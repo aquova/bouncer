@@ -1,0 +1,5 @@
+*config.json
+*.DS_Store
+*.swp
+*__pycache__
+*.db

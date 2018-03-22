@@ -16,13 +16,21 @@ client = discord.Client()
 
 # Create needed database, if doesn't exist
 sqlconn = sqlite3.connect('sdv.db')
-sqlconn.execute("CREATE TABLE IF NOT EXISTS badeggs (id INT PRIMARY KEY, username TEXT, num INT, date DATE, message TEXT, staff TEXT);")
+sqlconn.execute("CREATE TABLE IF NOT EXISTS badeggs (dbid, INT PRIMARY KEY, id INT, username TEXT, num INT, date DATE, message TEXT, staff TEXT);")
 sqlconn.commit()
 sqlconn.close()
 
 def removeCommand(m):
     tmp = m.split(" ")[2:]
     return " ".join(tmp)
+
+def formatTime(t):
+    # Input t is of the form: YYYY-MM-DD HH:MM:SS.SSSSSS
+    date = t.split(" ")[0]
+    pieces = date.split("-")
+    # output is of the form DD/MM/YYYY
+    european = "{}/{}/{}".format(pieces[2], pieces[1], pieces[0])
+    return european
 
 async def userSearch(u, m):
     if (len(u) == 1):
@@ -37,9 +45,9 @@ async def userSearch(u, m):
             out = "That user was found with the following infractions:\n"
             for item in searchResults:
                 if item[1] == 0:
-                    out += "{} was banned on {} by {} for this reason: {}\n".format(item[0], item[2], item[4], item[3])
+                    out += "{} was banned on {} by {} for this reason: {}\n".format(item[0], formatTime(item[2]), item[4], item[3])
                 else:
-                    out += "{} was received Warning {} on {} by {} for this reason: {}\n".format(item[0], item[1], item[2], item[4], item[3])
+                    out += "{} was received Warning {} on {} by {} for this reason: {}\n".format(item[0], item[1], formatTime(item[2]), item[4], item[3])
                 if item[1] == 3:
                     out += "They have received 3 warning, it is recommended that they be banned.\n"
             await client.send_message(m.channel, out)
@@ -65,15 +73,18 @@ async def on_message(message):
                     if len(user) == 1:
                         sqlconn = sqlite3.connect('sdv.db')
                         # TODO: This could potentially be a problem if you try to warn again after banning
-                        count = sqlconn.execute("SELECT COUNT(*) FROM badeggs").fetchone()[0]
+                        count = sqlconn.execute("SELECT COUNT(*) FROM badeggs WHERE id=?", [user[0].id]).fetchone()[0]
+                        globalcount = sqlconn.execute("SELECT COUNT(*) FROM badeggs").fetchone()[0]
                         currentTime = datetime.datetime.utcnow()
-                        params = [user[0].id, user[0].name, count + 1, currentTime, removeCommand(message.content), message.author.name]
-                        sqlconn.execute("INSERT INTO badeggs (id, username, num, date, message, staff) VALUES (?, ?, ?, ?, ?, ?)", params)
+                        params = [globalcount + 1, user[0].id, user[0].name, count + 1, currentTime, removeCommand(message.content), message.author.name]
+                        sqlconn.execute("INSERT INTO badeggs (dbid, id, username, num, date, message, staff) VALUES (?, ?, ?, ?, ?, ?, ?)", params)
                         sqlconn.commit()
                         sqlconn.close()
                         await client.send_message(message.channel, "User was warned.")
-                        # userSearch(user, message)
-                    print("Warned user")
+                        logMessage = "{} (ID: {}) received Warning #{} by {} for the following reason:\n{}".format(user[0].name, user[0].id, count+1, message.author.name, removeCommand(message.content))
+                        if (count > 2):
+                            logMessage += "This user has received 3 warnings or more. It is recommened that they be banned."
+                        await client.send_message(client.get_channel(logChannel), logMessage)
                 elif message.content.startswith("!banned"):
                     print("Banned User")
             else:

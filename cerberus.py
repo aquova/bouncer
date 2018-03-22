@@ -21,7 +21,7 @@ sqlconn.execute("CREATE TABLE IF NOT EXISTS badeggs (dbid, INT PRIMARY KEY, id I
 sqlconn.commit()
 sqlconn.close()
 
-warnThreshold = 2
+warnThreshold = 3
 
 def removeCommand(m):
     tmp = m.split(" ")[2:]
@@ -60,7 +60,7 @@ async def userSearch(u, m):
                     out += "[{}] **{}** - Banned by {} - {}\n".format(formatTime(item[2]), item[0], item[4], item[3])
                 else:
                     out += "[{}] **{}** - Warning #{} by {} - {}\n".format(formatTime(item[2]), item[0], item[1], item[4], item[3])
-                if item[1] == 3:
+                if item[1] == warnThreshold:
                     out += "They have received {} warnings, it is recommended that they be banned.\n".format(warnThreshold)
             await client.send_message(m.channel, out)
     else:
@@ -89,7 +89,7 @@ async def logUser(u, m, ban):
         except discord.errors.InvalidArgument:
             await client.send_message(m.channel, "The logging channel has not been set up in `config.json`. In order to have a visual record, please specify a channel ID.")
 
-        if (count > warnThreshold and ban == False):
+        if (count >= warnThreshold and ban == False):
             logMessage += "This user has received {} warnings or more. It is recommened that they be banned.".format(warnThreshold)
         await client.send_message(m.channel, logMessage)
     else:

@@ -1,4 +1,4 @@
-# bouncer
+# Bouncer
 
 A Discord moderator bot, designed to be used with the Stardew Valley server
 
@@ -31,6 +31,8 @@ The bot has several moderation features:
     - Upon being banned, there is the option to DM a user with the ban message. This can be disabled by setting the "DM" field in `config.json` to false.
 
 There is also a `!help` command, which will give the syntax for all of the previously listed commands
+
+For better security, the bot only listens in specific channels for commands, and only accepts commands for users with specific roles. These can both be specified in `config.json` under "listening" and "roles" respectively. The listening key must always have at least one channel, however the roles key can be left blank (with empty quotes) in which case all roles will be accepted.
 
 ## Installation
 

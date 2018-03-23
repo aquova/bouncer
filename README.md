@@ -42,3 +42,7 @@ Make a file called `config.json`, which contains your Discord bot key, channels 
 
 Once you have added your bot account to your server, the bot can be run by the command `./bot.sh`
 
+## Future Features
+
+- Possibly add ability to toggle DMing on command
+

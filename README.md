@@ -17,7 +17,7 @@ My personal hosting of the bot will be private, but users are free to host a ver
 The bot has several moderation features:
 
 - Logging of user warnings
-    - Moderators can log user warnings with the command `!warned @USERNAME message`, where `@USERNAME` is the mention of the offending user, and `message` are notes to be saved with the warning (such as why they were warned).
+    - Moderators can log user warnings with the command `!warn @USERNAME message`, where `@USERNAME` is the mention of the offending user, and `message` are notes to be saved with the warning (such as why they were warned).
     - Warnings are saved both in a channel specified in `config.json`, as well as saved to a local database.
 - Logging of user bans
     - Similar to warnings, bans can be logged with `!banned @USERNAME message`
@@ -26,7 +26,11 @@ The bot has several moderation features:
 - User searching
     - The database can be searched with the command `!search @USERNAME`. The bot will then post any noted infractions, as well as their timestamp and stored message
 - Removal
-    - Everybody makes mistakes.
+    - Everybody makes mistakes. The most recent log for a user can be removed with `!remove @USERNAME`
+- User DMing
+    - Upon being banned, there is the option to DM a user with the ban message. This can be disabled by setting the "DM" field in `config.json` to false.
+
+There is also a `!help` command, which will give the syntax for all of the previously listed commands
 
 ## Installation
 

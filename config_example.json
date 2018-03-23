@@ -4,5 +4,6 @@
         "listening":[""],
         "log":""
     },
-    "privileges":[""]
+    "roles":[""],
+    "DM":"False"
 }

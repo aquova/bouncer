@@ -1,9 +1,10 @@
 """
 A Discord moderation bot, originally made for the Stardew Valley server
 Written by aquova, 2018
+https://github.com/aquova/cerberus
 """
 
-import discord, json, asyncio, sqlite3, datetime
+import discord, json, sqlite3, datetime
 
 with open('config.json') as config_file:
     cfg = json.load(config_file)
@@ -21,7 +22,7 @@ client = discord.Client()
 
 # Create needed database, if doesn't exist
 sqlconn = sqlite3.connect('sdv.db')
-sqlconn.execute("CREATE TABLE IF NOT EXISTS badeggs (dbid, INT PRIMARY KEY, id INT, username TEXT, num INT, date DATE, message TEXT, staff TEXT);")
+sqlconn.execute("CREATE TABLE IF NOT EXISTS badeggs (dbid INT PRIMARY KEY, id INT, username TEXT, num INT, date DATE, message TEXT, staff TEXT);")
 sqlconn.commit()
 sqlconn.close()
 
@@ -97,15 +98,42 @@ async def logUser(u, m, ban):
             logMessage += "This user has received {} warnings or more. It is recommened that they be banned.".format(warnThreshold)
         await client.send_message(m.channel, logMessage)
         if ban and sendDMs:
-            await client.send_message(u[0], "You have been banned from the Stardew Valley server for the following reason: {}. If you have any questions, DM one of the staff members.".format(removeCommand(m.content)))
+            mes = removeCommand(m.content)
+            if mes != "":
+                await client.send_message(u[0], "You have been banned from the Stardew Valley server for the following reason: {}. If you have any questions, feel free to DM one of the staff members.".format(mes))
+            else:
+                await client.send_message(u[0], "You have been banned from the Stardew Valley server for violating one of our rules. If you have any questions, feel free to DM one of the staff members.")
     else:
         await client.send_message(m.channel, "Only mention the user you wish to log.")
+
+async def removeError(u, m):
+    if (len(u) == 1):
+        sqlconn = sqlite3.connect('sdv.db')
+        searchResults = sqlconn.execute("SELECT dbid, username, num, date, message, staff FROM badeggs WHERE id=?", [u[0].id]).fetchall()
+        if searchResults == []:
+            await client.send_message(m.channel, "That user was not found in the database.")
+        else:
+            item = searchResults[-1]
+            sqlconn.execute("REPLACE INTO badeggs (dbid, id, username, num, date, message, staff) VALUES (?, NULL, NULL, NULL, NULL, NULL, NULL)", [item[0]])
+            out = "The following log was deleted:\n"
+            if item[2] == 0:
+                out += "[{}] **{}** - Banned by {} - {}\n".format(formatTime(item[3]), item[1], item[5], item[4])
+            else:
+                out += "[{}] **{}** - Warning #{} by {} - {}\n".format(formatTime(item[3]), item[1], item[2], item[5], item[4])
+            await client.send_message(m.channel, out)
+        sqlconn.commit()
+        sqlconn.close()
+    else:
+        await client.send_message(m.channel, "Please mention only a single user so that I can remove their last log")
 
 @client.event
 async def on_ready():
     print('Logged in as')
     print(client.user.name)
     print(client.user.id)
+
+    game_object = discord.Game(name="type !help", type=0)
+    await client.change_presence(game=game_object)
 
 @client.event
 async def on_message(message):
@@ -124,7 +152,16 @@ async def on_message(message):
                     if checkRoles(message.author):
                         user = message.mentions
                         await logUser(user, message, True)
+                elif message.content.startswith("!remove"):
+                    if checkRoles(message.author):
+                        user = message.mentions
+                        await removeError(user, message)
+                elif message.content.startswith('!help'):
+                    helpMes = "Issue a warning: `!warn @USERNAME message`\nLog a ban: `!ban @USERNAME reason`\nSearch for a user: `!search @USERNAME`\nRemove a user's last log: `!remove @USERNAME`"
+                    await client.send_message(message.channel, helpMes)
         except discord.errors.HTTPException:
             pass
+        except Exception as e:
+            await client.send_message(message.channel, "Something has gone wrong. Blame aquova, and tell him this: {}".format(e))
 
 client.run(discordKey)

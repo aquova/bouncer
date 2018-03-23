@@ -148,7 +148,7 @@ async def on_message(message):
                     if checkRoles(message.author):
                         user = message.mentions
                         await logUser(user, message, False)
-                elif message.content.startswith("!banned"):
+                elif message.content.startswith("!ban"):
                     if checkRoles(message.author):
                         user = message.mentions
                         await logUser(user, message, True)

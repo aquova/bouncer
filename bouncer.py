@@ -1,7 +1,7 @@
 """
 A Discord moderation bot, originally made for the Stardew Valley server
 Written by aquova, 2018
-https://github.com/aquova/cerberus
+https://github.com/aquova/bouncer
 """
 
 import discord, json, sqlite3, datetime

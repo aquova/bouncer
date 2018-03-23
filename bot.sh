@@ -2,8 +2,8 @@
 
 while :
 do
-    if ! pgrep -x "cerberus.py" > /dev/null
+    if ! pgrep -x "bouncer.py" > /dev/null
     then
-        python3 cerberus.py
+        python3 bouncer.py
     fi
 done

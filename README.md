@@ -1,8 +1,8 @@
-# cerberus
+# bouncer
 
 A Discord moderator bot, designed to be used with the Stardew Valley server
 
-https://github.com/aquova/cerberus
+https://github.com/aquova/bouncer
 
 https://discord.gg/stardewvalley
 

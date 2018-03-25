@@ -13,10 +13,16 @@ discordKey = str(cfg['discord'])
 validInputChannels = cfg['channels']['listening']
 logChannel = str(cfg['channels']['log'])
 validRoles = cfg['roles']
-if cfg['DM'] == "True":
-    sendDMs = True
+
+if cfg['DM']['ban'].upper() == "TRUE":
+    sendBanDM = True
 else:
-    sendDMs = False
+    sendBanDM = False
+
+if cfg['DM']['warn'].upper() == "TRUE":
+    sendWarnDM = True
+else:
+    sendWarnDM = False
 
 client = discord.Client()
 
@@ -97,12 +103,18 @@ async def logUser(u, m, ban):
         if (count >= warnThreshold and ban == False):
             logMessage += "This user has received {} warnings or more. It is recommened that they be banned.".format(warnThreshold)
         await client.send_message(m.channel, logMessage)
-        if ban and sendDMs:
+        if ban and sendBanDM:
             mes = removeCommand(m.content)
             if mes != "":
                 await client.send_message(u[0], "You have been banned from the Stardew Valley server for the following reason: {}. If you have any questions, feel free to DM one of the staff members.".format(mes))
             else:
                 await client.send_message(u[0], "You have been banned from the Stardew Valley server for violating one of our rules. If you have any questions, feel free to DM one of the staff members.")
+        elif ban == False and sendWarnDM:
+            mes = removeCommand(m.content)
+            if mes != "":
+                await client.send_message(u[0], "You have received Warning #{} in the Stardew Valley server for the following reason: {}. If you have any questions, feel free to DM one of the staff members.".format(count, mes))
+            else:
+                await client.send_message(u[0], "You have received Warning #{} in the Stardew Valley server for violating one of our rules. If you have any questions, feel free to DM one of the staff members.".format(count))
     else:
         await client.send_message(m.channel, "Only mention the user you wish to log.")
 

@@ -5,5 +5,8 @@
         "log":""
     },
     "roles":[""],
-    "DM":"False"
+    "DM":{
+        "ban":"False",
+        "warn":"False"
+    }
 }

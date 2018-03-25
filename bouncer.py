@@ -80,7 +80,6 @@ async def userSearch(u, m):
 async def logUser(u, m, ban):
     if len(u) == 1:
         sqlconn = sqlite3.connect('sdv.db')
-        # TODO: This could potentially be a problem if you try to warn again after banning
         if (ban):
             count = 0
         else:
@@ -103,18 +102,25 @@ async def logUser(u, m, ban):
         if (count >= warnThreshold and ban == False):
             logMessage += "This user has received {} warnings or more. It is recommened that they be banned.".format(warnThreshold)
         await client.send_message(m.channel, logMessage)
-        if ban and sendBanDM:
-            mes = removeCommand(m.content)
-            if mes != "":
-                await client.send_message(u[0], "You have been banned from the Stardew Valley server for the following reason: {}. If you have any questions, feel free to DM one of the staff members.".format(mes))
-            else:
-                await client.send_message(u[0], "You have been banned from the Stardew Valley server for violating one of our rules. If you have any questions, feel free to DM one of the staff members.")
-        elif ban == False and sendWarnDM:
-            mes = removeCommand(m.content)
-            if mes != "":
-                await client.send_message(u[0], "You have received Warning #{} in the Stardew Valley server for the following reason: {}. If you have any questions, feel free to DM one of the staff members.".format(count, mes))
-            else:
-                await client.send_message(u[0], "You have received Warning #{} in the Stardew Valley server for violating one of our rules. If you have any questions, feel free to DM one of the staff members.".format(count))
+        try:
+            if ban and sendBanDM:
+                mes = removeCommand(m.content)
+                if mes != "":
+                    await client.send_message(u[0], "You have been banned from the Stardew Valley server for the following reason: {}. If you have any questions, feel free to DM one of the staff members.".format(mes))
+                else:
+                    await client.send_message(u[0], "You have been banned from the Stardew Valley server for violating one of our rules. If you have any questions, feel free to DM one of the staff members.")
+            elif ban == False and sendWarnDM:
+                mes = removeCommand(m.content)
+                if mes != "":
+                    await client.send_message(u[0], "You have received Warning #{} in the Stardew Valley server for the following reason: {}. If you have any questions, feel free to DM one of the staff members.".format(count, mes))
+                else:
+                    await client.send_message(u[0], "You have received Warning #{} in the Stardew Valley server for violating one of our rules. If you have any questions, feel free to DM one of the staff members.".format(count))
+        except discord.errors.Forbidden:
+            await client.send_message(message.channel, "ERROR: I am not allowed to DM the user. It is likely that they are not accepting DM's from me.")
+        except discord.errors.HTTPException as e:
+            await client.send_message(message.channel, "ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {}".format(e))
+        except discord.errors.NotFound:
+            await client.send_message(message.channel, "ERROR: I was unable to find the user to DM. I'm unsure how this can be the case, unless their account was deleted")
     else:
         await client.send_message(m.channel, "Only mention the user you wish to log.")
 

@@ -113,7 +113,7 @@ async def logUser(m, ban):
     elif u != None: # User info is known
         params = [globalcount + 1, uid, "{}#{}".format(u.name, u.discriminator), count, currentTime, removeCommand(m.content), m.author.name]
     else: # User info is unknown
-        params = [globalcount + 1, uid, "???", count, currentTime, removeCommand(m.content), m.author.name]
+        params = [globalcount + 1, uid, "ID: {}".format(uid), count, currentTime, removeCommand(m.content), m.author.name]
         await client.send_message(m.channel, "I wasn't able to find a username for that user, but whatever, I'll log them anyway.")
 
     sqlconn.execute("INSERT INTO badeggs (dbid, id, username, num, date, message, staff) VALUES (?, ?, ?, ?, ?, ?, ?)", params)

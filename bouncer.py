@@ -199,7 +199,7 @@ async def on_message(message):
                     if checkRoles(message.author):
                         await removeError(message)
                 elif message.content.startswith('!help'):
-                    helpMes = "Issue a warning: `!warn @USERNAME message`\nLog a ban: `!ban @USERNAME reason`\nSearch for a user: `!search @USERNAME`\nRemove a user's last log: `!remove @USERNAME`"
+                    helpMes = "Issue a warning: `!warn @USERNAME message`\nLog a ban: `!ban @USERNAME reason`\nSearch for a user: `!search @USERNAME`\nRemove a user's last log: `!remove @USERNAME\nDMing users when they are banned is {}\nDMing users when they are warned is {}`".format(sendBanDM, sendWarnDM)
                     await client.send_message(message.channel, helpMes)
         except discord.errors.HTTPException:
             pass

@@ -154,25 +154,23 @@ async def logUser(m, ban):
     except discord.errors.NotFound:
         await client.send_message(message.channel, "ERROR: I was unable to find the user to DM. I'm unsure how this can be the case, unless their account was deleted")
 
-async def removeError(u, m):
-    if (len(u) == 1):
-        sqlconn = sqlite3.connect('sdv.db')
-        searchResults = sqlconn.execute("SELECT dbid, username, num, date, message, staff FROM badeggs WHERE id=?", [u[0].id]).fetchall()
-        if searchResults == []:
-            await client.send_message(m.channel, "That user was not found in the database.")
-        else:
-            item = searchResults[-1]
-            sqlconn.execute("REPLACE INTO badeggs (dbid, id, username, num, date, message, staff) VALUES (?, NULL, NULL, NULL, NULL, NULL, NULL)", [item[0]])
-            out = "The following log was deleted:\n"
-            if item[2] == 0:
-                out += "[{}] **{}** - Banned by {} - {}\n".format(formatTime(item[3]), item[1], item[5], item[4])
-            else:
-                out += "[{}] **{}** - Warning #{} by {} - {}\n".format(formatTime(item[3]), item[1], item[2], item[5], item[4])
-            await client.send_message(m.channel, out)
-        sqlconn.commit()
-        sqlconn.close()
+async def removeError(m):
+    uid = getID(m)
+    sqlconn = sqlite3.connect('sdv.db')
+    searchResults = sqlconn.execute("SELECT dbid, username, num, date, message, staff FROM badeggs WHERE id=?", [uid]).fetchall()
+    if searchResults == []:
+        await client.send_message(m.channel, "That user was not found in the database.")
     else:
-        await client.send_message(m.channel, "Please mention only a single user so that I can remove their last log")
+        item = searchResults[-1]
+        sqlconn.execute("REPLACE INTO badeggs (dbid, id, username, num, date, message, staff) VALUES (?, NULL, NULL, NULL, NULL, NULL, NULL)", [item[0]])
+        out = "The following log was deleted:\n"
+        if item[2] == 0:
+            out += "[{}] **{}** - Banned by {} - {}\n".format(formatTime(item[3]), item[1], item[5], item[4])
+        else:
+            out += "[{}] **{}** - Warning #{} by {} - {}\n".format(formatTime(item[3]), item[1], item[2], item[5], item[4])
+        await client.send_message(m.channel, out)
+    sqlconn.commit()
+    sqlconn.close()
 
 @client.event
 async def on_ready():
@@ -199,14 +197,13 @@ async def on_message(message):
                         await logUser(message, True)
                 elif message.content.startswith("!remove"):
                     if checkRoles(message.author):
-                        user = message.mentions
-                        await removeError(user, message)
+                        await removeError(message)
                 elif message.content.startswith('!help'):
                     helpMes = "Issue a warning: `!warn @USERNAME message`\nLog a ban: `!ban @USERNAME reason`\nSearch for a user: `!search @USERNAME`\nRemove a user's last log: `!remove @USERNAME`"
                     await client.send_message(message.channel, helpMes)
         except discord.errors.HTTPException:
             pass
-        # except Exception as e:
-        #     await client.send_message(message.channel, "Something has gone wrong. Blame aquova, and tell him this: {}".format(e))
+        except Exception as e:
+            await client.send_message(message.channel, "Something has gone wrong. Blame aquova, and tell him this: {}".format(e))
 
 client.run(discordKey)

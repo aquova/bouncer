@@ -98,7 +98,7 @@ async def logUser(m, ban):
     u = discord.utils.get(m.server.members, id=uid)
     if uid == None:
         await client.send_message(m.channel, "Please mention a user or provide a user ID `!warn/ban USERID message`")
-        return # Still donno if this works
+        return
 
     sqlconn = sqlite3.connect('sdv.db')
     if (ban):
@@ -137,15 +137,15 @@ async def logUser(m, ban):
             if ban and sendBanDM:
                 mes = removeCommand(m.content)
                 if mes != "":
-                    await client.send_message(u[0], "You have been banned from the Stardew Valley server for the following reason: {}. If you have any questions, feel free to DM one of the staff members.".format(mes))
+                    await client.send_message(u, "You have been banned from the Stardew Valley server for the following reason: {}. If you have any questions, feel free to DM one of the staff members.".format(mes))
                 else:
-                    await client.send_message(u[0], "You have been banned from the Stardew Valley server for violating one of our rules. If you have any questions, feel free to DM one of the staff members.")
+                    await client.send_message(u, "You have been banned from the Stardew Valley server for violating one of our rules. If you have any questions, feel free to DM one of the staff members.")
             elif ban == False and sendWarnDM:
                 mes = removeCommand(m.content)
                 if mes != "":
-                    await client.send_message(u[0], "You have received Warning #{} in the Stardew Valley server for the following reason: {}. If you have any questions, feel free to DM one of the staff members.".format(count, mes))
+                    await client.send_message(u, "You have received Warning #{} in the Stardew Valley server for the following reason: {}. If you have any questions, feel free to DM one of the staff members.".format(count, mes))
                 else:
-                    await client.send_message(u[0], "You have received Warning #{} in the Stardew Valley server for violating one of our rules. If you have any questions, feel free to DM one of the staff members.".format(count))
+                    await client.send_message(u, "You have received Warning #{} in the Stardew Valley server for violating one of our rules. If you have any questions, feel free to DM one of the staff members.".format(count))
     # I don't know if any of these are ever getting tripped
     except discord.errors.Forbidden:
         await client.send_message(message.channel, "ERROR: I am not allowed to DM the user. It is likely that they are not accepting DM's from me.")

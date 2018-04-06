@@ -72,6 +72,7 @@ def getID(message):
 
 async def userSearch(m):
     u = getID(m)
+    member = discord.utils.get(m.server.members, id=u)
     if (u != None):
         sqlconn = sqlite3.connect('sdv.db')
         searchResults = sqlconn.execute("SELECT username, num, date, message, staff FROM badeggs WHERE id=?", [u]).fetchall()
@@ -79,9 +80,15 @@ async def userSearch(m):
         sqlconn.close()
 
         if searchResults == []:
-            await client.send_message(m.channel, "That user was not found in the database.")
+            if member != None:
+                await client.send_message(m.channel, "User {}#{} was not found in the database\n".format(member.name, member.discriminator))
+            else:
+                await client.send_message(m.channel, "That user was not found in the database.")
         else:
-            out = "That user was found with the following infractions:\n"
+            if member != None:
+                out = "User {}#{} was found with the following infractions\n".format(member.name, member.discriminator)
+            else:
+                out = "That user was found with the following infractions:\n"
             for item in searchResults:
                 if item[1] == 0:
                     out += "[{}] **{}** - Banned by {} - {}\n".format(formatTime(item[2]), item[0], item[4], item[3])

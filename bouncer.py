@@ -13,6 +13,11 @@ discordKey = str(cfg['discord'])
 validInputChannels = cfg['channels']['listening']
 logChannel = str(cfg['channels']['log'])
 validRoles = cfg['roles']
+try:
+    hourThreshold = int(cfg['ageWarning']['threshold'])
+except ValueError:
+    hourThreshold = 0
+ageChannel = cfg['ageWarning']['channel']
 
 if cfg['DM']['ban'].upper() == "TRUE":
     sendBanDM = True
@@ -83,7 +88,7 @@ async def userSearch(m):
             if member != None:
                 await client.send_message(m.channel, "User {}#{} was not found in the database\n".format(member.name, member.discriminator))
             else:
-                await client.send_message(m.channel, "That user was not found in the database.")
+                await client.send_message(m.channel, "That user was not found in the database, or in the server.")
         else:
             if member != None:
                 out = "User {}#{} was found with the following infractions\n".format(member.name, member.discriminator)
@@ -187,6 +192,17 @@ async def on_ready():
 
     game_object = discord.Game(name="type !help", type=0)
     await client.change_presence(game=game_object)
+
+@client.event
+async def on_member_join(member):
+    if hourThreshold != 0:
+        currentTime = datetime.utcnow()
+        accountCreated = member.created_at
+        age = currentTime - accountCreated
+        ageHours = age.days * 24
+        if ageHours < hourThreshold:
+            out = "User {}#{} (ID: {}) has joined the server with an account less than {} hours old. Just so you know.".format(member.name, member.discriminator, hourThreshold)
+            await client.send_message(client.get_channel(ageChannel), out)
 
 @client.event
 async def on_message(message):

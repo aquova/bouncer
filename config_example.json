@@ -4,6 +4,10 @@
         "listening":[""],
         "log":""
     },
+    "ageWarning":{
+        "threshold":"",
+        "channel":""
+    },
     "roles":[""],
     "DM":{
         "ban":"False",

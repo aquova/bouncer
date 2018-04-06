@@ -203,8 +203,6 @@ async def on_member_join(member):
         if ageHours < hourThreshold:
             out = "User {}#{} (ID: {}) has joined the server with an account less than {} hours old. Just so you know.".format(member.name, member.discriminator, hourThreshold)
             await client.send_message(client.get_channel(ageChannel), out)
-    else:
-        print("DISABLED")
 
 @client.event
 async def on_message(message):

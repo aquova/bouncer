@@ -168,6 +168,9 @@ async def logUser(m, ban):
 
 async def removeError(m):
     uid = getID(m)
+    if uid == None:
+        await client.send_message(m.channel, "Please mention a user or provide a user ID `!remove USERID`")
+        return
     sqlconn = sqlite3.connect('sdv.db')
     searchResults = sqlconn.execute("SELECT dbid, username, num, date, message, staff FROM badeggs WHERE id=?", [uid]).fetchall()
     if searchResults == []:
@@ -193,20 +196,19 @@ async def on_ready():
     game_object = discord.Game(name="type !help", type=0)
     await client.change_presence(game=game_object)
 
-@client.event
-async def on_member_join(member):
-    if hourThreshold != 0:
-        currentTime = datetime.utcnow()
-        accountCreated = member.created_at
-        age = currentTime - accountCreated
-        ageHours = age.days * 24
-        if ageHours < hourThreshold:
-            out = "User {}#{} (ID: {}) has joined the server with an account less than {} hours old. Just so you know.".format(member.name, member.discriminator, hourThreshold)
-            await client.send_message(client.get_channel(ageChannel), out)
+# @client.event
+# async def on_member_join(member):
+#     if hourThreshold != 0:
+#         currentTime = datetime.utcnow()
+#         accountCreated = member.created_at
+#         age = currentTime - accountCreated
+#         ageHours = age.days * 24
+#         if ageHours < hourThreshold:
+#             out = "User {}#{} (ID: {}) has joined the server with an account less than {} hours old. Just so you know.".format(member.name, member.discriminator, hourThreshold)
+#             await client.send_message(client.get_channel(ageChannel), out)
 
 @client.event
 async def on_message(message):
-    if message.author.id != client.user.id:
         try:
             if message.channel.id in validInputChannels:
                 if message.content.startswith("!search"):

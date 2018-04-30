@@ -209,7 +209,21 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
+    # with open("users.txt", 'w') as f:
+    #     mems = message.server.members
+    #     for u in mems:
+    #         f.write("{}\n".format(u.name))
+    if message.author.id != client.user.id:
         try:
+            # Some special stuff for the SDV multiplayer release
+            if ("BUG" in message.content.upper() and ("REPORT" in message.content.upper() or "FOUND" in message.content.upper())):
+                if str(message.channel.id) in ["440552475913748491", "137345719668310016", "189945533861724160"]:
+                    await client.send_message(message.channel, "Did I hear someone say they found a MP bug? :bug:\n If you wanna help out development of Stardew Valley, there's a link you can send your bug reports: https://community.playstarbound.com/threads/stardew-valley-multiplayer-beta-known-issues-fixes.142850/")
+
+            if (message.content.startswith("!bug")):
+                if ("273017595622457344" in [x.id for x in message.author.roles]):
+                    await client.send_message(message.channel, "Here is the SDV multiplayer bug report submission form!\nhttps://community.playstarbound.com/threads/stardew-valley-multiplayer-beta-known-issues-fixes.142850/")
+
             if message.channel.id in validInputChannels:
                 if message.content.startswith("!search"):
                     if checkRoles(message.author):

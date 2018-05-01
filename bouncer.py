@@ -6,6 +6,7 @@ https://github.com/aquova/bouncer
 
 import discord, json, sqlite3, datetime
 
+# Reading values from config file
 with open('config.json') as config_file:
     cfg = json.load(config_file)
 
@@ -32,10 +33,12 @@ sqlconn.execute("CREATE TABLE IF NOT EXISTS badeggs (dbid INT PRIMARY KEY, id IN
 sqlconn.commit()
 sqlconn.close()
 
+# Removes the '!command' to get just the request
 def removeCommand(m):
     tmp = m.split(" ")[2:]
     return " ".join(tmp)
 
+# Formats a datetime object to be European-style time string
 def formatTime(t):
     # Input t is of the form: YYYY-MM-DD HH:MM:SS.SSSSSS
     date = str(t).split(" ")[0]
@@ -44,6 +47,7 @@ def formatTime(t):
     european = "{}/{}/{}".format(pieces[2], pieces[1], pieces[0])
     return european
 
+# Checks if given user has one of the roles specified in config.json
 def checkRoles(user):
     if len(validRoles) == 1 and validRoles[0] == "":
         return True
@@ -53,6 +57,7 @@ def checkRoles(user):
                 return True
     return False
 
+# Gets the ID from a message, either from a mentioned user or by a typed ID value
 def getID(message):
     # If message contains one mention, return its ID
     if len(message.mentions) == 1:
@@ -68,6 +73,7 @@ def getID(message):
     except ValueError:
         return None
 
+# Searches the database for the specified user, given a message
 async def userSearch(m):
     u = getID(m)
     member = discord.utils.get(m.server.members, id=u)
@@ -206,19 +212,15 @@ async def on_message(message):
                 if ("273017595622457344" in [x.id for x in message.author.roles]):
                     await client.send_message(message.channel, "Here is the SDV multiplayer bug report submission form!\nhttps://community.playstarbound.com/threads/stardew-valley-multiplayer-beta-known-issues-fixes.142850/")
 
-            if message.channel.id in validInputChannels:
+            if (message.channel.id in validInputChannels) and checkRoles(message.author):
                 if message.content.startswith("!search"):
-                    if checkRoles(message.author):
-                        await userSearch(message)
+                    await userSearch(message)
                 elif message.content.startswith("!warn"):
-                    if checkRoles(message.author):
-                        await logUser(message, False)
+                    await logUser(message, False)
                 elif message.content.startswith("!ban"):
-                    if checkRoles(message.author):
-                        await logUser(message, True)
+                    await logUser(message, True)
                 elif message.content.startswith("!remove"):
-                    if checkRoles(message.author):
-                        await removeError(message)
+                    await removeError(message)
                 elif message.content.startswith('!help'):
                     helpMes = "Issue a warning: `!warn @USERNAME message`\nLog a ban: `!ban @USERNAME reason`\nSearch for a user: `!search @USERNAME`\nRemove a user's last log: `!remove @USERNAME\nDMing users when they are banned is {}\nDMing users when they are warned is {}`".format(sendBanDM, sendWarnDM)
                     await client.send_message(message.channel, helpMes)

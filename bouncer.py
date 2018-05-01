@@ -33,6 +33,8 @@ sqlconn.execute("CREATE TABLE IF NOT EXISTS badeggs (dbid INT PRIMARY KEY, id IN
 sqlconn.commit()
 sqlconn.close()
 
+warnThreshold = 3
+
 # Removes the '!command' to get just the request
 def removeCommand(m):
     tmp = m.split(" ")[2:]

@@ -2,13 +2,14 @@
     "discord":"",
     "channels":{
         "listening":[""],
-        "log":""
-    },
-    "ageWarning":{
-        "threshold":"",
-        "channel":""
+        "log":"",
+        "debug":{
+            "input":"",
+            "log":""
+        }
     },
     "roles":[""],
+    "owner":"",
     "DM":{
         "ban":"False",
         "warn":"False"

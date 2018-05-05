@@ -32,13 +32,14 @@ client = discord.Client()
 # Create needed database, if doesn't exist
 sqlconn = sqlite3.connect('sdv.db')
 sqlconn.execute("CREATE TABLE IF NOT EXISTS badeggs (dbid INT PRIMARY KEY, id INT, username TEXT, num INT, date DATE, message TEXT, staff TEXT);")
+sqlconn.execute("CREATE TABLE IF NOT EXISTS config (debug INT PRIMARY KEY);")
 sqlconn.commit()
 sqlconn.close()
 
 warnThreshold = 3
-debug = False
 lastCheck = datetime.datetime.fromtimestamp(1) # Create a new datetime object of ~0
 checkCooldown = datetime.timedelta(minutes=5)
+recentBans = {}
 
 # Removes the '!command' to get just the request
 def removeCommand(m):
@@ -130,6 +131,8 @@ async def logUser(m, ban):
         params = [globalcount + 1, uid, searchResults[0][0], count, currentTime, removeCommand(m.content), m.author.name]
     elif u != None: # User info is known
         params = [globalcount + 1, uid, "{}#{}".format(u.name, u.discriminator), count, currentTime, removeCommand(m.content), m.author.name]
+    elif uid in recentBans:
+        params = [globalcount + 1, uid, recentBans[uid][0], count, currentTime, removeCommand(m.content), m.author.name]
     else: # User info is unknown
         params = [globalcount + 1, uid, "ID: {}".format(uid), count, currentTime, removeCommand(m.content), m.author.name]
         await client.send_message(m.channel, "I wasn't able to find a username for that user, but whatever, I'll log them anyway.")
@@ -197,7 +200,7 @@ async def checkForBugs(message):
     global lastCheck
     if ("BUG" in message.content.upper() and ("REPORT" in message.content.upper() or "FOUND" in message.content.upper())):
         if str(message.channel.id) in ["440552475913748491", "137345719668310016", "189945533861724160"]:
-            await client.send_message(message.channel, "Did I hear someone say they found a MP bug? :bug:\n If you wanna help out development of Stardew Valley, there's a link you can send your bug reports: <https://community.playstarbound.com/threads/stardew-valley-multiplayer-beta-known-issues-fixes.142850/>")
+            await client.send_message(message.channel, "Did I hear someone say they found a MP bug? :bug:\nIf you wanna help out development of Stardew Valley, there's a link you can send your bug reports: <https://community.playstarbound.com/threads/stardew-valley-multiplayer-beta-known-issues-fixes.142850/>")
             lastCheck = datetime.datetime.utcnow()
 
 @client.event
@@ -206,8 +209,20 @@ async def on_ready():
     print(client.user.name)
     print(client.user.id)
 
-    game_object = discord.Game(name="type !help", type=0)
+
+    # sqlconn = sqlite3.connect('sdv.db')
+    # try:
+    #     debug = sqlconn.execute("SELECT debug FROM config").fetchone()[0]
+    # except TypeError:
+    debug = False
+
+    game_object = discord.Game(name="for !help", type=2)
     await client.change_presence(game=game_object)
+
+@client.event
+async def on_member_ban(member):
+    global recentBans
+    recentBans[member.id] = ["{}#{}".format(member.name, member.discriminator)]
 
 @client.event
 async def on_message(message):
@@ -221,6 +236,8 @@ async def on_message(message):
     #         f.write("{}\n".format(u.name))
     if message.author.id != client.user.id:
         try:
+            # if message.author.id == "254640676233412610":
+            #     print(message.type)
             if (message.channel.id in validInputChannels) and checkRoles(message.author):
                 if message.content.startswith("!search"):
                     await userSearch(message)
@@ -236,6 +253,10 @@ async def on_message(message):
 
             if message.author.id == cfg['owner'] and message.content == '!debug':
                 debug = not debug
+                # sqlconn = sqlite3.connect('sdv.db')
+                # sqlconn.execute("INSERT INTO config (debug) VALUES (?)", [debug])
+                # sqlconn.commit()
+                # sqlconn.close()
                 await client.send_message(message.channel, "Debug is now set to {}".format(debug))
                 if debug:
                     validInputChannels = [debugChannel]
@@ -246,7 +267,6 @@ async def on_message(message):
                     logChannel = str(cfg['channels']['log'])
                     await client.send_message(client.get_channel(debugChannel), "Debug option is now off")
 
-
             if (message.content.startswith("!bug")):
                 if ("273017595622457344" in [x.id for x in message.author.roles]):
                     await client.send_message(message.channel, "Here is the SDV multiplayer bug report submission form!\n<https://community.playstarbound.com/threads/stardew-valley-multiplayer-beta-known-issues-fixes.142850/>")
@@ -255,13 +275,13 @@ async def on_message(message):
                 if ("273017595622457344" in [x.id for x in message.author.roles]):
                     await client.send_message(message.channel, "<https://www.reddit.com/r/StardewValley/comments/8g0j7s/stardew_valley_13_beta/>")
 
-
             # Some special stuff for the SDV multiplayer release
             if (datetime.datetime.utcnow() - lastCheck > checkCooldown):
                 await checkForBugs(message)
         except discord.errors.HTTPException:
             pass
-        # except Exception as e:
-        #     await client.send_message(message.channel, "Something has gone wrong. Blame aquova, and tell him this: {}".format(e))
+        except Exception as e:
+            if not debug:
+                await client.send_message(message.channel, "Something has gone wrong. Blame aquova, and tell him this: {}".format(e))
 
 client.run(discordKey)

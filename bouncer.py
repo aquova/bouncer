@@ -81,6 +81,12 @@ def getID(message):
     except ValueError:
         return None
 
+async def logData():
+    currentTime = datetime.datetime.utcnow()
+    sdv = client.get_server(cfg['sdv']) # The SDV ID hardcoded in
+    with open('stats.csv', 'a') as openFile:
+        openFile.write("{},{}\n".format(currentTime, sdv.member_count))
+
 # Searches the database for the specified user, given a message
 async def userSearch(m):
     u = getID(m)
@@ -219,6 +225,12 @@ async def on_ready():
 
     game_object = discord.Game(name="for !help bouncer", type=3)
     await client.change_presence(game=game_object)
+
+    # TODO: Have it wait until the top of the hour before logging
+    while True:
+        await logData()
+        await asyncio.sleep(3600) # Sleep for 1 hour
+
 
 @client.event
 async def on_member_ban(member):

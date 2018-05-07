@@ -32,8 +32,7 @@ client = discord.Client()
 
 # Create needed database, if doesn't exist
 sqlconn = sqlite3.connect('sdv.db')
-sqlconn.execute("CREATE TABLE IF NOT EXISTS badeggs (dbid INT PRIMARY KEY, id INT, username TEXT, num INT, date DATE, message TEXT, staff TEXT);")
-sqlconn.execute("CREATE TABLE IF NOT EXISTS config (debug INT PRIMARY KEY);")
+sqlconn.execute("CREATE TABLE IF NOT EXISTS badeggs (dbid INT PRIMARY KEY, id INT, username TEXT, num INT, date DATE, message TEXT, staff TEXT, post INT);")
 sqlconn.commit()
 sqlconn.close()
 
@@ -138,18 +137,15 @@ async def logUser(m, ban):
         params = [globalcount + 1, uid, "ID: {}".format(uid), count, currentTime, removeCommand(m.content), m.author.name]
         await client.send_message(m.channel, "I wasn't able to find a username for that user, but whatever, I'll log them anyway.")
 
-    sqlconn.execute("INSERT INTO badeggs (dbid, id, username, num, date, message, staff) VALUES (?, ?, ?, ?, ?, ?, ?)", params)
-    sqlconn.commit()
-    sqlconn.close()
-
     if ban:
         logMessage = "[{}] **{}** - Banned by {} - {}\n".format(formatTime(currentTime), params[2],  m.author.name, removeCommand(m.content))
     else:
         logMessage = "[{}] **{}** - Warning #{} by {} - {}\n".format(formatTime(currentTime), params[2], count, m.author.name, removeCommand(m.content))
     try:
-        await client.send_message(client.get_channel(logChannel), logMessage)
+        logMesID = await client.send_message(client.get_channel(logChannel), logMessage)
     except discord.errors.InvalidArgument:
         await client.send_message(m.channel, "The logging channel has not been set up in `config.json`. In order to have a visual record, please specify a channel ID.")
+        logMesID = 0
 
     if (count >= warnThreshold and ban == False):
         logMessage += "This user has received {} warnings or more. It is recommened that they be banned.".format(warnThreshold)
@@ -168,6 +164,7 @@ async def logUser(m, ban):
                     await client.send_message(u, "You have received Warning #{} in the Stardew Valley server for the following reason: {}. If you have any questions, feel free to DM one of the staff members.".format(count, mes))
                 else:
                     await client.send_message(u, "You have received Warning #{} in the Stardew Valley server for violating one of our rules. If you have any questions, feel free to DM one of the staff members.".format(count))
+
     # I don't know if any of these are ever getting tripped
     except discord.errors.Forbidden:
         await client.send_message(message.channel, "ERROR: I am not allowed to DM the user. It is likely that they are not accepting DM's from me.")
@@ -176,24 +173,34 @@ async def logUser(m, ban):
     except discord.errors.NotFound:
         await client.send_message(message.channel, "ERROR: I was unable to find the user to DM. I'm unsure how this can be the case, unless their account was deleted")
 
+    params.append(logMesID.id)
+    sqlconn.execute("INSERT INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", params)
+    sqlconn.commit()
+    sqlconn.close()
+
 async def removeError(m):
     uid = getID(m)
     if uid == None:
         await client.send_message(m.channel, "Please mention a user or provide a user ID `!remove USERID`")
         return
     sqlconn = sqlite3.connect('sdv.db')
-    searchResults = sqlconn.execute("SELECT dbid, username, num, date, message, staff FROM badeggs WHERE id=?", [uid]).fetchall()
+    searchResults = sqlconn.execute("SELECT dbid, username, num, date, message, staff, post FROM badeggs WHERE id=?", [uid]).fetchall()
     if searchResults == []:
         await client.send_message(m.channel, "That user was not found in the database.")
     else:
         item = searchResults[-1]
-        sqlconn.execute("REPLACE INTO badeggs (dbid, id, username, num, date, message, staff) VALUES (?, NULL, NULL, NULL, NULL, NULL, NULL)", [item[0]])
+        sqlconn.execute("REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, NULL, NULL, NULL, NULL, NULL, NULL, NULL)", [item[0]])
         out = "The following log was deleted:\n"
         if item[2] == 0:
             out += "[{}] **{}** - Banned by {} - {}\n".format(formatTime(item[3]), item[1], item[5], item[4])
         else:
             out += "[{}] **{}** - Warning #{} by {} - {}\n".format(formatTime(item[3]), item[1], item[2], item[5], item[4])
         await client.send_message(m.channel, out)
+        if item[6] != 0:
+            async for m in client.logs_from(client.get_channel(logChannel)):
+                if str(m.id) == str(item[6]):
+                    await client.delete_message(m)
+                    break
     sqlconn.commit()
     sqlconn.close()
 

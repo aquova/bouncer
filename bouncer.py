@@ -10,6 +10,7 @@ import discord, json, sqlite3, datetime, asyncio
 with open('config.json') as config_file:
     cfg = json.load(config_file)
 
+# Configuring preferences
 discordKey = str(cfg['discord'])
 validInputChannels = cfg['channels']['listening']
 logChannel = str(cfg['channels']['log'])
@@ -131,7 +132,7 @@ async def logUser(m, ban):
         params = [globalcount + 1, uid, searchResults[0][0], count, currentTime, removeCommand(m.content), m.author.name]
     elif u != None: # User info is known
         params = [globalcount + 1, uid, "{}#{}".format(u.name, u.discriminator), count, currentTime, removeCommand(m.content), m.author.name]
-    elif uid in recentBans:
+    elif uid in recentBans: # User has been banned since bot power on
         params = [globalcount + 1, uid, recentBans[uid][0], count, currentTime, removeCommand(m.content), m.author.name]
     else: # User info is unknown
         params = [globalcount + 1, uid, "ID: {}".format(uid), count, currentTime, removeCommand(m.content), m.author.name]
@@ -161,7 +162,7 @@ async def logUser(m, ban):
                     await client.send_message(u, "You have been banned from the Stardew Valley server for the following reason: {}. If you have any questions, feel free to DM one of the staff members.".format(mes))
                 else:
                     await client.send_message(u, "You have been banned from the Stardew Valley server for violating one of our rules. If you have any questions, feel free to DM one of the staff members.")
-            elif ban == False and sendWarnDM:
+            elif not ban and sendWarnDM:
                 mes = removeCommand(m.content)
                 if mes != "":
                     await client.send_message(u, "You have received Warning #{} in the Stardew Valley server for the following reason: {}. If you have any questions, feel free to DM one of the staff members.".format(count, mes))
@@ -209,14 +210,7 @@ async def on_ready():
     print(client.user.name)
     print(client.user.id)
 
-
-    # sqlconn = sqlite3.connect('sdv.db')
-    # try:
-    #     debug = sqlconn.execute("SELECT debug FROM config").fetchone()[0]
-    # except TypeError:
-    debug = False
-
-    game_object = discord.Game(name="for !help", type=2)
+    game_object = discord.Game(name="for !help bouncer", type=3)
     await client.change_presence(game=game_object)
 
 @client.event
@@ -229,15 +223,16 @@ async def on_message(message):
     # This is probably not good practice
     global validInputChannels
     global logChannel
-    global debug
     # with open("users.txt", 'w') as f:
     #     mems = message.server.members
     #     for u in mems:
     #         f.write("{}\n".format(u.name))
     if message.author.id != client.user.id:
         try:
-            # if message.author.id == "254640676233412610":
-            #     print(message.type)
+            if (message.channel.is_private):
+                mes = "User {}#{} has sent me a private message: {}".format(message.author.name, message.author.discriminator, message.content)
+                # This is probably not the best way to do this, want to instead specify a dedicated channel
+                await client.send_message(client.get_channel(validInputChannels[0]), mes)
             if (message.channel.id in validInputChannels) and checkRoles(message.author):
                 if message.content.startswith("!search"):
                     await userSearch(message)
@@ -247,26 +242,12 @@ async def on_message(message):
                     await logUser(message, True)
                 elif message.content.startswith("!remove"):
                     await removeError(message)
-                elif message.content.startswith('!help'):
+                elif message.content.startswith('!help bouncer'):
                     helpMes = "Issue a warning: `!warn @USERNAME message`\nLog a ban: `!ban @USERNAME reason`\nSearch for a user: `!search @USERNAME`\nRemove a user's last log: `!remove @USERNAME\nDMing users when they are banned is {}\nDMing users when they are warned is {}`".format(sendBanDM, sendWarnDM)
-                    await client.send_message(message.channel, helpMes)
+                    test = await client.send_message(message.channel, helpMes)
+                    print(test)
 
-            if message.author.id == cfg['owner'] and message.content == '!debug':
-                debug = not debug
-                # sqlconn = sqlite3.connect('sdv.db')
-                # sqlconn.execute("INSERT INTO config (debug) VALUES (?)", [debug])
-                # sqlconn.commit()
-                # sqlconn.close()
-                await client.send_message(message.channel, "Debug is now set to {}".format(debug))
-                if debug:
-                    validInputChannels = [debugChannel]
-                    logChannel = debugLog
-                    await client.send_message(client.get_channel(debugChannel), "Debug option is now on, sending control to this channel")
-                else:
-                    validInputChannels = cfg['channels']['listening']
-                    logChannel = str(cfg['channels']['log'])
-                    await client.send_message(client.get_channel(debugChannel), "Debug option is now off")
-
+            # Some special stuff for the SDV multiplayer release
             if (message.content.startswith("!bug")):
                 if ("273017595622457344" in [x.id for x in message.author.roles]):
                     await client.send_message(message.channel, "Here is the SDV multiplayer bug report submission form!\n<https://community.playstarbound.com/threads/stardew-valley-multiplayer-beta-known-issues-fixes.142850/>")
@@ -275,13 +256,12 @@ async def on_message(message):
                 if ("273017595622457344" in [x.id for x in message.author.roles]):
                     await client.send_message(message.channel, "<https://www.reddit.com/r/StardewValley/comments/8g0j7s/stardew_valley_13_beta/>")
 
-            # Some special stuff for the SDV multiplayer release
+            # A five minute cooldown for responding to people who mention bug reports
             if (datetime.datetime.utcnow() - lastCheck > checkCooldown):
                 await checkForBugs(message)
         except discord.errors.HTTPException:
             pass
         except Exception as e:
-            if not debug:
-                await client.send_message(message.channel, "Something has gone wrong. Blame aquova, and tell him this: {}".format(e))
+            print(e)
 
 client.run(discordKey)

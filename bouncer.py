@@ -41,7 +41,7 @@ lastCheck = datetime.datetime.fromtimestamp(1) # Create a new datetime object of
 checkCooldown = datetime.timedelta(minutes=5)
 recentBans = {}
 
-# Removes the '!command' to get just the request
+# Removes the '$command' to get just the request
 def removeCommand(m):
     tmp = m.split(" ")[2:]
     return " ".join(tmp)
@@ -122,7 +122,7 @@ async def logUser(m, ban):
     uid = getID(m)
     u = discord.utils.get(m.server.members, id=uid)
     if uid == None:
-        await client.send_message(m.channel, "Please mention a user or provide a user ID `!warn/ban USERID message`")
+        await client.send_message(m.channel, "Please mention a user or provide a user ID `$warn/ban USERID message`")
         return
 
     sqlconn = sqlite3.connect('sdv.db')
@@ -187,7 +187,7 @@ async def logUser(m, ban):
 async def removeError(m):
     uid = getID(m)
     if uid == None:
-        await client.send_message(m.channel, "Please mention a user or provide a user ID `!remove USERID`")
+        await client.send_message(m.channel, "Please mention a user or provide a user ID `$remove USERID`")
         return
     sqlconn = sqlite3.connect('sdv.db')
     searchResults = sqlconn.execute("SELECT dbid, username, num, date, message, staff, post FROM badeggs WHERE id=?", [uid]).fetchall()
@@ -223,7 +223,7 @@ async def on_ready():
     print(client.user.name)
     print(client.user.id)
 
-    game_object = discord.Game(name="for !help bouncer", type=3)
+    game_object = discord.Game(name="for $help bouncer", type=3)
     await client.change_presence(game=game_object)
 
     # TODO: Have it wait until the top of the hour before logging
@@ -253,18 +253,26 @@ async def on_message(message):
                 # This is probably not the best way to do this, want to instead specify a dedicated channel
                 await client.send_message(client.get_channel(validInputChannels[0]), mes)
             if (message.channel.id in validInputChannels) and checkRoles(message.author):
-                if message.content.startswith("!search"):
+                if message.content.startswith("$search"):
                     await userSearch(message)
-                elif message.content.startswith("!warn"):
+                elif message.content.startswith("$warn"):
                     await logUser(message, False)
-                elif message.content.startswith("!ban"):
+                elif message.content.startswith("$ban"):
                     await logUser(message, True)
-                elif message.content.startswith("!remove"):
+                elif message.content.startswith("$remove"):
                     await removeError(message)
-                elif message.content.startswith('!help bouncer'):
-                    helpMes = "Issue a warning: `!warn @USERNAME message`\nLog a ban: `!ban @USERNAME reason`\nSearch for a user: `!search @USERNAME`\nRemove a user's last log: `!remove @USERNAME\nDMing users when they are banned is {}\nDMing users when they are warned is {}`".format(sendBanDM, sendWarnDM)
-                    test = await client.send_message(message.channel, helpMes)
-                    print(test)
+                elif message.content.startswith('$help'):
+                    helpMes = "Issue a warning: `$warn @USERNAME message`\nLog a ban: `$ban @USERNAME reason`\nSearch for a user: `$search @USERNAME`\nRemove a user's last log: `$remove @USERNAME\nDMing users when they are banned is {}\nDMing users when they are warned is {}`".format(sendBanDM, sendWarnDM)
+                    await client.send_message(message.channel, helpMes)
+
+                elif message.content.startswith("!search"):
+                    await client.send_message(message.channel, "Aero made me switch it to `$search`...")
+                elif message.content.startswith("!warn"):
+                    await client.send_message(message.channel, "Aero made me switch it to `$warn`...")
+                elif message.content.startswith("!ban"):
+                    await client.send_message(message.channel, "Aero made me switch it to `$ban`...")
+                elif message.content.startswith("!remove"):
+                    await client.send_message(message.channel, "Aero made me switch it to `$remove`...")
 
             # Some special stuff for the SDV multiplayer release
             if (message.content.startswith("!bug")):

@@ -132,7 +132,7 @@ async def logUser(m, ban):
         count = sqlconn.execute("SELECT COUNT(*) FROM badeggs WHERE id=?", [uid]).fetchone()[0] + 1
     globalcount = sqlconn.execute("SELECT COUNT(*) FROM badeggs").fetchone()[0]
     currentTime = datetime.datetime.utcnow()
-    if u == None and count > 1: # User not found in server, but found in database
+    if u == None and count > 0: # User not found in server, but found in database
         searchResults = sqlconn.execute("SELECT username FROM badeggs WHERE id=?", [uid]).fetchall()
         params = [globalcount + 1, uid, searchResults[0][0], count, currentTime, removeCommand(m.content), m.author.name]
     elif u != None: # User info is known

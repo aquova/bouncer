@@ -132,11 +132,11 @@ async def logUser(m, ban):
         count = sqlconn.execute("SELECT COUNT(*) FROM badeggs WHERE id=?", [uid]).fetchone()[0] + 1
     globalcount = sqlconn.execute("SELECT COUNT(*) FROM badeggs").fetchone()[0]
     currentTime = datetime.datetime.utcnow()
-    if u == None and count > 0: # User not found in server, but found in database
+    if u != None: # User info is known
+        params = [globalcount + 1, uid, "{}#{}".format(u.name, u.discriminator), count, currentTime, removeCommand(m.content), m.author.name]
+    elif u == None and count > 1: # User not found in server, but found in database
         searchResults = sqlconn.execute("SELECT username FROM badeggs WHERE id=?", [uid]).fetchall()
         params = [globalcount + 1, uid, searchResults[0][0], count, currentTime, removeCommand(m.content), m.author.name]
-    elif u != None: # User info is known
-        params = [globalcount + 1, uid, "{}#{}".format(u.name, u.discriminator), count, currentTime, removeCommand(m.content), m.author.name]
     elif uid in recentBans: # User has been banned since bot power on
         params = [globalcount + 1, uid, recentBans[uid][0], count, currentTime, removeCommand(m.content), m.author.name]
     else: # User info is unknown
@@ -238,8 +238,13 @@ async def on_member_ban(member):
     recentBans[member.id] = ["{}#{}".format(member.name, member.discriminator)]
 
 @client.event
+async def on_member_remove(member):
+    # I know they aren't banned, but still we may want to log someone after they leave
+    global recentBans
+    recentBans[member.id] = ["{}#{}".format(member.name, member.discriminator)]
+
+@client.event
 async def on_message(message):
-    # This is probably not good practice
     global validInputChannels
     global logChannel
     # with open("users.txt", 'w') as f:

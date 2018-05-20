@@ -18,15 +18,17 @@ debugChannel = str(cfg['channels']['debug']['input'])
 debugLog = str(cfg['channels']['debug']['log'])
 validRoles = cfg['roles']
 
-if cfg['DM']['ban'].upper() == "TRUE":
-    sendBanDM = True
-else:
-    sendBanDM = False
+sendBanDM = (cfg['DM']['ban'].upper() == "TRUE")
+# if cfg['DM']['ban'].upper() == "TRUE":
+#     sendBanDM = True
+# else:
+#     sendBanDM = False
 
-if cfg['DM']['warn'].upper() == "TRUE":
-    sendWarnDM = True
-else:
-    sendWarnDM = False
+sendWarnDM = (cfg['DM']['warn'].upper() == "TRUE")
+# if cfg['DM']['warn'].upper() == "TRUE":
+#     sendWarnDM = True
+# else:
+#     sendWarnDM = False
 
 client = discord.Client()
 
@@ -81,6 +83,37 @@ def getID(message):
     except ValueError:
         return None
 
+# Parses the message to check if there's a valid username, then attempts to find their ID
+def parseUsername(message):
+    # Usernames can have spaces, so need to throw away the first word (the command), 
+    # and then everything after the discriminator
+
+    # Remove command
+    testUsername = message.content.split(" ")[1:]
+    testUsername = " ".join(testUsername)
+    # Remove a "@" if it exists at the front of the message
+    if testUsername[0] == "@":
+        testUsername = testUsername[1:]
+
+    # Parse out the actual username
+    user = testUsername.split("#")
+    if len(user) != 2:
+        return None
+    discriminator = user[1].split(" ")
+    user = "{}#{}".format(user[0], discriminator[0])
+
+    userFound = discord.utils.get(message.server.members, name=user[0], discriminator=user[1])
+    if userFound != None:
+        return userFound.id
+    
+    sqlconn = sqlite3.connect('sdv.db')
+    searchResults = sqlconn.execute("SELECT id FROM badeggs WHERE username=?", [user]).fetchall()
+    sqlconn.close()
+    if searchResults != []:
+        return searchResults[0][0]
+    else:
+        return None
+
 async def logData():
     currentTime = datetime.datetime.utcnow()
     sdv = client.get_server(cfg['sdv']) # The SDV ID hardcoded in
@@ -90,6 +123,10 @@ async def logData():
 # Searches the database for the specified user, given a message
 async def userSearch(m):
     u = getID(m)
+    # If message wasn't an ID, check if it's a username
+    if u == None:
+        u = parseUsername(m)
+
     member = discord.utils.get(m.server.members, id=u)
     if (u != None):
         sqlconn = sqlite3.connect('sdv.db')
@@ -101,7 +138,7 @@ async def userSearch(m):
             if member != None:
                 await client.send_message(m.channel, "User {}#{} was not found in the database\n".format(member.name, member.discriminator))
             else:
-                await client.send_message(m.channel, "That user was not found in the database, or in the server.")
+                await client.send_message(m.channel, "That user was not found in the database or in the server.")
         else:
             if member != None:
                 out = "User {}#{} was found with the following infractions\n".format(member.name, member.discriminator)
@@ -120,9 +157,11 @@ async def userSearch(m):
 
 async def logUser(m, ban):
     uid = getID(m)
+    if uid == None:
+        uid = parseUsername(m)
     u = discord.utils.get(m.server.members, id=uid)
     if uid == None:
-        await client.send_message(m.channel, "Please mention a user or provide a user ID `$warn/ban USERID message`")
+        await client.send_message(m.channel, "I wasn't able to understand that message `$warn/ban USER message`")
         return
 
     sqlconn = sqlite3.connect('sdv.db')
@@ -187,7 +226,9 @@ async def logUser(m, ban):
 async def removeError(m):
     uid = getID(m)
     if uid == None:
-        await client.send_message(m.channel, "Please mention a user or provide a user ID `$remove USERID`")
+        uid = parseUsername(m)
+    if uid == None:
+        await client.send_message(m.channel, "I wasn't able to understand that message `$remove USER`")
         return
     sqlconn = sqlite3.connect('sdv.db')
     searchResults = sqlconn.execute("SELECT dbid, username, num, date, message, staff, post FROM badeggs WHERE id=?", [uid]).fetchall()
@@ -255,8 +296,8 @@ async def on_message(message):
         try:
             if (message.channel.is_private):
                 mes = "User {}#{} has sent me a private message: {}".format(message.author.name, message.author.discriminator, message.content)
-                # This is probably not the best way to do this, want to instead specify a dedicated channel
                 await client.send_message(client.get_channel(validInputChannels[0]), mes)
+
             if (message.channel.id in validInputChannels) and checkRoles(message.author):
                 if message.content.startswith("$search"):
                     await userSearch(message)
@@ -293,7 +334,5 @@ async def on_message(message):
                 await checkForBugs(message)
         except discord.errors.HTTPException:
             pass
-        except Exception as e:
-            print(e)
 
 client.run(discordKey)

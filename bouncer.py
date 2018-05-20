@@ -102,7 +102,7 @@ def parseUsername(message):
     discriminator = user[1].split(" ")
     user = "{}#{}".format(user[0], discriminator[0])
 
-    userFound = discord.utils.get(message.server.members, name=user[0], discriminator=user[1])
+    userFound = discord.utils.get(message.server.members, name=user.split("#")[0], discriminator=user.split("#")[1])
     if userFound != None:
         return userFound.id
     

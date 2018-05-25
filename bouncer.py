@@ -19,16 +19,7 @@ debugLog = str(cfg['channels']['debug']['log'])
 validRoles = cfg['roles']
 
 sendBanDM = (cfg['DM']['ban'].upper() == "TRUE")
-# if cfg['DM']['ban'].upper() == "TRUE":
-#     sendBanDM = True
-# else:
-#     sendBanDM = False
-
 sendWarnDM = (cfg['DM']['warn'].upper() == "TRUE")
-# if cfg['DM']['warn'].upper() == "TRUE":
-#     sendWarnDM = True
-# else:
-#     sendWarnDM = False
 
 client = discord.Client()
 
@@ -42,6 +33,10 @@ warnThreshold = 3
 lastCheck = datetime.datetime.fromtimestamp(1) # Create a new datetime object of ~0
 checkCooldown = datetime.timedelta(minutes=5)
 recentBans = {}
+
+
+# Utility Functions
+#####################
 
 # Removes the '$command' to get just the request
 def removeCommand(m):
@@ -85,7 +80,7 @@ def getID(message):
 
 # Parses the message to check if there's a valid username, then attempts to find their ID
 def parseUsername(message):
-    # Usernames can have spaces, so need to throw away the first word (the command), 
+    # Usernames can have spaces, so need to throw away the first word (the command),
     # and then everything after the discriminator
 
     # Remove command
@@ -105,7 +100,7 @@ def parseUsername(message):
     userFound = discord.utils.get(message.server.members, name=user.split("#")[0], discriminator=user.split("#")[1])
     if userFound != None:
         return userFound.id
-    
+
     sqlconn = sqlite3.connect('sdv.db')
     searchResults = sqlconn.execute("SELECT id FROM badeggs WHERE username=?", [user]).fetchall()
     sqlconn.close()
@@ -113,6 +108,24 @@ def parseUsername(message):
         return searchResults[0][0]
     else:
         return None
+
+# Functions that only need to be called once in a while
+# Exports the user list to a .txt file
+def fetchUserList():
+    with open("users.txt", 'w') as f:
+        mems = message.server.members
+        for u in mems:
+            f.write("{}\n".format(u.name))
+
+# Fetches a dict of the role names to ID values for the given server
+# serverID needs to be a string
+def fetchRoleList(serverID):
+    s = client.get_server(serverID)
+    roles = {role.name: role.id for role in s.roles}
+    for r in roles:
+        print("{} : {}".format(r, roles[r]))
+
+#####################
 
 async def logData():
     currentTime = datetime.datetime.utcnow()
@@ -153,7 +166,7 @@ async def userSearch(m):
                     out += "They have received {} warnings, it is recommended that they be banned.\n".format(warnThreshold)
             await client.send_message(m.channel, out)
     else:
-        await client.send_message(m.channel, "Please mention only a single user that you wish to search")
+        await client.send_message(m.channel, "I was unable to find a user by that name")
 
 async def logUser(m, ban):
     uid = getID(m)
@@ -288,10 +301,6 @@ async def on_member_remove(member):
 async def on_message(message):
     global validInputChannels
     global logChannel
-    # with open("users.txt", 'w') as f:
-    #     mems = message.server.members
-    #     for u in mems:
-    #         f.write("{}\n".format(u.name))
     if message.author.id != client.user.id:
         try:
             if (message.channel.is_private):
@@ -319,15 +328,6 @@ async def on_message(message):
                     await client.send_message(message.channel, "Aero made me switch it to `$ban`...")
                 elif message.content.startswith("!remove"):
                     await client.send_message(message.channel, "Aero made me switch it to `$remove`...")
-
-            # Some special stuff for the SDV multiplayer release
-            if (message.content.startswith("!bug")):
-                if ("273017595622457344" in [x.id for x in message.author.roles]):
-                    await client.send_message(message.channel, "Here is the SDV multiplayer bug report submission form!\n<https://community.playstarbound.com/threads/stardew-valley-multiplayer-beta-known-issues-fixes.142850/>")
-
-            if (message.content.startswith("!beta")):
-                if ("273017595622457344" in [x.id for x in message.author.roles]):
-                    await client.send_message(message.channel, "<https://www.reddit.com/r/StardewValley/comments/8g0j7s/stardew_valley_13_beta/>")
 
             # A five minute cooldown for responding to people who mention bug reports
             if (datetime.datetime.utcnow() - lastCheck > checkCooldown):

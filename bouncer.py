@@ -277,7 +277,7 @@ async def on_ready():
     print(client.user.name)
     print(client.user.id)
 
-    game_object = discord.Game(name="for $help bouncer", type=3)
+    game_object = discord.Game(name="for $help", type=3)
     await client.change_presence(game=game_object)
 
     # TODO: Have it wait until the top of the hour before logging
@@ -317,7 +317,7 @@ async def on_message(message):
                 elif message.content.startswith("$remove"):
                     await removeError(message)
                 elif message.content.startswith('$help'):
-                    helpMes = "Issue a warning: `$warn @USERNAME message`\nLog a ban: `$ban @USERNAME reason`\nSearch for a user: `$search @USERNAME`\nRemove a user's last log: `$remove @USERNAME\nDMing users when they are banned is {}\nDMing users when they are warned is {}`".format(sendBanDM, sendWarnDM)
+                    helpMes = "Issue a warning: `$warn USER message`\nLog a ban: `$ban USER reason`\nSearch for a user: `$search USER`\nRemove a user's last log: `$remove USER\nDMing users when they are banned is {}\nDMing users when they are warned is {}`".format(sendBanDM, sendWarnDM)
                     await client.send_message(message.channel, helpMes)
 
                 elif message.content.startswith("!search"):

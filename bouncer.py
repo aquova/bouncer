@@ -92,8 +92,6 @@ def parseUsername(message):
 
     # Parse out the actual username
     user = testUsername.split("#")
-    if len(user) != 2:
-        return None
     discriminator = user[1].split(" ")
     user = "{}#{}".format(user[0], discriminator[0])
 

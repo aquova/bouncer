@@ -90,21 +90,24 @@ def parseUsername(message):
     if testUsername[0] == "@":
         testUsername = testUsername[1:]
 
-    # Parse out the actual username
-    user = testUsername.split("#")
-    discriminator = user[1].split(" ")
-    user = "{}#{}".format(user[0], discriminator[0])
+    try:
+        # Parse out the actual username
+        user = testUsername.split("#")
+        discriminator = user[1].split(" ")
+        user = "{}#{}".format(user[0], discriminator[0])
 
-    userFound = discord.utils.get(message.server.members, name=user.split("#")[0], discriminator=user.split("#")[1])
-    if userFound != None:
-        return userFound.id
+        userFound = discord.utils.get(message.server.members, name=user.split("#")[0], discriminator=user.split("#")[1])
+        if userFound != None:
+            return userFound.id
 
-    sqlconn = sqlite3.connect('sdv.db')
-    searchResults = sqlconn.execute("SELECT id FROM badeggs WHERE username=?", [user]).fetchall()
-    sqlconn.close()
-    if searchResults != []:
-        return searchResults[0][0]
-    else:
+        sqlconn = sqlite3.connect('sdv.db')
+        searchResults = sqlconn.execute("SELECT id FROM badeggs WHERE username=?", [user]).fetchall()
+        sqlconn.close()
+        if searchResults != []:
+            return searchResults[0][0]
+        else:
+            return None
+    except IndexError:
         return None
 
 # Functions that only need to be called once in a while

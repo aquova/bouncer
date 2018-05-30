@@ -4,7 +4,7 @@ Written by aquova, 2018
 https://github.com/aquova/bouncer
 """
 
-import discord, json, sqlite3, datetime, asyncio
+import discord, json, sqlite3, datetime, asyncio, os
 
 # Reading values from config file
 with open('config.json') as config_file:
@@ -26,6 +26,7 @@ client = discord.Client()
 # Create needed database, if doesn't exist
 sqlconn = sqlite3.connect('sdv.db')
 sqlconn.execute("CREATE TABLE IF NOT EXISTS badeggs (dbid INT PRIMARY KEY, id INT, username TEXT, num INT, date DATE, message TEXT, staff TEXT, post INT);")
+sqlconn.execute("CREATE TABLE IF NOT EXISTS blocks (id INT PRIMARY KEY);")
 sqlconn.commit()
 sqlconn.close()
 
@@ -33,6 +34,7 @@ warnThreshold = 3
 lastCheck = datetime.datetime.fromtimestamp(1) # Create a new datetime object of ~0
 checkCooldown = datetime.timedelta(minutes=5)
 recentBans = {}
+blockList = []
 
 
 # Utility Functions
@@ -265,6 +267,30 @@ async def removeError(m):
     sqlconn.commit()
     sqlconn.close()
 
+async def blockUser(message, block):
+    global blockList
+    uid = int(getID(message))
+    if uid == None:
+        await client.send_message(message.channel, "That was not a valid user ID")
+        return
+    sqlconn = sqlite3.connect('sdv.db')
+    if block:
+        if uid in blockList:
+            await client.send_message(message.channel, "Um... That user was already blocked...")
+        else:
+            sqlconn.execute("INSERT INTO blocks (id) VALUES (?)", [uid])
+            blockList.append(uid)
+            await client.send_message(message.channel, "I have now blocked {}. Their message will no longer display in chat, but they will be logged for later review.".format(uid))
+    else:
+        if uid not in blockList:
+            await client.send_message(message.channel, "That user hasn't been blocked...")
+        else:
+            sqlconn.execute("DELETE FROM blocks WHERE id=?", [uid])
+            blockList.remove(uid)
+            await client.send_message(message.channel, "I have now unblocked {}. You will once again be able to hear their dumb bullshit in chat.".format(uid))
+    sqlconn.commit()
+    sqlconn.close()
+
 async def checkForBugs(message):
     global lastCheck
     if ("BUG" in message.content.upper() and ("REPORT" in message.content.upper() or "FOUND" in message.content.upper())):
@@ -274,6 +300,7 @@ async def checkForBugs(message):
 
 @client.event
 async def on_ready():
+    global blockList
     print('Logged in as')
     print(client.user.name)
     print(client.user.id)
@@ -281,11 +308,15 @@ async def on_ready():
     game_object = discord.Game(name="for $help", type=3)
     await client.change_presence(game=game_object)
 
+    sqlconn = sqlite3.connect('sdv.db')
+    blockDB = sqlconn.execute("SELECT * FROM blocks").fetchall()
+    blockList = [x[0] for x in blockDB]
+    sqlconn.close()
+
     # TODO: Have it wait until the top of the hour before logging
     while True:
         await logData()
         await asyncio.sleep(3600) # Sleep for 1 hour
-
 
 @client.event
 async def on_member_ban(member):
@@ -304,9 +335,14 @@ async def on_message(message):
     global logChannel
     if message.author.id != client.user.id:
         try:
-            if (message.channel.is_private):
-                mes = "User {}#{} has sent me a private message: {}".format(message.author.name, message.author.discriminator, message.content)
-                await client.send_message(client.get_channel(validInputChannels[0]), mes)
+            if message.channel.is_private:
+                if message.author.id in blockList:
+                    ts = message.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                    with open("DMs.txt", 'a', encoding='utf-8') as openFile:
+                        openFile.write("{} <ID: {}> {}\n".format(ts, "{}#{}".format(message.author.name, message.author.discriminator), message.content))
+                else:
+                    mes = "User {}#{} has sent me a private message: {}".format(message.author.name, message.author.discriminator, message.content)
+                    await client.send_message(client.get_channel(validInputChannels[0]), mes)
 
             if (message.channel.id in validInputChannels) and checkRoles(message.author):
                 if message.content.startswith("$search"):
@@ -317,8 +353,12 @@ async def on_message(message):
                     await logUser(message, True)
                 elif message.content.startswith("$remove"):
                     await removeError(message)
+                elif message.content.startswith("$block"):
+                    await blockUser(message, True)
+                elif message.content.startswith("$unblock"):
+                    await blockUser(message, False)
                 elif message.content.startswith('$help'):
-                    helpMes = "Issue a warning: `$warn USER message`\nLog a ban: `$ban USER reason`\nSearch for a user: `$search USER`\nRemove a user's last log: `$remove USER\nDMing users when they are banned is {}\nDMing users when they are warned is {}`".format(sendBanDM, sendWarnDM)
+                    helpMes = "Issue a warning: `$warn USER message`\nLog a ban: `$ban USER reason`\nSearch for a user: `$search USER`\nRemove a user's last log: `$remove USER`\nStop a user from sending DMs to us: `$block/$unblock USERID`\nDMing users when they are banned is `{}`\nDMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
                     await client.send_message(message.channel, helpMes)
 
                 elif message.content.startswith("!search"):

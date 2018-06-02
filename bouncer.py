@@ -5,6 +5,7 @@ https://github.com/aquova/bouncer
 """
 
 import discord, json, sqlite3, datetime, asyncio, os
+import Utils
 
 # Reading values from config file
 with open('config.json') as config_file:
@@ -36,100 +37,6 @@ checkCooldown = datetime.timedelta(minutes=5)
 recentBans = {}
 blockList = []
 
-
-# Utility Functions
-#####################
-
-# Removes the '$command' to get just the request
-def removeCommand(m):
-    tmp = m.split(" ")[2:]
-    return " ".join(tmp)
-
-# Formats a datetime object to be European-style time string
-def formatTime(t):
-    # Input t is of the form: YYYY-MM-DD HH:MM:SS.SSSSSS
-    date = str(t).split(" ")[0]
-    pieces = date.split("-")
-    # output is of the form DD/MM/YYYY
-    european = "{}/{}/{}".format(pieces[2], pieces[1], pieces[0])
-    return european
-
-# Checks if given user has one of the roles specified in config.json
-def checkRoles(user):
-    if len(validRoles) == 1 and validRoles[0] == "":
-        return True
-    for role in user.roles:
-        for r in validRoles:
-            if role.id == r:
-                return True
-    return False
-
-# Gets the ID from a message, either from a mentioned user or by a typed ID value
-def getID(message):
-    # If message contains one mention, return its ID
-    if len(message.mentions) == 1:
-        return message.mentions[0].id
-    # Otherwise, check if second word of message is an ID
-    test = message.content.split(" ")[1]
-    # Checks if word is an int, and of correct length, otherwise returns None
-    try:
-        int(test)
-        if len(test) == 18:
-            return test
-        return None
-    except ValueError:
-        return None
-
-# Parses the message to check if there's a valid username, then attempts to find their ID
-def parseUsername(message):
-    # Usernames can have spaces, so need to throw away the first word (the command),
-    # and then everything after the discriminator
-
-    # Remove command
-    testUsername = message.content.split(" ")[1:]
-    testUsername = " ".join(testUsername)
-    # Remove a "@" if it exists at the front of the message
-    if testUsername[0] == "@":
-        testUsername = testUsername[1:]
-
-    try:
-        # Parse out the actual username
-        user = testUsername.split("#")
-        discriminator = user[1].split(" ")
-        user = "{}#{}".format(user[0], discriminator[0])
-
-        userFound = discord.utils.get(message.server.members, name=user.split("#")[0], discriminator=user.split("#")[1])
-        if userFound != None:
-            return userFound.id
-
-        sqlconn = sqlite3.connect('sdv.db')
-        searchResults = sqlconn.execute("SELECT id FROM badeggs WHERE username=?", [user]).fetchall()
-        sqlconn.close()
-        if searchResults != []:
-            return searchResults[0][0]
-        else:
-            return None
-    except IndexError:
-        return None
-
-# Functions that only need to be called once in a while
-# Exports the user list to a .txt file
-def fetchUserList():
-    with open("users.txt", 'w') as f:
-        mems = message.server.members
-        for u in mems:
-            f.write("{}\n".format(u.name))
-
-# Fetches a dict of the role names to ID values for the given server
-# serverID needs to be a string
-def fetchRoleList(serverID):
-    s = client.get_server(serverID)
-    roles = {role.name: role.id for role in s.roles}
-    for r in roles:
-        print("{} : {}".format(r, roles[r]))
-
-#####################
-
 async def logData():
     currentTime = datetime.datetime.utcnow()
     sdv = client.get_server(cfg['sdv']) # The SDV ID hardcoded in
@@ -138,10 +45,10 @@ async def logData():
 
 # Searches the database for the specified user, given a message
 async def userSearch(m):
-    u = getID(m)
+    u = Utils.getID(m)
     # If message wasn't an ID, check if it's a username
     if u == None:
-        u = parseUsername(m)
+        u = Utils.parseUsername(m)
 
     member = discord.utils.get(m.server.members, id=u)
     if (u != None):
@@ -162,9 +69,9 @@ async def userSearch(m):
                 out = "That user was found with the following infractions:\n"
             for item in searchResults:
                 if item[1] == 0:
-                    out += "[{}] **{}** - Banned by {} - {}\n".format(formatTime(item[2]), item[0], item[4], item[3])
+                    out += "[{}] **{}** - Banned by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[4], item[3])
                 else:
-                    out += "[{}] **{}** - Warning #{} by {} - {}\n".format(formatTime(item[2]), item[0], item[1], item[4], item[3])
+                    out += "[{}] **{}** - Warning #{} by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[1], item[4], item[3])
                 if item[1] == warnThreshold:
                     out += "They have received {} warnings, it is recommended that they be banned.\n".format(warnThreshold)
             await client.send_message(m.channel, out)
@@ -172,9 +79,9 @@ async def userSearch(m):
         await client.send_message(m.channel, "I was unable to find a user by that name")
 
 async def logUser(m, ban):
-    uid = getID(m)
+    uid = Utils.getID(m)
     if uid == None:
-        uid = parseUsername(m)
+        uid = Utils.parseUsername(m)
     u = discord.utils.get(m.server.members, id=uid)
     if uid == None:
         await client.send_message(m.channel, "I wasn't able to understand that message `$warn/ban USER message`")
@@ -188,20 +95,20 @@ async def logUser(m, ban):
     globalcount = sqlconn.execute("SELECT COUNT(*) FROM badeggs").fetchone()[0]
     currentTime = datetime.datetime.utcnow()
     if u != None: # User info is known
-        params = [globalcount + 1, uid, "{}#{}".format(u.name, u.discriminator), count, currentTime, removeCommand(m.content), m.author.name]
+        params = [globalcount + 1, uid, "{}#{}".format(u.name, u.discriminator), count, currentTime, Utils.removeCommand(m.content), m.author.name]
     elif u == None and count > 1: # User not found in server, but found in database
         searchResults = sqlconn.execute("SELECT username FROM badeggs WHERE id=?", [uid]).fetchall()
-        params = [globalcount + 1, uid, searchResults[0][0], count, currentTime, removeCommand(m.content), m.author.name]
+        params = [globalcount + 1, uid, searchResults[0][0], count, currentTime, Utils.removeCommand(m.content), m.author.name]
     elif uid in recentBans: # User has been banned since bot power on
-        params = [globalcount + 1, uid, recentBans[uid][0], count, currentTime, removeCommand(m.content), m.author.name]
+        params = [globalcount + 1, uid, recentBans[uid][0], count, currentTime, Utils.removeCommand(m.content), m.author.name]
     else: # User info is unknown
-        params = [globalcount + 1, uid, "ID: {}".format(uid), count, currentTime, removeCommand(m.content), m.author.name]
+        params = [globalcount + 1, uid, "ID: {}".format(uid), count, currentTime, Utils.removeCommand(m.content), m.author.name]
         await client.send_message(m.channel, "I wasn't able to find a username for that user, but whatever, I'll log them anyway.")
 
     if ban:
-        logMessage = "[{}] **{}** - Banned by {} - {}\n".format(formatTime(currentTime), params[2],  m.author.name, removeCommand(m.content))
+        logMessage = "[{}] **{}** - Banned by {} - {}\n".format(Utils.formatTime(currentTime), params[2],  m.author.name, Utils.removeCommand(m.content))
     else:
-        logMessage = "[{}] **{}** - Warning #{} by {} - {}\n".format(formatTime(currentTime), params[2], count, m.author.name, removeCommand(m.content))
+        logMessage = "[{}] **{}** - Warning #{} by {} - {}\n".format(Utils.formatTime(currentTime), params[2], count, m.author.name, Utils.removeCommand(m.content))
     try:
         logMesID = await client.send_message(client.get_channel(logChannel), logMessage)
     except discord.errors.InvalidArgument:
@@ -214,13 +121,13 @@ async def logUser(m, ban):
     try:
         if u != None:
             if ban and sendBanDM:
-                mes = removeCommand(m.content)
+                mes = Utils.removeCommand(m.content)
                 if mes != "":
                     await client.send_message(u, "You have been banned from the Stardew Valley server for the following reason: {}. If you have any questions, feel free to DM one of the staff members.".format(mes))
                 else:
                     await client.send_message(u, "You have been banned from the Stardew Valley server for violating one of our rules. If you have any questions, feel free to DM one of the staff members.")
             elif not ban and sendWarnDM:
-                mes = removeCommand(m.content)
+                mes = Utils.removeCommand(m.content)
                 if mes != "":
                     await client.send_message(u, "You have received Warning #{} in the Stardew Valley server for the following reason: {}. If you have any questions, feel free to DM one of the staff members.".format(count, mes))
                 else:
@@ -240,9 +147,9 @@ async def logUser(m, ban):
     sqlconn.close()
 
 async def removeError(m):
-    uid = getID(m)
+    uid = Utils.getID(m)
     if uid == None:
-        uid = parseUsername(m)
+        uid = Utils.parseUsername(m)
     if uid == None:
         await client.send_message(m.channel, "I wasn't able to understand that message `$remove USER`")
         return
@@ -255,9 +162,9 @@ async def removeError(m):
         sqlconn.execute("REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, NULL, NULL, NULL, NULL, NULL, NULL, NULL)", [item[0]])
         out = "The following log was deleted:\n"
         if item[2] == 0:
-            out += "[{}] **{}** - Banned by {} - {}\n".format(formatTime(item[3]), item[1], item[5], item[4])
+            out += "[{}] **{}** - Banned by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[5], item[4])
         else:
-            out += "[{}] **{}** - Warning #{} by {} - {}\n".format(formatTime(item[3]), item[1], item[2], item[5], item[4])
+            out += "[{}] **{}** - Warning #{} by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[2], item[5], item[4])
         await client.send_message(m.channel, out)
         if item[6] != 0:
             async for m in client.logs_from(client.get_channel(logChannel)):
@@ -269,8 +176,9 @@ async def removeError(m):
 
 async def blockUser(message, block):
     global blockList
-    uid = int(getID(message))
-    if uid == None:
+    try:
+        uid = int(Utils.getID(message))
+    except TypeError:
         await client.send_message(message.channel, "That was not a valid user ID")
         return
     sqlconn = sqlite3.connect('sdv.db')
@@ -344,7 +252,7 @@ async def on_message(message):
                     mes = "User {}#{} has sent me a private message: {}".format(message.author.name, message.author.discriminator, message.content)
                     await client.send_message(client.get_channel(validInputChannels[0]), mes)
 
-            if (message.channel.id in validInputChannels) and checkRoles(message.author):
+            if (message.channel.id in validInputChannels) and Utils.checkRoles(message.author, validRoles):
                 if message.content.startswith("$search"):
                     await userSearch(message)
                 elif message.content.startswith("$warn"):

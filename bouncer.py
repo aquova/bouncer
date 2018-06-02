@@ -27,7 +27,7 @@ client = discord.Client()
 # Create needed database, if doesn't exist
 sqlconn = sqlite3.connect('sdv.db')
 sqlconn.execute("CREATE TABLE IF NOT EXISTS badeggs (dbid INT PRIMARY KEY, id INT, username TEXT, num INT, date DATE, message TEXT, staff TEXT, post INT);")
-sqlconn.execute("CREATE TABLE IF NOT EXISTS blocks (id INT PRIMARY KEY);")
+sqlconn.execute("CREATE TABLE IF NOT EXISTS blocks (id TEXT);")
 sqlconn.commit()
 sqlconn.close()
 
@@ -176,9 +176,8 @@ async def removeError(m):
 
 async def blockUser(message, block):
     global blockList
-    try:
-        uid = int(Utils.getID(message))
-    except TypeError:
+    uid = Utils.getID(message)
+    if uid == None:
         await client.send_message(message.channel, "That was not a valid user ID")
         return
     sqlconn = sqlite3.connect('sdv.db')
@@ -188,7 +187,7 @@ async def blockUser(message, block):
         else:
             sqlconn.execute("INSERT INTO blocks (id) VALUES (?)", [uid])
             blockList.append(uid)
-            await client.send_message(message.channel, "I have now blocked {}. Their message will no longer display in chat, but they will be logged for later review.".format(uid))
+            await client.send_message(message.channel, "I have now blocked {}. Their messages will no longer display in chat, but they will be logged for later review.".format(uid))
     else:
         if uid not in blockList:
             await client.send_message(message.channel, "That user hasn't been blocked...")

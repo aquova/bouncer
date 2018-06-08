@@ -202,7 +202,7 @@ async def checkForBugs(message):
     global lastCheck
     if ("BUG" in message.content.upper() and ("REPORT" in message.content.upper() or "FOUND" in message.content.upper())):
         if str(message.channel.id) in ["440552475913748491", "137345719668310016", "189945533861724160"]:
-            await client.send_message(message.channel, "Did I hear someone say they found a MP bug? :bug:\nIf you wanna help out development of Stardew Valley, there's a link you can send your bug reports: <https://community.playstarbound.com/threads/stardew-valley-multiplayer-beta-known-issues-fixes.142850/>")
+            await client.send_message(message.channel, "Did I hear someone say they found a MP bug? :bug:\nIf you wanna help out development of Stardew Valley, there's a link you can send your bug reports: <https://community.playstarbound.com/threads/stardew-valley-multiplayer-beta-known-issues-fixes-2.145034/>")
             lastCheck = datetime.datetime.utcnow()
 
 @client.event
@@ -211,9 +211,6 @@ async def on_ready():
     print('Logged in as')
     print(client.user.name)
     print(client.user.id)
-
-    game_object = discord.Game(name="for $help", type=3)
-    await client.change_presence(game=game_object)
 
     sqlconn = sqlite3.connect('sdv.db')
     blockDB = sqlconn.execute("SELECT * FROM blocks").fetchall()

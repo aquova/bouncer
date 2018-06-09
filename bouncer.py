@@ -15,8 +15,6 @@ with open('config.json') as config_file:
 discordKey = str(cfg['discord'])
 validInputChannels = cfg['channels']['listening']
 logChannel = str(cfg['channels']['log'])
-debugChannel = str(cfg['channels']['debug']['input'])
-debugLog = str(cfg['channels']['debug']['log'])
 validRoles = cfg['roles']
 
 sendBanDM = (cfg['DM']['ban'].upper() == "TRUE")
@@ -34,16 +32,20 @@ sqlconn.close()
 warnThreshold = 3
 lastCheck = datetime.datetime.fromtimestamp(1) # Create a new datetime object of ~0
 checkCooldown = datetime.timedelta(minutes=5)
+
+# Containers to store needed information in memory
 recentBans = {}
 blockList = []
 
+# Logs current user count every hour into 'stats.csv'
 async def logData():
     currentTime = datetime.datetime.utcnow()
-    sdv = client.get_server(cfg['sdv']) # The SDV ID hardcoded in
+    sdv = client.get_server(cfg['server'])
     with open('stats.csv', 'a') as openFile:
         openFile.write("{},{}\n".format(currentTime, sdv.member_count))
 
 # Searches the database for the specified user, given a message
+# m: Discord message object
 async def userSearch(m):
     u = Utils.getID(m)
     # If message wasn't an ID, check if it's a username
@@ -78,15 +80,21 @@ async def userSearch(m):
     else:
         await client.send_message(m.channel, "I was unable to find a user by that name")
 
+# Note a warn or ban for a user
+# m: Discord message object
+# Ban: Boolean, true for ban, false for warn
 async def logUser(m, ban):
+    # Attempt to get ID from message
     uid = Utils.getID(m)
+    # If unable, treat it as a username
     if uid == None:
         uid = Utils.parseUsername(m)
-    u = discord.utils.get(m.server.members, id=uid)
+    # If still unable, send error
     if uid == None:
         await client.send_message(m.channel, "I wasn't able to understand that message `$warn/ban USER message`")
         return
 
+    u = discord.utils.get(m.server.members, id=uid)
     sqlconn = sqlite3.connect('sdv.db')
     if (ban):
         count = 0
@@ -94,30 +102,41 @@ async def logUser(m, ban):
         count = sqlconn.execute("SELECT COUNT(*) FROM badeggs WHERE id=?", [uid]).fetchone()[0] + 1
     globalcount = sqlconn.execute("SELECT COUNT(*) FROM badeggs").fetchone()[0]
     currentTime = datetime.datetime.utcnow()
-    if u != None: # User info is known
+
+    # User info is known
+    if u != None: 
         params = [globalcount + 1, uid, "{}#{}".format(u.name, u.discriminator), count, currentTime, Utils.removeCommand(m.content), m.author.name]
-    elif u == None and count > 1: # User not found in server, but found in database
+    # User not found in server, but found in database
+    elif u == None and count > 1: 
         searchResults = sqlconn.execute("SELECT username FROM badeggs WHERE id=?", [uid]).fetchall()
         params = [globalcount + 1, uid, searchResults[0][0], count, currentTime, Utils.removeCommand(m.content), m.author.name]
-    elif uid in recentBans: # User has been banned since bot power on
+    # User has been banned since bot power on
+    elif uid in recentBans: 
         params = [globalcount + 1, uid, recentBans[uid][0], count, currentTime, Utils.removeCommand(m.content), m.author.name]
-    else: # User info is unknown
+    # User info is unknown
+    else: 
         params = [globalcount + 1, uid, "ID: {}".format(uid), count, currentTime, Utils.removeCommand(m.content), m.author.name]
         await client.send_message(m.channel, "I wasn't able to find a username for that user, but whatever, I'll log them anyway.")
 
+    # Generate message for log channel
     if ban:
         logMessage = "[{}] **{}** - Banned by {} - {}\n".format(Utils.formatTime(currentTime), params[2],  m.author.name, Utils.removeCommand(m.content))
     else:
         logMessage = "[{}] **{}** - Warning #{} by {} - {}\n".format(Utils.formatTime(currentTime), params[2], count, m.author.name, Utils.removeCommand(m.content))
+    
+    # Send message to log channel
     try:
         logMesID = await client.send_message(client.get_channel(logChannel), logMessage)
     except discord.errors.InvalidArgument:
         await client.send_message(m.channel, "The logging channel has not been set up in `config.json`. In order to have a visual record, please specify a channel ID.")
         logMesID = 0
 
+    # Send ban recommendation, if needed
     if (count >= warnThreshold and ban == False):
         logMessage += "This user has received {} warnings or more. It is recommened that they be banned.".format(warnThreshold)
     await client.send_message(m.channel, logMessage)
+
+    # Send a DM to the user
     try:
         if u != None:
             if ban and sendBanDM:
@@ -141,18 +160,26 @@ async def logUser(m, ban):
     except discord.errors.NotFound:
         await client.send_message(m.channel, "ERROR: I was unable to find the user to DM. I'm unsure how this can be the case, unless their account was deleted")
 
+    # Update database
     params.append(logMesID.id)
     sqlconn.execute("INSERT INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", params)
     sqlconn.commit()
     sqlconn.close()
 
+# Removes last database entry for specified user
+# m: Discord message object
 async def removeError(m):
+    # Try to get ID
     uid = Utils.getID(m)
+    # If no ID, then try parsing username for ID
     if uid == None:
         uid = Utils.parseUsername(m)
+    # This looks stupid, there's probably a slicker way to write this
     if uid == None:
         await client.send_message(m.channel, "I wasn't able to understand that message `$remove USER`")
         return
+
+    # Find most recent entry in database for specified user
     sqlconn = sqlite3.connect('sdv.db')
     searchResults = sqlconn.execute("SELECT dbid, username, num, date, message, staff, post FROM badeggs WHERE id=?", [uid]).fetchall()
     if searchResults == []:
@@ -166,6 +193,8 @@ async def removeError(m):
         else:
             out += "[{}] **{}** - Warning #{} by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[2], item[5], item[4])
         await client.send_message(m.channel, out)
+
+        # Search logging channel for matching post, and remove it
         if item[6] != 0:
             async for m in client.logs_from(client.get_channel(logChannel)):
                 if str(m.id) == str(item[6]):
@@ -174,6 +203,9 @@ async def removeError(m):
     sqlconn.commit()
     sqlconn.close()
 
+# Prevents DM from a specific user from being forwarded
+# message: Discord message object
+# block: Boolean, true for block, false for unblock
 async def blockUser(message, block):
     global blockList
     uid = Utils.getID(message)
@@ -198,6 +230,8 @@ async def blockUser(message, block):
     sqlconn.commit()
     sqlconn.close()
 
+# Special function made for SDV multiplayer beta release
+# If matching phrase is posted, then post link to bug submission thread
 async def checkForBugs(message):
     global lastCheck
     if ("BUG" in message.content.upper() and ("REPORT" in message.content.upper() or "FOUND" in message.content.upper())):

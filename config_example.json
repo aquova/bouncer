@@ -1,15 +1,12 @@
 {
-    "discord":"",
+    "discord":"BOT API TOKEN",
+    "server":"SERVER ID",
     "channels":{
-        "listening":[""],
-        "log":"",
-        "debug":{
-            "input":"",
-            "log":""
-        }
+        "listening":["CHANNEL IDS TO ACCCEPT COMMANDS"],
+        "log":"CHANNEL ID TO LOG WARNS"
     },
-    "roles":[""],
-    "owner":"",
+    "roles":["ROLES TO ACCEPT COMMANDS FROM"],
+    "owner":"BOT OWNER ID",
     "DM":{
         "ban":"False",
         "warn":"False"

@@ -1,4 +1,4 @@
-#Utility function for bouncer
+# Utility functions for bouncer
 
 import discord, time, sqlite3
 

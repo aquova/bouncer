@@ -1,9 +1,9 @@
-*config.json
-*.DS_Store
+config.json
+.DS_Store
 *.swp
-*__pycache__
+__pycache__
 *.db
 *.csv
-*.vscode
+.vscode
 *.code-workspace
 *.txt

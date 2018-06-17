@@ -50,7 +50,7 @@ async def userSearch(m):
     u = Utils.getID(m)
     # If message wasn't an ID, check if it's a username
     if u == None:
-        u = Utils.parseUsername(m)
+        u = Utils.parseUsername(m, recentBans)
 
     member = discord.utils.get(m.server.members, id=u)
     if (u != None):
@@ -88,7 +88,7 @@ async def logUser(m, ban):
     uid = Utils.getID(m)
     # If unable, treat it as a username
     if uid == None:
-        uid = Utils.parseUsername(m)
+        uid = Utils.parseUsername(m, recentBans)
     # If still unable, send error
     if uid == None:
         await client.send_message(m.channel, "I wasn't able to understand that message `$warn/ban USER message`")
@@ -173,7 +173,7 @@ async def removeError(m):
     uid = Utils.getID(m)
     # If no ID, then try parsing username for ID
     if uid == None:
-        uid = Utils.parseUsername(m)
+        uid = Utils.parseUsername(m, recentBans)
     # This looks stupid, there's probably a slicker way to write this
     if uid == None:
         await client.send_message(m.channel, "I wasn't able to understand that message `$remove USER`")
@@ -250,6 +250,9 @@ async def on_ready():
     blockDB = sqlconn.execute("SELECT * FROM blocks").fetchall()
     blockList = [x[0] for x in blockDB]
     sqlconn.close()
+
+    game_object = discord.Game(name="for your DMs", type=3)
+    await client.change_presence(game=game_object)
 
     # TODO: Have it wait until the top of the hour before logging
     while True:

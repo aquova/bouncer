@@ -43,7 +43,7 @@ def getID(message):
         return None
 
 # Parses the message to check if there's a valid username, then attempts to find their ID
-def parseUsername(message):
+def parseUsername(message, recentBans):
     # Usernames can have spaces, so need to throw away the first word (the command),
     # and then everything after the discriminator
 
@@ -63,6 +63,10 @@ def parseUsername(message):
         userFound = discord.utils.get(message.server.members, name=user.split("#")[0], discriminator=user.split("#")[1])
         if userFound != None:
             return userFound.id
+
+        if user in list(recentBans.values()):
+            revBans = dict((v, k) for k, v in recentBans.iteritems())
+            return revBans[user]
 
         sqlconn = sqlite3.connect('sdv.db')
         searchResults = sqlconn.execute("SELECT id FROM badeggs WHERE username=?", [user]).fetchall()

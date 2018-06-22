@@ -230,6 +230,36 @@ async def blockUser(message, block):
     sqlconn.commit()
     sqlconn.close()
 
+# Sends a private message to the specified user
+async def sendMessage(message):
+    # Try to get ID
+    uid = Utils.getID(message)
+    # If no ID, then try parsing username for ID
+    if uid == None:
+        uid = Utils.parseUsername(message, recentBans)
+    if uid == None:
+        await client.send_message(message.channel, "I wasn't able to understand that message `$reply USER`")
+        return
+
+    u = discord.utils.get(message.server.members, id=uid)
+
+    # User info is known
+    if u != None: 
+        try:
+            await client.send_message(u, "A message from the SDV staff: {}".format(Utils.removeCommand(message.content)))
+            await client.send_message(message.channel, "Message sent.")
+
+        # I don't know if any of these are ever getting tripped
+        except discord.errors.Forbidden:
+            await client.send_message(message.channel, "ERROR: I am not allowed to DM the user. It is likely that they are not accepting DM's from me.")
+        except discord.errors.HTTPException as e:
+            await client.send_message(message.channel, "ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {}".format(e))
+        except discord.errors.NotFound:
+            await client.send_message(message.channel, "ERROR: I was unable to find the user to DM. I'm unsure how this can be the case, unless their account was deleted")
+    # User object couldn't be obtained
+    else: 
+        await client.send_message(message.channel, "Sorry, but they need to be in the server for me to message them")
+
 # Special function made for SDV multiplayer beta release
 # If matching phrase is posted, then post link to bug submission thread
 async def checkForBugs(message):
@@ -298,18 +328,11 @@ async def on_message(message):
                     await blockUser(message, True)
                 elif message.content.startswith("$unblock"):
                     await blockUser(message, False)
+                elif message.content.startswith("$reply"):
+                    await sendMessage(message)
                 elif message.content.startswith('$help'):
                     helpMes = "Issue a warning: `$warn USER message`\nLog a ban: `$ban USER reason`\nSearch for a user: `$search USER`\nRemove a user's last log: `$remove USER`\nStop a user from sending DMs to us: `$block/$unblock USERID`\nDMing users when they are banned is `{}`\nDMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
                     await client.send_message(message.channel, helpMes)
-
-                elif message.content.startswith("!search"):
-                    await client.send_message(message.channel, "Aero made me switch it to `$search`...")
-                elif message.content.startswith("!warn"):
-                    await client.send_message(message.channel, "Aero made me switch it to `$warn`...")
-                elif message.content.startswith("!ban"):
-                    await client.send_message(message.channel, "Aero made me switch it to `$ban`...")
-                elif message.content.startswith("!remove"):
-                    await client.send_message(message.channel, "Aero made me switch it to `$remove`...")
 
             # A five minute cooldown for responding to people who mention bug reports
             if (datetime.datetime.utcnow() - lastCheck > checkCooldown):

@@ -104,17 +104,17 @@ async def logUser(m, ban):
     currentTime = datetime.datetime.utcnow()
 
     # User info is known
-    if u != None: 
+    if u != None:
         params = [globalcount + 1, uid, "{}#{}".format(u.name, u.discriminator), count, currentTime, Utils.removeCommand(m.content), m.author.name]
     # User not found in server, but found in database
-    elif u == None and count > 1: 
+    elif u == None and count > 1:
         searchResults = sqlconn.execute("SELECT username FROM badeggs WHERE id=?", [uid]).fetchall()
         params = [globalcount + 1, uid, searchResults[0][0], count, currentTime, Utils.removeCommand(m.content), m.author.name]
     # User has been banned since bot power on
-    elif uid in recentBans: 
+    elif uid in recentBans:
         params = [globalcount + 1, uid, recentBans[uid][0], count, currentTime, Utils.removeCommand(m.content), m.author.name]
     # User info is unknown
-    else: 
+    else:
         params = [globalcount + 1, uid, "ID: {}".format(uid), count, currentTime, Utils.removeCommand(m.content), m.author.name]
         await client.send_message(m.channel, "I wasn't able to find a username for that user, but whatever, I'll log them anyway.")
 
@@ -123,7 +123,7 @@ async def logUser(m, ban):
         logMessage = "[{}] **{}** - Banned by {} - {}\n".format(Utils.formatTime(currentTime), params[2],  m.author.name, Utils.removeCommand(m.content))
     else:
         logMessage = "[{}] **{}** - Warning #{} by {} - {}\n".format(Utils.formatTime(currentTime), params[2], count, m.author.name, Utils.removeCommand(m.content))
-    
+
     # Send message to log channel
     try:
         logMesID = await client.send_message(client.get_channel(logChannel), logMessage)
@@ -244,7 +244,7 @@ async def sendMessage(message):
     u = discord.utils.get(message.server.members, id=uid)
 
     # User info is known
-    if u != None: 
+    if u != None:
         try:
             await client.send_message(u, "A message from the SDV staff: {}".format(Utils.removeCommand(message.content)))
             await client.send_message(message.channel, "Message sent.")
@@ -257,7 +257,7 @@ async def sendMessage(message):
         except discord.errors.NotFound:
             await client.send_message(message.channel, "ERROR: I was unable to find the user to DM. I'm unsure how this can be the case, unless their account was deleted")
     # User object couldn't be obtained
-    else: 
+    else:
         await client.send_message(message.channel, "Sorry, but they need to be in the server for me to message them")
 
 # Special function made for SDV multiplayer beta release
@@ -312,7 +312,7 @@ async def on_message(message):
                     with open("DMs.txt", 'a', encoding='utf-8') as openFile:
                         openFile.write("{} <ID: {}> {}\n".format(ts, "{}#{}".format(message.author.name, message.author.discriminator), message.content))
                 else:
-                    mes = "User {}#{} has sent me a private message: {}".format(message.author.name, message.author.discriminator, message.content)
+                    mes = "User {}#{} (ID: {})has sent me a private message: {}".format(message.author.name, message.author.discriminator, message.author.id, message.content)
                     await client.send_message(client.get_channel(validInputChannels[0]), mes)
 
             if (message.channel.id in validInputChannels) and Utils.checkRoles(message.author, validRoles):
@@ -331,7 +331,7 @@ async def on_message(message):
                 elif message.content.startswith("$reply"):
                     await sendMessage(message)
                 elif message.content.startswith('$help'):
-                    helpMes = "Issue a warning: `$warn USER message`\nLog a ban: `$ban USER reason`\nSearch for a user: `$search USER`\nRemove a user's last log: `$remove USER`\nStop a user from sending DMs to us: `$block/$unblock USERID`\nDMing users when they are banned is `{}`\nDMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
+                    helpMes = "Issue a warning: `$warn USER message`\nLog a ban: `$ban USER reason`\nSearch for a user: `$search USER`\nRemove a user's last log: `$remove USER`\nStop a user from sending DMs to us: `$block/$unblock USERID`\nReply to a user in DMs: `$reply USERID`\nDMing users when they are banned is `{}`\nDMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
                     await client.send_message(message.channel, helpMes)
 
             # A five minute cooldown for responding to people who mention bug reports

@@ -312,7 +312,7 @@ async def on_message(message):
                     mes = "{} <{}> {}\n".format(ts, "{}#{}".format(message.author.name, message.author.discriminator), message.content)
                     if message.attachments != []:
                         for item in message.attachments:
-                            mes += '\n' + item['url']
+                            mes += ' ' + item['url']
                     with open("DMs.txt", 'a', encoding='utf-8') as openFile:
                         openFile.write(mes)
                 else:

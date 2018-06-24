@@ -309,10 +309,17 @@ async def on_message(message):
             if message.channel.is_private:
                 if message.author.id in blockList:
                     ts = message.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+                    mes = "{} <{}> {}\n".format(ts, "{}#{}".format(message.author.name, message.author.discriminator), message.content)
+                    if message.attachments != []:
+                        for item in message.attachments:
+                            mes += '\n' + item['url']
                     with open("DMs.txt", 'a', encoding='utf-8') as openFile:
-                        openFile.write("{} <ID: {}> {}\n".format(ts, "{}#{}".format(message.author.name, message.author.discriminator), message.content))
+                        openFile.write(mes)
                 else:
-                    mes = "User {}#{} (ID: {})has sent me a private message: {}".format(message.author.name, message.author.discriminator, message.author.id, message.content)
+                    mes = "User {}#{} (ID: {}) has sent me a private message: {}".format(message.author.name, message.author.discriminator, message.author.id, message.content)
+                    if message.attachments != []:
+                        for item in message.attachments:
+                            mes += '\n' + item['url']
                     await client.send_message(client.get_channel(validInputChannels[0]), mes)
 
             if (message.channel.id in validInputChannels) and Utils.checkRoles(message.author, validRoles):

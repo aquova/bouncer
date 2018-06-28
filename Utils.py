@@ -93,3 +93,9 @@ def fetchRoleList(serverID):
     roles = {role.name: role.id for role in s.roles}
     for r in roles:
         print("{} : {}".format(r, roles[r]))
+
+def dumpBans(banList):
+    output = ""
+    for user in list(banList.items()):
+        output += "{}: {}\n".format(user, banList[user])
+    return output

@@ -153,10 +153,10 @@ async def logUser(m, ban):
                     await client.send_message(u, "You have received Warning #{} in the Stardew Valley server for violating one of our rules. If you have any questions, feel free to DM one of the staff members.".format(count))
 
     # I don't know if any of these are ever getting tripped
-    except discord.errors.Forbidden:
-        await client.send_message(m.channel, "ERROR: I am not allowed to DM the user. It is likely that they are not accepting DM's from me.")
     except discord.errors.HTTPException as e:
         await client.send_message(m.channel, "ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {}".format(e))
+    except discord.errors.Forbidden:
+        await client.send_message(m.channel, "ERROR: I am not allowed to DM the user. It is likely that they are not accepting DM's from me.")
     except discord.errors.NotFound:
         await client.send_message(m.channel, "ERROR: I was unable to find the user to DM. I'm unsure how this can be the case, unless their account was deleted")
 
@@ -231,7 +231,7 @@ async def blockUser(message, block):
     sqlconn.close()
 
 # Sends a private message to the specified user
-async def sendMessage(message):
+async def reply(message):
     # Try to get ID
     uid = Utils.getID(message)
     # If no ID, then try parsing username for ID
@@ -250,10 +250,10 @@ async def sendMessage(message):
             await client.send_message(message.channel, "Message sent.")
 
         # I don't know if any of these are ever getting tripped
-        except discord.errors.Forbidden:
-            await client.send_message(message.channel, "ERROR: I am not allowed to DM the user. It is likely that they are not accepting DM's from me.")
         except discord.errors.HTTPException as e:
             await client.send_message(message.channel, "ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {}".format(e))
+        except discord.errors.Forbidden:
+            await client.send_message(message.channel, "ERROR: I am not allowed to DM the user. It is likely that they are not accepting DM's from me.")
         except discord.errors.NotFound:
             await client.send_message(message.channel, "ERROR: I was unable to find the user to DM. I'm unsure how this can be the case, unless their account was deleted")
     # User object couldn't be obtained
@@ -323,20 +323,44 @@ async def on_message(message):
                     await client.send_message(client.get_channel(validInputChannels[0]), mes)
 
             if (message.channel.id in validInputChannels) and Utils.checkRoles(message.author, validRoles):
-                if message.content.startswith("$search"):
-                    await userSearch(message)
+                if message.content.startswith("$dumpbans"):
+                    output = Utils.dumpBans(recentBans)
+                    await client.send_message(message.channel, output)
+                elif message.content.startswith("$search"):
+                    if message.content == "$search":
+                        await client.send_message(message.channel, "`$search USER`")
+                    else:
+                        await userSearch(message)
                 elif message.content.startswith("$warn"):
-                    await logUser(message, False)
+                    if message.content == "$warn":
+                        await client.send_message(message.channel, "`$warn USER reason`")
+                    else:
+                        await logUser(message, False)
                 elif message.content.startswith("$ban"):
-                    await logUser(message, True)
+                    if message.content == "$ban":
+                        await client.send_message(message.channel, "`$ban USER reason`")
+                    else:
+                        await logUser(message, True)
                 elif message.content.startswith("$remove"):
-                    await removeError(message)
+                    if message.content == "$remove":
+                        await client.send_message(message.channel, "`$remove USER`")
+                    else:
+                        await removeError(message)
                 elif message.content.startswith("$block"):
-                    await blockUser(message, True)
+                    if message.content == "$block":
+                        await client.send_message(message.channel, "`$block USER`")
+                    else:
+                        await blockUser(message, True)
                 elif message.content.startswith("$unblock"):
-                    await blockUser(message, False)
+                    if message.content == "$unblock":
+                        await client.send_message(message.channel, "`$unblock USER`")
+                    else:
+                        await blockUser(message, False)
                 elif message.content.startswith("$reply"):
-                    await sendMessage(message)
+                    if message.content == "$reply":
+                        await client.send_message(message.channel, "`$reply USERID message`")
+                    else:
+                        await reply(message)
                 elif message.content.startswith('$help'):
                     helpMes = "Issue a warning: `$warn USER message`\nLog a ban: `$ban USER reason`\nSearch for a user: `$search USER`\nRemove a user's last log: `$remove USER`\nStop a user from sending DMs to us: `$block/$unblock USERID`\nReply to a user in DMs: `$reply USERID`\nDMing users when they are banned is `{}`\nDMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
                     await client.send_message(message.channel, helpMes)

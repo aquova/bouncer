@@ -24,6 +24,7 @@ client = discord.Client()
 
 # Create needed database, if doesn't exist
 sqlconn = sqlite3.connect('sdv.db')
+# 'num' is the number of warnings. A ban is counted noted as 0, notes are negative values
 sqlconn.execute("CREATE TABLE IF NOT EXISTS badeggs (dbid INT PRIMARY KEY, id INT, username TEXT, num INT, date DATE, message TEXT, staff TEXT, post INT);")
 sqlconn.execute("CREATE TABLE IF NOT EXISTS blocks (id TEXT);")
 sqlconn.commit()
@@ -72,6 +73,8 @@ async def userSearch(m):
             for item in searchResults:
                 if item[1] == 0:
                     out += "[{}] **{}** - Banned by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[4], item[3])
+                elif item[1] < 0:
+                    out += "[{}] **{}** - Note by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[4], item[3])
                 else:
                     out += "[{}] **{}** - Warning #{} by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[1], item[4], item[3])
                 if item[1] == warnThreshold:
@@ -99,7 +102,7 @@ async def logUser(m, ban):
     if (ban):
         count = 0
     else:
-        count = sqlconn.execute("SELECT COUNT(*) FROM badeggs WHERE id=?", [uid]).fetchone()[0] + 1
+        count = sqlconn.execute("SELECT COUNT(*) FROM badeggs WHERE id=? AND num > 0", [uid]).fetchone()[0] + 1
     globalcount = sqlconn.execute("SELECT COUNT(*) FROM badeggs").fetchone()[0]
     currentTime = datetime.datetime.utcnow()
 
@@ -190,6 +193,8 @@ async def removeError(m):
         out = "The following log was deleted:\n"
         if item[2] == 0:
             out += "[{}] **{}** - Banned by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[5], item[4])
+        elif item[2] < 0:
+            out += "[{}] **{}** - Note by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[5], item[4])
         else:
             out += "[{}] **{}** - Warning #{} by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[2], item[5], item[4])
         await client.send_message(m.channel, out)
@@ -259,6 +264,47 @@ async def reply(message):
     # User object couldn't be obtained
     else:
         await client.send_message(message.channel, "Sorry, but they need to be in the server for me to message them")
+
+# Adds a note to a user's profile
+async def addNote(m):
+    # Attempt to get ID from message
+    uid = Utils.getID(m)
+    # If unable, treat it as a username
+    if uid == None:
+        uid = Utils.parseUsername(m, recentBans)
+    # If still unable, send error
+    if uid == None:
+        await client.send_message(m.channel, "I wasn't able to understand that message `$note USER message`")
+        return
+
+    u = discord.utils.get(m.server.members, id=uid)
+    sqlconn = sqlite3.connect('sdv.db')
+    globalcount = sqlconn.execute("SELECT COUNT(*) FROM badeggs").fetchone()[0]
+    currentTime = datetime.datetime.utcnow()
+
+    # User info is known
+    if u != None:
+        params = [globalcount + 1, uid, "{}#{}".format(u.name, u.discriminator), -1, currentTime, Utils.removeCommand(m.content), m.author.name, 0]
+    # User not found in server, but found in database
+    elif u == None and count > 1:
+        searchResults = sqlconn.execute("SELECT username FROM badeggs WHERE id=?", [uid]).fetchall()
+        params = [globalcount + 1, uid, searchResults[0][0], -1, currentTime, Utils.removeCommand(m.content), m.author.name, 0]
+    # User has been banned since bot power on
+    elif uid in recentBans:
+        params = [globalcount + 1, uid, recentBans[uid][0], -1, currentTime, Utils.removeCommand(m.content), m.author.name, 0]
+    # User info is unknown
+    else:
+        params = [globalcount + 1, uid, "ID: {}".format(uid), -1, currentTime, Utils.removeCommand(m.content), m.author.name, 0]
+        await client.send_message(m.channel, "I wasn't able to find a username for that user, but whatever, I'll note them anyway.")
+
+    # Generate confirmation message
+    confirmMessage = "Note made for {}".format(params[2])
+    await client.send_message(m.channel, confirmMessage)
+
+    # Update database
+    sqlconn.execute("INSERT INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", params)
+    sqlconn.commit()
+    sqlconn.close()
 
 # Special function made for SDV multiplayer beta release
 # If matching phrase is posted, then post link to bug submission thread
@@ -361,8 +407,13 @@ async def on_message(message):
                         await client.send_message(message.channel, "`$reply USERID message`")
                     else:
                         await reply(message)
+                elif message.content.startswith("$note"):
+                    if message.content == "$note":
+                        await client.send_message(message.channel, "`$note USERID message`")
+                    else:
+                        await addNote(message)
                 elif message.content.startswith('$help'):
-                    helpMes = "Issue a warning: `$warn USER message`\nLog a ban: `$ban USER reason`\nSearch for a user: `$search USER`\nRemove a user's last log: `$remove USER`\nStop a user from sending DMs to us: `$block/$unblock USERID`\nReply to a user in DMs: `$reply USERID`\nDMing users when they are banned is `{}`\nDMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
+                    helpMes = "Issue a warning: `$warn USER message`\nLog a ban: `$ban USER reason`\nSearch for a user: `$search USER`\nCreate a note about a user: `$note USER message`\nRemove a user's last log: `$remove USER`\nStop a user from sending DMs to us: `$block/$unblock USERID`\nReply to a user in DMs: `$reply USERID`\nDMing users when they are banned is `{}`\nDMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
                     await client.send_message(message.channel, helpMes)
 
             # A five minute cooldown for responding to people who mention bug reports

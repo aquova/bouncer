@@ -279,6 +279,7 @@ async def addNote(m):
 
     u = discord.utils.get(m.server.members, id=uid)
     sqlconn = sqlite3.connect('sdv.db')
+    count = sqlconn.execute("SELECT COUNT(*) FROM badeggs WHERE id=?", [uid]).fetchone()[0]
     globalcount = sqlconn.execute("SELECT COUNT(*) FROM badeggs").fetchone()[0]
     currentTime = datetime.datetime.utcnow()
 
@@ -286,7 +287,7 @@ async def addNote(m):
     if u != None:
         params = [globalcount + 1, uid, "{}#{}".format(u.name, u.discriminator), -1, currentTime, Utils.removeCommand(m.content), m.author.name, 0]
     # User not found in server, but found in database
-    elif u == None and count > 1:
+    elif u == None and count != 0:
         searchResults = sqlconn.execute("SELECT username FROM badeggs WHERE id=?", [uid]).fetchall()
         params = [globalcount + 1, uid, searchResults[0][0], -1, currentTime, Utils.removeCommand(m.content), m.author.name, 0]
     # User has been banned since bot power on

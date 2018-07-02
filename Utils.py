@@ -33,12 +33,10 @@ def getID(message):
         return message.mentions[0].id
     # Otherwise, check if second word of message is an ID
     test = message.content.split(" ")[1]
-    # Checks if word is an int, and of correct length, otherwise returns None
+    # Checks if word is an int, otherwise returns None
     try:
         int(test)
-        if len(test) == 18:
-            return test
-        return None
+        return test
     except ValueError:
         return None
 

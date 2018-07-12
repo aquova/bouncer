@@ -164,7 +164,7 @@ async def logUser(m, ban):
 
 # Removes last database entry for specified user
 # m: Discord message object
-async def removeError(m):
+async def removeError(m, warn):
     # Try to get ID
     uid = Utils.getID(m)
     # If no ID, then try parsing username for ID
@@ -177,7 +177,12 @@ async def removeError(m):
 
     # Find most recent entry in database for specified user
     sqlconn = sqlite3.connect('sdv.db')
-    searchResults = sqlconn.execute("SELECT dbid, username, num, date, message, staff, post FROM badeggs WHERE id=?", [uid]).fetchall()
+    # If warn, return only bans and warns, else return notes
+    if warn:
+        searchResults = sqlconn.execute("SELECT dbid, username, num, date, message, staff, post FROM badeggs WHERE id=? AND num > -1", [uid]).fetchall()
+    else:
+        searchResults = sqlconn.execute("SELECT dbid, username, num, date, message, staff, post FROM badeggs WHERE id=? AND num < 0", [uid]).fetchall()
+
     if searchResults == []:
         await client.send_message(m.channel, "That user was not found in the database.")
     else:
@@ -396,7 +401,7 @@ async def on_message(message):
                     if message.content == "$remove":
                         await client.send_message(message.channel, "`$remove USER`")
                     else:
-                        await removeError(message)
+                        await removeError(message, True)
                 elif message.content.startswith("$block"):
                     if message.content == "$block":
                         await client.send_message(message.channel, "`$block USER`")
@@ -412,18 +417,22 @@ async def on_message(message):
                         await client.send_message(message.channel, "`$reply USERID message`")
                     else:
                         await reply(message)
-
                 # Needs to come before $note
                 elif message.content.startswith("$notebook"):
                     await notebook(message)
-
+                # Also needs to come before $note
+                elif message.content.startswith("$noteremove"):
+                    if message.content == "$noteremove":
+                        await client.send_message(message.channel, "`$noteremove USER`")
+                    else:
+                        await removeError(message, False)
                 elif message.content.startswith("$note"):
                     if message.content == "$note":
                         await client.send_message(message.channel, "`$note USERID message`")
                     else:
                         await addNote(message)
                 elif message.content.startswith('$help'):
-                    helpMes = "Issue a warning: `$warn USER message`\nLog a ban: `$ban USER reason`\nSearch for a user: `$search USER`\nCreate a note about a user: `$note USER message`\nShow all notes: `$notebook`\nRemove a user's last log: `$remove USER`\nStop a user from sending DMs to us: `$block/$unblock USERID`\nReply to a user in DMs: `$reply USERID`\nDMing users when they are banned is `{}`\nDMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
+                    helpMes = "Issue a warning: `$warn USER message`\nLog a ban: `$ban USER reason`\nSearch for a user: `$search USER`\nCreate a note about a user: `$note USER message`\nShow all notes: `$notebook`\nRemove a user's last log: `$remove USER`\nRemove a user's last note: `$noteremove USER`\nStop a user from sending DMs to us: `$block/$unblock USERID`\nReply to a user in DMs: `$reply USERID`\nDMing users when they are banned is `{}`\nDMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
                     await client.send_message(message.channel, helpMes)
 
             # A five minute cooldown for responding to people who mention bug reports

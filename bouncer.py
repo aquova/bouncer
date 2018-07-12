@@ -412,7 +412,7 @@ async def on_message(message):
                         await client.send_message(message.channel, "`$unblock USER`")
                     else:
                         await blockUser(message, False)
-                elif message.content.startswith("$reply"):
+                elif message.content.split(" ")[0].upper() == "$REPLY":
                     if message.content == "$reply":
                         await client.send_message(message.channel, "`$reply USERID message`")
                     else:
@@ -426,7 +426,7 @@ async def on_message(message):
                         await client.send_message(message.channel, "`$noteremove USER`")
                     else:
                         await removeError(message, False)
-                elif message.content.startswith("$note"):
+                elif message.content.split(" ")[0].upper() == "$NOTE":
                     if message.content == "$note":
                         await client.send_message(message.channel, "`$note USERID message`")
                     else:

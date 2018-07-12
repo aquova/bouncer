@@ -38,13 +38,6 @@ checkCooldown = datetime.timedelta(minutes=5)
 recentBans = {}
 blockList = []
 
-# Logs current user count every hour into 'stats.csv'
-async def logData():
-    currentTime = datetime.datetime.utcnow()
-    sdv = client.get_server(cfg['server'])
-    with open('stats.csv', 'a') as openFile:
-        openFile.write("{},{}\n".format(currentTime, sdv.member_count))
-
 # Searches the database for the specified user, given a message
 # m: Discord message object
 async def userSearch(m):
@@ -307,6 +300,22 @@ async def addNote(m):
     sqlconn.commit()
     sqlconn.close()
 
+async def notebook(message):
+    sqlconn = sqlite3.connect('sdv.db')
+    allNotes = sqlconn.execute("SELECT * FROM badeggs WHERE num=-1").fetchall()
+    sqlconn.commit()
+    sqlconn.close()
+
+    out = "You asked for it...\n"
+    for item in allNotes:
+        note = "[{}] **{}** - Note by {} - {}\n".format(Utils.formatTime(item[4]), item[2], item[6], item[5])
+        if len(note) + len(out) < 2000:
+            out += note
+        else:
+            await client.send_message(message.channel, out)
+            out = note
+    await client.send_message(message.channel, out)
+
 # Special function made for SDV multiplayer beta release
 # If matching phrase is posted, then post link to bug submission thread
 async def checkForBugs(message):
@@ -330,11 +339,6 @@ async def on_ready():
 
     game_object = discord.Game(name="for your DMs", type=3)
     await client.change_presence(game=game_object)
-
-    # TODO: Have it wait until the top of the hour before logging
-    while True:
-        await logData()
-        await asyncio.sleep(3600) # Sleep for 1 hour
 
 @client.event
 async def on_member_ban(member):
@@ -408,13 +412,18 @@ async def on_message(message):
                         await client.send_message(message.channel, "`$reply USERID message`")
                     else:
                         await reply(message)
+
+                # Needs to come before $note
+                elif message.content.startswith("$notebook"):
+                    await notebook(message)
+
                 elif message.content.startswith("$note"):
                     if message.content == "$note":
                         await client.send_message(message.channel, "`$note USERID message`")
                     else:
                         await addNote(message)
                 elif message.content.startswith('$help'):
-                    helpMes = "Issue a warning: `$warn USER message`\nLog a ban: `$ban USER reason`\nSearch for a user: `$search USER`\nCreate a note about a user: `$note USER message`\nRemove a user's last log: `$remove USER`\nStop a user from sending DMs to us: `$block/$unblock USERID`\nReply to a user in DMs: `$reply USERID`\nDMing users when they are banned is `{}`\nDMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
+                    helpMes = "Issue a warning: `$warn USER message`\nLog a ban: `$ban USER reason`\nSearch for a user: `$search USER`\nCreate a note about a user: `$note USER message`\nShow all notes: `$notebook`\nRemove a user's last log: `$remove USER`\nStop a user from sending DMs to us: `$block/$unblock USERID`\nReply to a user in DMs: `$reply USERID`\nDMing users when they are banned is `{}`\nDMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
                     await client.send_message(message.channel, helpMes)
 
             # A five minute cooldown for responding to people who mention bug reports

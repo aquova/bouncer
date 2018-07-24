@@ -26,20 +26,6 @@ def checkRoles(user, validRoles):
                 return True
     return False
 
-# Gets the ID from a message, either from a mentioned user or by a typed ID value
-def getID(message):
-    # If message contains one mention, return its ID
-    if len(message.mentions) == 1:
-        return message.mentions[0].id
-    # Otherwise, check if second word of message is an ID
-    test = message.content.split(" ")[1]
-    # Checks if word is an int, otherwise returns None
-    try:
-        int(test)
-        return test
-    except ValueError:
-        return None
-
 # Parses the message to check if there's a valid username, then attempts to find their ID
 def parseUsername(message, recentBans):
     # Usernames can have spaces, so need to throw away the first word (the command),
@@ -76,7 +62,10 @@ def parseUsername(message, recentBans):
     except IndexError:
         return None
 
-# Functions that only need to be called once in a while
+#########################################################
+# Functions that only need to be called once in a while #
+#########################################################
+
 # Exports the user list to a .txt file
 def fetchUserList():
     with open("users.txt", 'w') as f:

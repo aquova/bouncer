@@ -5,12 +5,8 @@ https://github.com/aquova/bouncer
 """
 
 import discord, json, sqlite3, datetime, asyncio, os
-from discord.ext import commands
 import Utils
 from Member import User
-
-description = "A Discord moderation bot, originally made for the Stardew Valley server"
-bot = commands.Bot(command_prefix="$", description=description)
 
 # Reading values from config file
 with open('config.json') as config_file:
@@ -141,10 +137,12 @@ async def logUser(m, state):
 
         # Send a DM to the user
         try:
-            if state == LogTypes.BAN and sendBanDM:
-                await client.send_message(u, "You have been banned from the Stardew Valley server for violating one of our rules. If you have any questions, feel free to DM one of the staff members. {}".format(mes))
-            elif state == LogTypes.WARN and sendWarnDM:
-                await client.send_message(u, "You have received Warning #{} in the Stardew Valley server for violating one of our rules. If you have any questions, feel free to DM one of the staff members. {}".format(count, mes))
+            u = user.getMember()
+            if u != None:
+                if state == LogTypes.BAN and sendBanDM:
+                    await client.send_message(u, "You have been banned from the Stardew Valley server for violating one of our rules. If you have any questions, feel free to DM one of the staff members. {}".format(mes))
+                elif state == LogTypes.WARN and sendWarnDM:
+                    await client.send_message(u, "You have received Warning #{} in the Stardew Valley server for violating one of our rules. If you have any questions, feel free to DM one of the staff members. {}".format(count, mes))
 
         # I don't know if any of these are ever getting tripped
         except discord.errors.HTTPException as e:
@@ -155,7 +153,7 @@ async def logUser(m, state):
             await client.send_message(m.channel, "ERROR: I was unable to find the user to DM. I'm unsure how this can be the case, unless their account was deleted")
 
     # Update database
-    params.append(logMesID)
+    params.append(logMesID.id)
     sqlconn.execute("INSERT INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", params)
     sqlconn.commit()
     sqlconn.close()

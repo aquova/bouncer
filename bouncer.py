@@ -131,7 +131,8 @@ async def logUser(m, state):
     if state != LogTypes.NOTE:
         # Send message to log channel
         try:
-            logMesID = await client.send_message(client.get_channel(logChannel), logMessage)
+            logMes = await client.send_message(client.get_channel(logChannel), logMessage)
+            logMesID = logMes.id
         except discord.errors.InvalidArgument:
             await client.send_message(m.channel, "The logging channel has not been set up in `config.json`. In order to have a visual record, please specify a channel ID.")
 
@@ -153,7 +154,7 @@ async def logUser(m, state):
             await client.send_message(m.channel, "ERROR: I was unable to find the user to DM. I'm unsure how this can be the case, unless their account was deleted")
 
     # Update database
-    params.append(logMesID.id)
+    params.append(logMesID)
     sqlconn.execute("INSERT INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", params)
     sqlconn.commit()
     sqlconn.close()
@@ -352,7 +353,7 @@ async def on_message(message):
                 await reply(message)
             elif message.content.startswith("$noteremove"):
                 await removeError(message, LogTypes.NOTE)
-            elif message.content.startswith("note"):
+            elif message.content.startswith("$note"):
                 await logUser(message, LogTypes.NOTE)
 
         # A five minute cooldown for responding to people who mention bug reports

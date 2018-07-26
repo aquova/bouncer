@@ -26,13 +26,12 @@ class User:
     def getMember(self):
         return discord.utils.get(self.message.server.members, id=self.id)
 
-    def getName(self, message, banList):
+    def getName(self):
         member = self.getMember()
         if member != None:
             return "{}#{}".format(member.name, member.discriminator)
-        checkUsername = Utils.parseUsername(self.message, banList)
-        if checkUsername != None:
-            return checkUsername
+        if self.id in banList:
+            return banList[self.id]
         checkDatabase = self.search()
         if checkDatabase == []:
             raise self.MessageError("User not found")

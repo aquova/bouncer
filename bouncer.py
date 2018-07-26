@@ -65,14 +65,15 @@ async def userSearch(m):
         return
 
     searchResults = user.search()
+    username = user.getName(m, recentBans)
     if searchResults == []:
         try:
-            await client.send_message(m.channel, "User {} was not found in the database\n".format(user.getName()))
+            await client.send_message(m.channel, "User {} was not found in the database\n".format(username))
         except User.MessageError:
             await client.send_message(m.channel, "That user was not found in the database\n")
         return
 
-    out = "User {} was found with the following infractions\n".format(user.getName())
+    out = "User {} was found with the following infractions\n".format(username)
     for item in searchResults:
         if item[1] == 0:
             out += "[{}] **{}** - Banned by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[4], item[3])
@@ -107,7 +108,7 @@ async def logUser(m, state):
     mes = Utils.removeCommand(m.content)
 
     try:
-        username = user.getName()
+        username = user.getName(m, recentBans)
     except User.MessageError:
         username = "ID: " + str(user.id)
         await client.send_message(m.channel, "I wasn't able to find a username for that user, but whatever, I'll do it anyway.")
@@ -141,9 +142,9 @@ async def logUser(m, state):
             u = user.getMember()
             if u != None:
                 if state == LogTypes.BAN and sendBanDM:
-                    await client.send_message(u, "You have been banned from the Stardew Valley server for violating one of our rules. If you have any questions, feel free to DM one of the staff members. {}".format(mes))
+                    await client.send_message(u, "You have been banned from the Stardew Valley server for violating one of our rules: {} If you have any questions, feel free to DM one of the staff members.".format(mes))
                 elif state == LogTypes.WARN and sendWarnDM:
-                    await client.send_message(u, "You have received Warning #{} in the Stardew Valley server for violating one of our rules. If you have any questions, feel free to DM one of the staff members. {}".format(count, mes))
+                    await client.send_message(u, "You have received Warning #{} in the Stardew Valley server for violating one of our rules: {} If you have any questions, feel free to DM one of the staff members.".format(count, mes))
 
         # I don't know if any of these are ever getting tripped
         except discord.errors.HTTPException as e:

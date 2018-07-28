@@ -65,7 +65,7 @@ async def userSearch(m):
         return
 
     searchResults = user.search()
-    username = user.getName()
+    username = user.getName(recentBans)
     if searchResults == []:
         try:
             await client.send_message(m.channel, "User {} was not found in the database\n".format(username))
@@ -108,7 +108,7 @@ async def logUser(m, state):
     mes = Utils.removeCommand(m.content)
 
     try:
-        username = user.getName()
+        username = user.getName(recentBans)
     except User.MessageError:
         username = "ID: " + str(user.id)
         await client.send_message(m.channel, "I wasn't able to find a username for that user, but whatever, I'll do it anyway.")

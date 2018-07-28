@@ -26,7 +26,7 @@ class User:
     def getMember(self):
         return discord.utils.get(self.message.server.members, id=self.id)
 
-    def getName(self):
+    def getName(self, banList):
         member = self.getMember()
         if member != None:
             return "{}#{}".format(member.name, member.discriminator)

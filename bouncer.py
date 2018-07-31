@@ -296,13 +296,13 @@ async def on_ready():
 @client.event
 async def on_member_ban(member):
     global recentBans
-    recentBans[member.id] = ["{}#{}".format(member.name, member.discriminator)]
+    recentBans[member.id] = "{}#{}".format(member.name, member.discriminator)
 
 @client.event
 async def on_member_remove(member):
     # I know they aren't banned, but still we may want to log someone after they leave
     global recentBans
-    recentBans[member.id] = ["{}#{}".format(member.name, member.discriminator)]
+    recentBans[member.id] = "{}#{}".format(member.name, member.discriminator)
 
 @client.event
 async def on_message(message):

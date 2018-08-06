@@ -311,6 +311,7 @@ async def on_message(message):
     if message.author.id == client.user.id:
         return
     try:
+        # If they sent a private DM to bouncer
         if message.channel.is_private:
             if message.author.id in blockList:
                 ts = message.timestamp.strftime('%Y-%m-%d %H:%M:%S')
@@ -327,6 +328,16 @@ async def on_message(message):
                         mes += '\n' + item['url']
                 await client.send_message(client.get_channel(validInputChannels[0]), mes)
 
+        # If a user pings bouncer
+        elif client.user in message.mentions:
+            # mes = "**{}#{}** (ID: {}) pinged me in #{}: {}".format(message.author.name, message.author.discriminator, message.author.id, message.channel.name, message.content)
+            mes = "**{}#{}** (ID: {}) pinged me in <#{}>: {}".format(message.author.name, message.author.discriminator, message.author.id, message.channel.id, message.content)
+            if message.attachments != []:
+                for item in message.attachments:
+                    mes += '\n' + item['url']
+            await client.send_message(client.get_channel(validInputChannels[0]), mes)
+
+        # If they have privledges to access bouncer functions
         elif (message.channel.id in validInputChannels) and Utils.checkRoles(message.author, validRoles):
             if len(message.content.split(" ")) == 1:
                 if message.content.upper() == "$HELP":

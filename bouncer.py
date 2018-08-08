@@ -61,7 +61,7 @@ async def userSearch(m):
     try:
         user = User(m, recentBans)
     except User.MessageError:
-        await client.send_message(m.channel, "I wasn't able to understand that message: `$search USER`")
+        await client.send_message(m.channel, "I wasn't able to find a user anywhere based on that message. `$search USER`")
         return
 
     searchResults = user.search()

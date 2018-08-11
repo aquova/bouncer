@@ -49,7 +49,7 @@ def parseUsername(message, recentBans):
             return userFound.id
 
         if user in list(recentBans.values()):
-            revBans = dict((v, k) for k, v in recentBans.iteritems())
+            revBans = {v: k for k, v in recentBans.items()}
             return revBans[user]
 
         sqlconn = sqlite3.connect('sdv.db')

@@ -4,7 +4,7 @@ Written by aquova, 2018
 https://github.com/aquova/bouncer
 """
 
-import discord, json, sqlite3, datetime, asyncio, os
+import discord, json, sqlite3, datetime, asyncio, os, subprocess, sys
 import Utils
 from Member import User
 
@@ -166,7 +166,10 @@ async def removeError(m, state):
     try:
         user = User(m, recentBans)
     except User.MessageError:
-        await client.send_message(m.channel, "I wasn't able to understand that message: `$remove USER`")
+        if state == LogTypes.NOTE:
+            await client.send_message(m.channel, "I wasn't able to understand that message: `$noteremove USER`")
+        else:
+            await client.send_message(m.channel, "I wasn't able to understand that message: `$remove USER`")
         return
 
     # Find most recent entry in database for specified user
@@ -330,7 +333,6 @@ async def on_message(message):
 
         # If a user pings bouncer
         elif client.user in message.mentions:
-            # mes = "**{}#{}** (ID: {}) pinged me in #{}: {}".format(message.author.name, message.author.discriminator, message.author.id, message.channel.name, message.content)
             mes = "**{}#{}** (ID: {}) pinged me in <#{}>: {}".format(message.author.name, message.author.discriminator, message.author.id, message.channel.id, message.content)
             if message.attachments != []:
                 for item in message.attachments:
@@ -347,6 +349,10 @@ async def on_message(message):
                     await notebook(message)
                 elif message.content.upper() in helpInfo.keys():
                     await client.send_message(message.channel, helpInfo[message.content.upper()])
+                elif message.content.upper() == "$UPDATE" and message.author.id == "254640676233412610":
+                    await client.send_message(message.channel, "Updating and restarting...")
+                    subprocess.call("git pull", shell=True)
+                    sys.exit()
                 return
 
             if message.content.startswith("$search"):

@@ -65,9 +65,9 @@ async def userSearch(m):
         return
 
     searchResults = user.search()
-    username = user.getName(recentBans)
     if searchResults == []:
         try:
+            username = user.getName(recentBans)
             await client.send_message(m.channel, "User {} was not found in the database\n".format(username))
         except User.MessageError:
             await client.send_message(m.channel, "That user was not found in the database\n")

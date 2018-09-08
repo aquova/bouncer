@@ -332,6 +332,10 @@ async def on_message(message):
                         mes += '\n' + item['url']
                 await client.send_message(client.get_channel(validInputChannels[0]), mes)
 
+        # Temporarily notify if UB3R-BOT has removed something on its word censor
+        elif (message.author.id == "85614143951892480" and message.channel.id == "233039273207529472") and ("Word Censor Triggered" in message.content):
+            await client.send_message(client.get_channel(validInputChannels[0]), "Uh oh, looks like the censor might've been tripped.")
+
         # If a user pings bouncer
         elif client.user in message.mentions:
             mes = "**{}#{}** (ID: {}) pinged me in <#{}>: {}".format(message.author.name, message.author.discriminator, message.author.id, message.channel.id, message.content)

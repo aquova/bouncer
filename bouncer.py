@@ -107,6 +107,9 @@ async def logUser(m, state):
     globalcount = sqlconn.execute("SELECT COUNT(*) FROM badeggs").fetchone()[0]
     currentTime = datetime.datetime.utcnow()
     mes = Utils.removeCommand(m.content)
+    if len(m.attachments) != 0:
+        for item in m.attachments:
+            mes += '\n{}'.format(item['url'])
 
     try:
         username = user.getName(recentBans)

@@ -32,8 +32,6 @@ sqlconn.commit()
 sqlconn.close()
 
 warnThreshold = 3
-lastCheck = datetime.datetime.fromtimestamp(1) # Create a new datetime object of ~0
-checkCooldown = datetime.timedelta(minutes=5)
 
 # Containers to store needed information in memory
 recentBans = {}
@@ -41,6 +39,8 @@ blockList = []
 
 helpInfo = {'$WARN':       '`$warn USER reason`',
             '$BAN':        '`$ban USER reason`',
+            '$UNBAN':      '`$unban USER reason`',
+            '$KICK':       '`$kick USER reason`'
             '$SEARCH':     '`$search USER`',
             '$NOTE':       '`$note USER message',
             '$REMOVE':     '`$remove USER',
@@ -51,6 +51,8 @@ helpInfo = {'$WARN':       '`$warn USER reason`',
 
 # This is basically a makeshift enum
 class LogTypes:
+    UNBAN = -3
+    KICK = -2
     NOTE = -1
     BAN = 0
     WARN = 1
@@ -76,10 +78,14 @@ async def userSearch(m):
 
     out = "User {} was found with the following infractions\n".format(username)
     for item in searchResults:
-        if item[1] == 0:
+        if item[1] == LogTypes.BAN:
             out += "[{}] **{}** - Banned by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[4], item[3])
-        elif item[1] < 0:
+        elif item[1] == LogTypes.NOTE:
             out += "[{}] **{}** - Note by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[4], item[3])
+        elif item[1] == LogTypes.KICK:
+            out += "[{}] **{}** - Kicked by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[4], item[3])
+        elif item[1] == LogTypes.UNBAN:
+            out += "[{}] **{}** - Unbanned by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[4], item[3])
         else:
             out += "[{}] **{}** - Warning #{} by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[1], item[4], item[3])
 
@@ -111,6 +117,10 @@ async def logUser(m, state):
         for item in m.attachments:
             mes += '\n{}'.format(item['url'])
 
+    if mes == "":
+        await client.send_message(m.channel, "Please give a reason for why you want to log them.")
+        return
+
     try:
         username = user.getName(recentBans)
     except User.MessageError:
@@ -124,6 +134,10 @@ async def logUser(m, state):
         logMessage = "[{}] **{}** - Banned by {} - {}\n".format(Utils.formatTime(currentTime), params[2],  m.author.name, mes)
     elif state == LogTypes.WARN:
         logMessage = "[{}] **{}** - Warning #{} by {} - {}\n".format(Utils.formatTime(currentTime), params[2], count, m.author.name, mes)
+    elif state == LogTypes.KICK:
+        logMessage = "[{}] **{}** - Kicked by {} - {}\n".format(Utils.formatTime(currentTime), params[2], count, m.author.name, mes)
+    elif state == LogTypes.UNBAN:
+        logMessage = "[{}] **{}** - Unbanned by {} - {}\n".format(Utils.formatTime(currentTime), params[2], count, m.author.name, mes)
     else:
         logMessage = "Note made for {}".format(username)
 
@@ -149,6 +163,8 @@ async def logUser(m, state):
                     await client.send_message(u, "You have been banned from the Stardew Valley server for violating one of our rules: {} If you have any questions, feel free to DM one of the staff members.".format(mes))
                 elif state == LogTypes.WARN and sendWarnDM:
                     await client.send_message(u, "You have received Warning #{} in the Stardew Valley server for violating one of our rules: {} If you have any questions, feel free to DM one of the staff members.".format(count, mes))
+                elif state == LogTypes.KICK and sendBanDM:
+                    await client.send_message(u, "You have been kicked from the Stardew Valley server for the following reason: {} If you have any questions, feel free to DM one of the staff members.".format(count, mes))
 
         # I don't know if any of these are ever getting tripped
         except discord.errors.HTTPException as e:
@@ -180,9 +196,9 @@ async def removeError(m, state):
     sqlconn = sqlite3.connect('sdv.db')
     # There's probably a clever way to reduce this to one line
     if state == LogTypes.NOTE:
-        searchResults = sqlconn.execute("SELECT dbid, username, num, date, message, staff, post FROM badeggs WHERE id=? AND num < 0", [user.id]).fetchall()
+        searchResults = sqlconn.execute("SELECT dbid, username, num, date, message, staff, post FROM badeggs WHERE id=? AND num = 0", [user.id]).fetchall()
     else:
-        searchResults = sqlconn.execute("SELECT dbid, username, num, date, message, staff, post FROM badeggs WHERE id=? AND num > -1", [user.id]).fetchall()
+        searchResults = sqlconn.execute("SELECT dbid, username, num, date, message, staff, post FROM badeggs WHERE id=? AND num <> 0", [user.id]).fetchall()
 
     if searchResults == []:
         await client.send_message(m.channel, "That user was not found in the database.")
@@ -194,6 +210,10 @@ async def removeError(m, state):
             out += "[{}] **{}** - Banned by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[5], item[4])
         elif item[2] == LogTypes.NOTE:
             out += "[{}] **{}** - Note by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[5], item[4])
+        elif item[2] == LogTypes.UNBAN:
+            out += "[{}] **{}** - Unbanned by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[5], item[4])
+        elif item[2] == LogTypes.KICK:
+            out += "[{}] **{}** - Kicked by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[5], item[4])
         else:
             out += "[{}] **{}** - Warning #{} by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[2], item[5], item[4])
         await client.send_message(m.channel, out)
@@ -276,15 +296,6 @@ async def notebook(m):
             out = note
     await client.send_message(m.channel, out)
 
-# Special function made for SDV multiplayer beta release
-# If matching phrase is posted, then post link to bug submission thread
-async def checkForBugs(message):
-    global lastCheck
-    if ("BUG" in message.content.upper() and ("REPORT" in message.content.upper() or "FOUND" in message.content.upper())):
-        if str(message.channel.id) in ["440552475913748491", "137345719668310016", "189945533861724160"]:
-            await client.send_message(message.channel, "Did I hear someone say they found a MP bug? :bug:\nIf you wanna help out development of Stardew Valley, there's a link you can send your bug reports: <https://community.playstarbound.com/threads/stardew-valley-multiplayer-beta-known-issues-fixes-2.145034/>")
-            lastCheck = datetime.datetime.utcnow()
-
 @client.event
 async def on_ready():
     global blockList
@@ -351,7 +362,7 @@ async def on_message(message):
         elif (message.channel.id in validInputChannels) and Utils.checkRoles(message.author, validRoles):
             if len(message.content.split(" ")) == 1:
                 if message.content.upper() == "$HELP":
-                    helpMes = "Issue a warning: `$warn USER message`\nLog a ban: `$ban USER reason`\nSearch for a user: `$search USER`\nCreate a note about a user: `$note USER message`\nShow all notes: `$notebook`\nRemove a user's last log: `$remove USER`\nRemove a user's last note: `$noteremove USER`\nStop a user from sending DMs to us: `$block/$unblock USERID`\nReply to a user in DMs: `$reply USERID`\nDMing users when they are banned is `{}`\nDMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
+                    helpMes = "Issue a warning: `$warn USER message`\nLog a ban: `$ban USER reason`\nLog an unbanning: `$unban USER reason`\nLog a kick: `$kick USER reason`\nSearch for a user: `$search USER`\nCreate a note about a user: `$note USER message`\nShow all notes: `$notebook`\nRemove a user's last log: `$remove USER`\nRemove a user's last note: `$noteremove USER`\nStop a user from sending DMs to us: `$block/$unblock USERID`\nReply to a user in DMs: `$reply USERID`\nDMing users when they are banned is `{}`\nDMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
                     await client.send_message(message.channel, helpMes)
                 elif message.content.upper() == "$NOTEBOOK":
                     await notebook(message)
@@ -369,6 +380,10 @@ async def on_message(message):
                 await logUser(message, LogTypes.WARN)
             elif message.content.startswith("$ban"):
                 await logUser(message, LogTypes.BAN)
+            elif message.content.startswith("$kick"):
+                await logUser(message, LogTypes.KICK)
+            elif message.content.startswith("$unban"):
+                await logUser(message, LogTypes.UNBAN)
             elif message.content.startswith("$remove"):
                 await removeError(message, LogTypes.BAN)
             elif message.content.startswith("$block"):
@@ -382,9 +397,6 @@ async def on_message(message):
             elif message.content.startswith("$note"):
                 await logUser(message, LogTypes.NOTE)
 
-        # A five minute cooldown for responding to people who mention bug reports
-        if (datetime.datetime.utcnow() - lastCheck > checkCooldown):
-            await checkForBugs(message)
     except discord.errors.HTTPException:
         pass
 

@@ -40,7 +40,7 @@ blockList = []
 helpInfo = {'$WARN':       '`$warn USER reason`',
             '$BAN':        '`$ban USER reason`',
             '$UNBAN':      '`$unban USER reason`',
-            '$KICK':       '`$kick USER reason`'
+            '$KICK':       '`$kick USER reason`',
             '$SEARCH':     '`$search USER`',
             '$NOTE':       '`$note USER message',
             '$REMOVE':     '`$remove USER',

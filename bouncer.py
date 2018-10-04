@@ -131,13 +131,13 @@ async def logUser(m, state):
 
     # Generate message for log channel
     if state == LogTypes.BAN:
-        logMessage = "[{}] **{}** - Banned by {} - {}\n".format(Utils.formatTime(currentTime), params[2],  m.author.name, mes)
+        logMessage = "[{}] **{}** - Banned by {} - {}\n".format(Utils.formatTime(currentTime), params[2], m.author.name, mes)
     elif state == LogTypes.WARN:
         logMessage = "[{}] **{}** - Warning #{} by {} - {}\n".format(Utils.formatTime(currentTime), params[2], count, m.author.name, mes)
     elif state == LogTypes.KICK:
-        logMessage = "[{}] **{}** - Kicked by {} - {}\n".format(Utils.formatTime(currentTime), params[2], count, m.author.name, mes)
+        logMessage = "[{}] **{}** - Kicked by {} - {}\n".format(Utils.formatTime(currentTime), params[2], m.author.name, mes)
     elif state == LogTypes.UNBAN:
-        logMessage = "[{}] **{}** - Unbanned by {} - {}\n".format(Utils.formatTime(currentTime), params[2], count, m.author.name, mes)
+        logMessage = "[{}] **{}** - Unbanned by {} - {}\n".format(Utils.formatTime(currentTime), params[2], m.author.name, mes)
     else:
         logMessage = "Note made for {}".format(username)
 
@@ -164,7 +164,7 @@ async def logUser(m, state):
                 elif state == LogTypes.WARN and sendWarnDM:
                     await client.send_message(u, "You have received Warning #{} in the Stardew Valley server for violating one of our rules: {} If you have any questions, feel free to DM one of the staff members.".format(count, mes))
                 elif state == LogTypes.KICK and sendBanDM:
-                    await client.send_message(u, "You have been kicked from the Stardew Valley server for the following reason: {} If you have any questions, feel free to DM one of the staff members.".format(count, mes))
+                    await client.send_message(u, "You have been kicked from the Stardew Valley server for the following reason: {} If you have any questions, feel free to DM one of the staff members.".format(mes))
 
         # I don't know if any of these are ever getting tripped
         except discord.errors.HTTPException as e:

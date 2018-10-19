@@ -23,9 +23,16 @@ sendWarnDM = (cfg['DM']['warn'].upper() == "ON")
 
 client = discord.Client()
 
-# Create needed database, if doesn't exist
+# Notes on database structure:
+# Most of the columns are self explanitory
+# num column is the category of the infraction
+# 0: Ban
+# >0: The number of the warning
+# -1: Note
+# -2: Kick
+# -3: Unban (yes I know)
+
 sqlconn = sqlite3.connect('sdv.db')
-# 'num' is the number of warnings. A ban is counted noted as 0, notes are negative values
 sqlconn.execute("CREATE TABLE IF NOT EXISTS badeggs (dbid INT PRIMARY KEY, id INT, username TEXT, num INT, date DATE, message TEXT, staff TEXT, post INT);")
 sqlconn.execute("CREATE TABLE IF NOT EXISTS blocks (id TEXT);")
 sqlconn.commit()
@@ -196,12 +203,15 @@ async def removeError(m, state):
     sqlconn = sqlite3.connect('sdv.db')
     # There's probably a clever way to reduce this to one line
     if state == LogTypes.NOTE:
-        searchResults = sqlconn.execute("SELECT dbid, username, num, date, message, staff, post FROM badeggs WHERE id=? AND num = 0", [user.id]).fetchall()
+        searchResults = sqlconn.execute("SELECT dbid, username, num, date, message, staff, post FROM badeggs WHERE id=? AND num = -1", [user.id]).fetchall()
     else:
-        searchResults = sqlconn.execute("SELECT dbid, username, num, date, message, staff, post FROM badeggs WHERE id=? AND num <> 0", [user.id]).fetchall()
+        searchResults = sqlconn.execute("SELECT dbid, username, num, date, message, staff, post FROM badeggs WHERE id=? AND num <> -1", [user.id]).fetchall()
 
     if searchResults == []:
-        await client.send_message(m.channel, "That user was not found in the database.")
+        if state == LogTypes.NOTE:
+            await client.send_message(m.channel, "I couldn't find any notes for that user in the database.")
+        else:
+            await client.send_message(m.channel, "I couldn't find that user in the database. They might have some notes however.")
     else:
         item = searchResults[-1]
         sqlconn.execute("REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, NULL, NULL, NULL, NULL, NULL, NULL, NULL)", [item[0]])

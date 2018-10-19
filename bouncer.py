@@ -30,7 +30,7 @@ client = discord.Client()
 # >0: The number of the warning
 # -1: Note
 # -2: Kick
-# -3: Unban (yes I know)
+# -3: Unban
 
 sqlconn = sqlite3.connect('sdv.db')
 sqlconn.execute("CREATE TABLE IF NOT EXISTS badeggs (dbid INT PRIMARY KEY, id INT, username TEXT, num INT, date DATE, message TEXT, staff TEXT, post INT);")
@@ -51,7 +51,6 @@ helpInfo = {'$WARN':       '`$warn USER reason`',
             '$SEARCH':     '`$search USER`',
             '$NOTE':       '`$note USER message',
             '$REMOVE':     '`$remove USER',
-            '$NOTEREMOVE': '`$noteremove USER`',
             '$BLOCK':      '`$block USER`',
             '$UNBLOCK':    '`$unblock USER',
             '$REPLY':      '`$reply USER`'}
@@ -84,7 +83,8 @@ async def userSearch(m):
         return
 
     out = "User {} was found with the following infractions\n".format(username)
-    for item in searchResults:
+    for index, item in enumerate(searchResults):
+        out += "{}. ".format(index+1)
         if item[1] == LogTypes.BAN:
             out += "[{}] **{}** - Banned by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[4], item[3])
         elif item[1] == LogTypes.NOTE:
@@ -96,7 +96,7 @@ async def userSearch(m):
         else:
             out += "[{}] **{}** - Warning #{} by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[1], item[4], item[3])
 
-        if item[1] == warnThreshold:
+        if item[1] >= warnThreshold:
             out += "They have received {} warnings, it is recommended that they be banned.\n".format(warnThreshold)
     await client.send_message(m.channel, out)
 
@@ -189,31 +189,31 @@ async def logUser(m, state):
 
 # Removes last database entry for specified user
 # m: Discord message object
-async def removeError(m, state):
+async def removeError(m):
     try:
         user = User(m, recentBans)
     except User.MessageError:
-        if state == LogTypes.NOTE:
-            await client.send_message(m.channel, "I wasn't able to understand that message: `$noteremove USER`")
-        else:
-            await client.send_message(m.channel, "I wasn't able to understand that message: `$remove USER`")
+        await client.send_message(m.channel, "I wasn't able to understand that message: `$remove USER`")
+        return
+
+    try:
+        index = int(m.content.split(" ")[2]) - 1
+    except IndexError:
+        index = -1
+    except ValueError:
+        await client.send_message(m.channel, "I don't know what `{}` is but I'm pretty sure it's not a number.".format(m.content.split(" ")[2]))
         return
 
     # Find most recent entry in database for specified user
     sqlconn = sqlite3.connect('sdv.db')
-    # There's probably a clever way to reduce this to one line
-    if state == LogTypes.NOTE:
-        searchResults = sqlconn.execute("SELECT dbid, username, num, date, message, staff, post FROM badeggs WHERE id=? AND num = -1", [user.id]).fetchall()
-    else:
-        searchResults = sqlconn.execute("SELECT dbid, username, num, date, message, staff, post FROM badeggs WHERE id=? AND num <> -1", [user.id]).fetchall()
+    searchResults = sqlconn.execute("SELECT dbid, username, num, date, message, staff, post FROM badeggs WHERE id=?", [user.id]).fetchall()
 
     if searchResults == []:
-        if state == LogTypes.NOTE:
-            await client.send_message(m.channel, "I couldn't find any notes for that user in the database.")
-        else:
-            await client.send_message(m.channel, "I couldn't find that user in the database. They might have some notes however.")
+        await client.send_message(m.channel, "I couldn't find that user in the database")
+    elif index != -1 and (index > len(searchResults) or index < 0):
+        await client.send_message(m.channel, "I can't remove item number {}, there aren't that many for this user".format(index+1))
     else:
-        item = searchResults[-1]
+        item = searchResults[index]
         sqlconn.execute("REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, NULL, NULL, NULL, NULL, NULL, NULL, NULL)", [item[0]])
         out = "The following log was deleted:\n"
         if item[2] == LogTypes.BAN:
@@ -372,7 +372,7 @@ async def on_message(message):
         elif (message.channel.id in validInputChannels) and Utils.checkRoles(message.author, validRoles):
             if len(message.content.split(" ")) == 1:
                 if message.content.upper() == "$HELP":
-                    helpMes = "Issue a warning: `$warn USER message`\nLog a ban: `$ban USER reason`\nLog an unbanning: `$unban USER reason`\nLog a kick: `$kick USER reason`\nSearch for a user: `$search USER`\nCreate a note about a user: `$note USER message`\nShow all notes: `$notebook`\nRemove a user's last log: `$remove USER`\nRemove a user's last note: `$noteremove USER`\nStop a user from sending DMs to us: `$block/$unblock USERID`\nReply to a user in DMs: `$reply USERID`\nDMing users when they are banned is `{}`\nDMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
+                    helpMes = "Issue a warning: `$warn USER message`\nLog a ban: `$ban USER reason`\nLog an unbanning: `$unban USER reason`\nLog a kick: `$kick USER reason`\nSearch for a user: `$search USER`\nCreate a note about a user: `$note USER message`\nShow all notes: `$notebook`\nRemove a user's last log: `$remove USER`\nStop a user from sending DMs to us: `$block/$unblock USERID`\nReply to a user in DMs: `$reply USERID`\nDMing users when they are banned is `{}`\nDMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
                     await client.send_message(message.channel, helpMes)
                 elif message.content.upper() == "$NOTEBOOK":
                     await notebook(message)
@@ -395,15 +395,13 @@ async def on_message(message):
             elif message.content.startswith("$unban"):
                 await logUser(message, LogTypes.UNBAN)
             elif message.content.startswith("$remove"):
-                await removeError(message, LogTypes.BAN)
+                await removeError(message)
             elif message.content.startswith("$block"):
                 await blockUser(message, True)
             elif message.content.startswith("$unblock"):
                 await blockUser(message, False)
             elif message.content.startswith("$reply"):
                 await reply(message)
-            elif message.content.startswith("$noteremove"):
-                await removeError(message, LogTypes.NOTE)
             elif message.content.startswith("$note"):
                 await logUser(message, LogTypes.NOTE)
 

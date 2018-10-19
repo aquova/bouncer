@@ -8,13 +8,20 @@ def removeCommand(m):
     return " ".join(tmp)
 
 # Formats a datetime object to be European-style time string
-def formatTime(t):
+# The old formatTime function. Has now been replaced with YYYY-MM-DD
+def formatTime_euro(t):
     # Input t is of the form: YYYY-MM-DD HH:MM:SS.SSSSSS
     date = str(t).split(" ")[0]
     pieces = date.split("-")
     # output is of the form DD/MM/YYYY
     european = "{}/{}/{}".format(pieces[2], pieces[1], pieces[0])
     return european
+
+def formatTime(t):
+    # Input t is of the form: YYYY-MM-DD HH:MM:SS.SSSSSS
+    date = str(t).split(" ")[0]
+    # output is of the form YYYY-MM-DD
+    return date
 
 # Checks if given user has one of the roles specified in config.json
 def checkRoles(user, validRoles):

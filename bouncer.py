@@ -210,7 +210,7 @@ async def removeError(m):
 
     if searchResults == []:
         await client.send_message(m.channel, "I couldn't find that user in the database")
-    elif index != -1 and (index > len(searchResults) or index < 0):
+    elif (index > len(searchResults) - 1) or index < -1:
         await client.send_message(m.channel, "I can't remove item number {}, there aren't that many for this user".format(index+1))
     else:
         item = searchResults[index]
@@ -372,7 +372,7 @@ async def on_message(message):
         elif (message.channel.id in validInputChannels) and Utils.checkRoles(message.author, validRoles):
             if len(message.content.split(" ")) == 1:
                 if message.content.upper() == "$HELP":
-                    helpMes = "Issue a warning: `$warn USER message`\nLog a ban: `$ban USER reason`\nLog an unbanning: `$unban USER reason`\nLog a kick: `$kick USER reason`\nSearch for a user: `$search USER`\nCreate a note about a user: `$note USER message`\nShow all notes: `$notebook`\nRemove a user's last log: `$remove USER`\nStop a user from sending DMs to us: `$block/$unblock USERID`\nReply to a user in DMs: `$reply USERID`\nDMing users when they are banned is `{}`\nDMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
+                    helpMes = "Issue a warning: `$warn USER message`\nLog a ban: `$ban USER reason`\nLog an unbanning: `$unban USER reason`\nLog a kick: `$kick USER reason`\nSearch for a user: `$search USER`\nCreate a note about a user: `$note USER message`\nShow all notes: `$notebook`\nRemove a user's last log: `$remove USER index(optional)`\nStop a user from sending DMs to us: `$block/$unblock USERID`\nReply to a user in DMs: `$reply USERID`\nDMing users when they are banned is `{}`\nDMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
                     await client.send_message(message.channel, helpMes)
                 elif message.content.upper() == "$NOTEBOOK":
                     await notebook(message)

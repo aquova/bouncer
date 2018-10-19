@@ -1,12 +1,11 @@
-"""
-Bouncer
-Written by aquova, 2018
-https://github.com/aquova/bouncer
-"""
+# Bouncer - a Discord Moderation bot, originally for the Stardew Valley server
+# Written by aquova, 2018
+# https://github.com/aquova/bouncer
 
 import discord, json, sqlite3, datetime, asyncio, os, subprocess, sys
 import Utils
 from Member import User
+import PingTracker as pt
 
 # Reading values from config file
 with open('config.json') as config_file:
@@ -28,6 +27,7 @@ sqlconn = sqlite3.connect('sdv.db')
 # 'num' is the number of warnings. A ban is counted noted as 0, notes are negative values
 sqlconn.execute("CREATE TABLE IF NOT EXISTS badeggs (dbid INT PRIMARY KEY, id INT, username TEXT, num INT, date DATE, message TEXT, staff TEXT, post INT);")
 sqlconn.execute("CREATE TABLE IF NOT EXISTS blocks (id TEXT);")
+sqlconn.execute("CREATE TABLE IF NOT EXISTS pings (dbid INT PRIMARY KEY, userid INT, username TEXT, message TEXT, mesTime DATE, respTime DATE, RESOLVED INT);")
 sqlconn.commit()
 sqlconn.close()
 
@@ -269,6 +269,7 @@ async def reply(m):
         await client.send_message(m.channel, "Sorry, but they need to be in the server for me to message them")
         return
     try:
+        pt.resolvePing(user.id)
         await client.send_message(u, "A message from the SDV staff: {}".format(Utils.removeCommand(m.content)))
         await client.send_message(m.channel, "Message sent.")
 
@@ -344,6 +345,7 @@ async def on_message(message):
                 if message.attachments != []:
                     for item in message.attachments:
                         mes += '\n' + item['url']
+                pt.newPing(message)
                 await client.send_message(client.get_channel(validInputChannels[0]), mes)
 
         # Temporarily notify if UB3R-BOT has removed something on its word censor
@@ -366,6 +368,8 @@ async def on_message(message):
                     await client.send_message(message.channel, helpMes)
                 elif message.content.upper() == "$NOTEBOOK":
                     await notebook(message)
+                elif message.content.upper() == "$PINGS":
+                    await client.send_message(message.channel, pt.unresolved())
                 elif message.content.upper() in helpInfo.keys():
                     await client.send_message(message.channel, helpInfo[message.content.upper()])
                 elif message.content.upper() == "$UPDATE" and message.author.id == "254640676233412610":

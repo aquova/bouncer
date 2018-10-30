@@ -366,6 +366,7 @@ async def on_message(message):
             if message.attachments != []:
                 for item in message.attachments:
                     mes += '\n' + item['url']
+            mes += "\nhttps://discordapp.com/channels/{}/{}/{}".format(message.server.id, message.channel.id, message.id)
             await client.send_message(client.get_channel(validInputChannels[0]), mes)
 
         # If they have privledges to access bouncer functions

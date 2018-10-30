@@ -24,13 +24,22 @@ def newPing(message):
     sqlconn = sqlite3.connect('sdv.db')
     dbnum = sqlconn.execute("SELECT COUNT(*) FROM pings").fetchone()[0]
     uname = "{}#{}".format(message.author.name, message.author.discriminator)
+    currTime = datetime.datetime.utcnow()
 
     # If their most recent ping was less than 15 minutes ago, consider this part of the same issue
-    # pingsFromUser = sqlconn.execute("SELECT * FROM pings WHERE userid = ?", (message.author.id,)).fetchall()
-    # if pingsFromUser != []:
-    #     lastTime = pingsFromUser[-1][3]
+    pingsFromUser = sqlconn.execute("SELECT * FROM pings WHERE userid = ?", (message.author.id,)).fetchall()
+    if pingsFromUser != []:
+        lastTime = pingsFromUser[-1][4]
+        lastTime_formatted = datetime.datetime.strptime(lastTime, '%Y-%m-%d %H:%M:%S.%f')
+        diff = currTime - lastTime_formatted
+        # If less than 15 minutes have elapsed, and final log is unresolved
+        if () and (pingsFromUser[-1][-1] == 0):
+            params = [dbnum, message.author.id, uname, message.content, currTime]
+            sqlconn.execute("REPLACE INTO pings (dbid, userid, username, message, mesTime, respTime, resolved) VALUES (?, ?, ?, ?, ?, NULL, 0)", params)
+            sqlconn.commit()
+            sqlconn.close()
+            return
 
-    currTime = datetime.datetime.utcnow()
     params = [dbnum, message.author.id, uname, message.content, currTime]
     sqlconn.execute("INSERT INTO pings (dbid, userid, username, message, mesTime, respTime, resolved) VALUES (?, ?, ?, ?, ?, NULL, 0)", params)
     sqlconn.commit()

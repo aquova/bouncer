@@ -82,7 +82,7 @@ def fetchUserList():
 
 # Fetches a dict of the role names to ID values for the given server
 # serverID needs to be a string
-def fetchRoleList(serverID):
+def fetchRoleList(serverID, client):
     s = client.get_server(serverID)
     roles = {role.name: role.id for role in s.roles}
     for r in roles:

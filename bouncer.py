@@ -14,8 +14,12 @@ with open('config.json') as config_file:
 
 # Configuring preferences
 discordKey = str(cfg['discord'])
+# The first entry in validInputChannels is the one DMs and censor warnings are sent
 validInputChannels = cfg['channels']['listening']
+# Channel to save notes/warns/etc
 logChannel = str(cfg['channels']['log'])
+# Channel to save system logs - leaves, bans, joins, etc
+systemLog = str(cfg['channels']['syslog'])
 validRoles = cfg['roles']
 
 sendBanDM = (cfg['DM']['ban'].upper() == "ON")
@@ -325,12 +329,39 @@ async def on_ready():
 async def on_member_ban(member):
     global recentBans
     recentBans[member.id] = "{}#{}".format(member.name, member.discriminator)
+    mes = "{}#{} has been banned.".format(member.name, member.discriminator)
+    await client.send_message(client.get_channel(systemLog), mes)
 
 @client.event
 async def on_member_remove(member):
     # I know they aren't banned, but still we may want to log someone after they leave
     global recentBans
     recentBans[member.id] = "{}#{}".format(member.name, member.discriminator)
+    mes = "**{}#{}** has left".format(member.name, member.discriminator)
+    await client.send_message(client.get_channel(systemLog), mes)
+
+@client.event
+async def on_message_delete(message):
+    mes = "**{}#{}** deleted in <#{}>: `{}`".format(message.author.name, message.author.discriminator, message.channel.id, message.content)
+    await client.send_message(client.get_channel(systemLog), mes)
+
+@client.event
+async def on_message_edit(before, after):
+    mes = "**{}#{}** modified in <#{}>: `{}` to `{}`".format(before.author.name, before.author.discriminator, before.channel.id, before.content, after.content)
+    await client.send_message(client.get_channel(systemLog), mes)
+
+@client.event
+async def on_member_join(member):
+    mes = "**{}#{}** has joined".format(member.name, member.discriminator)
+    await client.send_message(client.get_channel(systemLog), mes)
+
+@client.event
+async def on_voice_state_update(before, after):
+    if (after.voice.voice_channel == None):
+        mes = "**{}#{}** has left voice channel {}".format(after.name, after.discriminator, before.voice.voice_channel.name)
+    else:
+        mes = "**{}#{}** has joined voice channel {}".format(after.name, after.discriminator, after.voice.voice_channel.name)
+    await client.send_message(client.get_channel(systemLog), mes)
 
 @client.event
 async def on_message(message):

@@ -13,8 +13,9 @@ class User:
     def getID(self, banList):
         if len(self.message.mentions) > 0:
             # Need to make sure pinged user is in the right position
-            if self.message.content.split(" ")[1] == "<@{}>".format(self.message.mentions[0].id):
-                return self.message.mentions[0].id
+            possibleUsername = self.message.mentions[0].id
+            if (self.message.content.split(" ")[1] == "<@{}>".format(possibleUsername) or (self.message.content.split(" ")[1] == "<@!{}>".format(possibleUsername))):
+                return possibleUsername
         checkID = self.message.content.split(" ")[1]
         try:
             int(checkID)

@@ -348,7 +348,11 @@ async def on_message_delete(message):
 @client.event
 async def on_message_edit(before, after):
     mes = "**{}#{}** modified in <#{}>: `{}` to `{}`".format(before.author.name, before.author.discriminator, before.channel.id, before.content, after.content)
-    await client.send_message(client.get_channel(systemLog), mes)
+    try:
+        await client.send_message(client.get_channel(systemLog), mes)
+    except discord.errors.HTTPException as e:
+        print("Unknown error with editing message. This message was unable to post for this reason: {}\n".format(e))
+        print("{}\n".format(mes))
 
 @client.event
 async def on_member_join(member):

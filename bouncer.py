@@ -347,9 +347,15 @@ async def on_message_delete(message):
 
 @client.event
 async def on_message_edit(before, after):
-    mes = "**{}#{}** modified in <#{}>: `{}` to `{}`".format(before.author.name, before.author.discriminator, before.channel.id, before.content, after.content)
     try:
-        await client.send_message(client.get_channel(systemLog), mes)
+        if len(before.content) + len(after.content) > 200:
+            mes1 = "**{}#{}** modified in <#{}>: `{}`".format(before.author.name, before.author.discriminator, before.channel.id, before.content)
+            mes2 = "to `{}`".format(after.content)
+            await client.send_message(client.get_channel(systemLog), mes1)
+            await client.send_message(client.get_channel(systemLog), mes2)
+        else:
+            mes = "**{}#{}** modified in <#{}>: `{}` to `{}`".format(before.author.name, before.author.discriminator, before.channel.id, before.content, after.content)
+            await client.send_message(client.get_channel(systemLog), mes)
     except discord.errors.HTTPException as e:
         print("Unknown error with editing message. This message was unable to post for this reason: {}\n".format(e))
         print("{}\n".format(mes))

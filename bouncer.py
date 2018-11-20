@@ -343,6 +343,9 @@ async def on_member_remove(member):
 @client.event
 async def on_message_delete(message):
     mes = "**{}#{}** deleted in <#{}>: `{}`".format(message.author.name, message.author.discriminator, message.channel.id, message.content)
+    if message.attachments != []:
+        for item in message.attachments:
+            mes += '\n' + item['url']
     await client.send_message(client.get_channel(systemLog), mes)
 
 @client.event
@@ -351,6 +354,12 @@ async def on_message_edit(before, after):
         if len(before.content) + len(after.content) > 200:
             mes1 = "**{}#{}** modified in <#{}>: `{}`".format(before.author.name, before.author.discriminator, before.channel.id, before.content)
             mes2 = "to `{}`".format(after.content)
+            if before.attachments != []:
+                for item in before.attachments:
+                    mes += '\n' + item['url']
+            if after.attachments != []:
+                for item in after.attachments:
+                    mes += '\n' + item['url']
             await client.send_message(client.get_channel(systemLog), mes1)
             await client.send_message(client.get_channel(systemLog), mes2)
         else:

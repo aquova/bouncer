@@ -326,6 +326,24 @@ async def on_ready():
     await client.change_presence(game=game_object)
 
 @client.event
+async def on_member_update(before, after):
+    if before.nick != after.nick:
+        if after.nick == None:
+            mes = "**{}#{}** has reset their username".format(after.name, after.discriminator)
+        else:
+            new = after.nick
+            mes = "**{}#{}** is now known as {}".format(after.name, after.discriminator, after.nick)
+        await client.send_message(client.get_channel(systemLog), mes)
+    elif before.roles != after.roles:
+        if len(before.roles) > len(after.roles):
+            missing = [r for r in before.roles if r not in after.roles]
+            mes = "**{}#{}** had the role `{}` removed.".format(after.name, after.discriminator, missing[0])
+        else:
+            newRoles = [r for r in after.roles if r not in before.roles]
+            mes = "**{}#{}** had the role `{}` added.".format(after.name, after.discriminator, newRoles[0])
+        await client.send_message(client.get_channel(systemLog), mes)
+
+@client.event
 async def on_member_ban(member):
     global recentBans
     recentBans[member.id] = "{}#{}".format(member.name, member.discriminator)
@@ -356,14 +374,17 @@ async def on_message_edit(before, after):
             mes2 = "to `{}`".format(after.content)
             if before.attachments != []:
                 for item in before.attachments:
-                    mes += '\n' + item['url']
+                    mes1 += '\n' + item['url']
             if after.attachments != []:
                 for item in after.attachments:
-                    mes += '\n' + item['url']
+                    mes2 += '\n' + item['url']
             await client.send_message(client.get_channel(systemLog), mes1)
             await client.send_message(client.get_channel(systemLog), mes2)
         else:
             mes = "**{}#{}** modified in <#{}>: `{}` to `{}`".format(before.author.name, before.author.discriminator, before.channel.id, before.content, after.content)
+            if after.attachments != []:
+                for item in after.attachments:
+                    mes += '\n' + item['url']
             await client.send_message(client.get_channel(systemLog), mes)
     except discord.errors.HTTPException as e:
         print("Unknown error with editing message. This message was unable to post for this reason: {}\n".format(e))

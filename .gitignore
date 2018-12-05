@@ -1,11 +1,15 @@
+# Private files
 config.json
-.DS_Store
-*.swp
-__pycache__
 *.db
 *.csv
+DMs.txt
+*.png
+
+# Editor files
+*.swp
 .vscode
 *.code-workspace
-*.txt
 
-Message.py
+# Other junk
+.DS_Store
+__pycache__

@@ -5,7 +5,7 @@ https://github.com/aquova/bouncer
 """
 
 import discord, json, sqlite3, datetime, asyncio, os, subprocess, sys
-import Utils
+import Utils, Visualize
 from Member import User
 
 # Reading values from config file
@@ -388,7 +388,6 @@ async def on_message_edit(before, after):
             await client.send_message(client.get_channel(systemLog), mes)
     except discord.errors.HTTPException as e:
         print("Unknown error with editing message. This message was unable to post for this reason: {}\n".format(e))
-        print("{}\n".format(mes))
 
 @client.event
 async def on_member_join(member):
@@ -454,6 +453,14 @@ async def on_message(message):
                     await client.send_message(message.channel, "Updating and restarting...")
                     subprocess.call("git pull", shell=True)
                     sys.exit()
+                elif message.content.upper() == "$GRAPH":
+                    Visualize.genUserPlot()
+                    Visualize.genMonthlyPlot()
+                    await client.send_file(message.channel, fp='./sdv_user_plot.png')
+                    await client.send_file(message.channel, fp='./sdv_month_plot.png')
+                elif message.content.upper() == "$STATS":
+                    Visualize.getUserStats()
+                    Visualize.getMonthlyStats()
                 return
 
             if message.content.startswith("$search"):

@@ -39,6 +39,8 @@ client = discord.Client()
 sqlconn = sqlite3.connect('sdv.db')
 sqlconn.execute("CREATE TABLE IF NOT EXISTS badeggs (dbid INT PRIMARY KEY, id INT, username TEXT, num INT, date DATE, message TEXT, staff TEXT, post INT);")
 sqlconn.execute("CREATE TABLE IF NOT EXISTS blocks (id TEXT);")
+sqlconn.execute("CREATE TABLE IF NOT EXISTS staffLogs (staff TEXT PRIMARY KEY, bans INT, warns INT);")
+sqlconn.execute("CREATE TABLE IF NOT EXISTS monthLogs (month TEXT PRIMARY KEY, bans INT, warns INT);")
 sqlconn.commit()
 sqlconn.close()
 
@@ -143,12 +145,15 @@ async def logUser(m, state):
     # Generate message for log channel
     if state == LogTypes.BAN:
         logMessage = "[{}] **{}** - Banned by {} - {}\n".format(Utils.formatTime(currentTime), params[2], m.author.name, mes)
+        Visualize.updateCache(m.author.name, (1, 0), Utils.formatTime(currentTime))
     elif state == LogTypes.WARN:
         logMessage = "[{}] **{}** - Warning #{} by {} - {}\n".format(Utils.formatTime(currentTime), params[2], count, m.author.name, mes)
+        Visualize.updateCache(m.author.name, (0, 1), Utils.formatTime(currentTime))
     elif state == LogTypes.KICK:
         logMessage = "[{}] **{}** - Kicked by {} - {}\n".format(Utils.formatTime(currentTime), params[2], m.author.name, mes)
     elif state == LogTypes.UNBAN:
         logMessage = "[{}] **{}** - Unbanned by {} - {}\n".format(Utils.formatTime(currentTime), params[2], m.author.name, mes)
+        Visualize.updateCache(m.author.name, (-1, 0), Utils.formatTime(currentTime))
     else:
         logMessage = "Note made for {}".format(username)
 
@@ -222,14 +227,17 @@ async def removeError(m):
         out = "The following log was deleted:\n"
         if item[2] == LogTypes.BAN:
             out += "[{}] **{}** - Banned by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[5], item[4])
+            Visualize.updateCache(item[1], (-1, 0), Utils.formatTime(item[3]))
         elif item[2] == LogTypes.NOTE:
             out += "[{}] **{}** - Note by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[5], item[4])
         elif item[2] == LogTypes.UNBAN:
             out += "[{}] **{}** - Unbanned by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[5], item[4])
+            Visualize.updateCache(item[1], (1, 0), Utils.formatTime(item[3]))
         elif item[2] == LogTypes.KICK:
             out += "[{}] **{}** - Kicked by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[5], item[4])
         else:
             out += "[{}] **{}** - Warning #{} by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[2], item[5], item[4])
+            Visualize.updateCache(item[1], (0, -1), Utils.formatTime(item[3]))
         await client.send_message(m.channel, out)
 
         # Search logging channel for matching post, and remove it
@@ -458,9 +466,6 @@ async def on_message(message):
                     Visualize.genMonthlyPlot()
                     await client.send_file(message.channel, fp='./sdv_user_plot.png')
                     await client.send_file(message.channel, fp='./sdv_month_plot.png')
-                elif message.content.upper() == "$STATS":
-                    Visualize.getUserStats()
-                    Visualize.getMonthlyStats()
                 return
 
             if message.content.startswith("$search"):

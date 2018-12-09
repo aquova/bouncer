@@ -145,15 +145,15 @@ async def logUser(m, state):
     # Generate message for log channel
     if state == LogTypes.BAN:
         logMessage = "[{}] **{}** - Banned by {} - {}\n".format(Utils.formatTime(currentTime), params[2], m.author.name, mes)
-        Visualize.updateCache(m.author.name, (1, 0), Utils.formatTime(currentTime))
+        Visualize.updateCache(sqlconn, m.author.name, (1, 0), Utils.formatTime(currentTime))
     elif state == LogTypes.WARN:
         logMessage = "[{}] **{}** - Warning #{} by {} - {}\n".format(Utils.formatTime(currentTime), params[2], count, m.author.name, mes)
-        Visualize.updateCache(m.author.name, (0, 1), Utils.formatTime(currentTime))
+        Visualize.updateCache(sqlconn, m.author.name, (0, 1), Utils.formatTime(currentTime))
     elif state == LogTypes.KICK:
         logMessage = "[{}] **{}** - Kicked by {} - {}\n".format(Utils.formatTime(currentTime), params[2], m.author.name, mes)
     elif state == LogTypes.UNBAN:
         logMessage = "[{}] **{}** - Unbanned by {} - {}\n".format(Utils.formatTime(currentTime), params[2], m.author.name, mes)
-        Visualize.updateCache(m.author.name, (-1, 0), Utils.formatTime(currentTime))
+        Visualize.updateCache(sqlconn, m.author.name, (-1, 0), Utils.formatTime(currentTime))
     else:
         logMessage = "Note made for {}".format(username)
 
@@ -227,17 +227,17 @@ async def removeError(m):
         out = "The following log was deleted:\n"
         if item[2] == LogTypes.BAN:
             out += "[{}] **{}** - Banned by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[5], item[4])
-            Visualize.updateCache(item[1], (-1, 0), Utils.formatTime(item[3]))
+            Visualize.updateCache(sqlconn, item[1], (-1, 0), Utils.formatTime(item[3]))
         elif item[2] == LogTypes.NOTE:
             out += "[{}] **{}** - Note by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[5], item[4])
         elif item[2] == LogTypes.UNBAN:
             out += "[{}] **{}** - Unbanned by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[5], item[4])
-            Visualize.updateCache(item[1], (1, 0), Utils.formatTime(item[3]))
+            Visualize.updateCache(sqlconn, item[1], (1, 0), Utils.formatTime(item[3]))
         elif item[2] == LogTypes.KICK:
             out += "[{}] **{}** - Kicked by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[5], item[4])
         else:
             out += "[{}] **{}** - Warning #{} by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[2], item[5], item[4])
-            Visualize.updateCache(item[1], (0, -1), Utils.formatTime(item[3]))
+            Visualize.updateCache(sqlconn, item[1], (0, -1), Utils.formatTime(item[3]))
         await client.send_message(m.channel, out)
 
         # Search logging channel for matching post, and remove it

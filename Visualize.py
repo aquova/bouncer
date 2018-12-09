@@ -19,10 +19,9 @@ def getMax(a):
             maximum = x[0] + x[1]
     return roundup(maximum)
 
-def updateCache(staff, val, date):
+def updateCache(sqlconn, staff, val, date):
     formatDate = "{}-{}".format(date.split('-')[1], date.split('-')[0])
 
-    sqlconn = sqlite3.connect('sdv.db')
     checkStaff = sqlconn.execute("SELECT * FROM staffLogs WHERE staff=?", [staff]).fetchall()
     checkDate = sqlconn.execute("SELECT * FROM monthLogs WHERE month=?", [formatDate]).fetchall()
 
@@ -43,7 +42,6 @@ def updateCache(staff, val, date):
         sqlconn.execute("REPLACE INTO monthLogs (month, bans, warns) VALUES (?, ?, ?)", [formatDate, bans+val[0], warns+val[1]])
 
     sqlconn.commit()
-    sqlconn.close()
 
 def genUserPlot():
     plt.clf()

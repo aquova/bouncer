@@ -31,6 +31,8 @@ def updateCache(sqlconn, staff, val, date):
     else:
         bans = checkStaff[0][1]
         warns = checkStaff[0][2]
+        if (bans + val[0] < 0) or (warns + val[1] < 0):
+            print("Hey, a user is going to have a negative balance, that's no good.")
         sqlconn.execute("REPLACE INTO staffLogs (staff, bans, warns) VALUES (?, ?, ?)", [staff, bans+val[0], warns+val[1]])
 
     # First log this month
@@ -39,6 +41,8 @@ def updateCache(sqlconn, staff, val, date):
     else:
         bans = checkDate[0][1]
         warns = checkDate[0][2]
+        if (bans + val[0] < 0) or (warns + val[1] < 0):
+            print("Hey, a user is going to have a negative balance, that's no good.")
         sqlconn.execute("REPLACE INTO monthLogs (month, bans, warns) VALUES (?, ?, ?)", [formatDate, bans+val[0], warns+val[1]])
 
     sqlconn.commit()

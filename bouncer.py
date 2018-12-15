@@ -227,17 +227,17 @@ async def removeError(m):
         out = "The following log was deleted:\n"
         if item[2] == LogTypes.BAN:
             out += "[{}] **{}** - Banned by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[5], item[4])
-            Visualize.updateCache(sqlconn, item[1], (-1, 0), Utils.formatTime(item[3]))
+            Visualize.updateCache(sqlconn, item[5], (-1, 0), Utils.formatTime(item[3]))
         elif item[2] == LogTypes.NOTE:
             out += "[{}] **{}** - Note by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[5], item[4])
         elif item[2] == LogTypes.UNBAN:
             out += "[{}] **{}** - Unbanned by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[5], item[4])
-            Visualize.updateCache(sqlconn, item[1], (1, 0), Utils.formatTime(item[3]))
+            Visualize.updateCache(sqlconn, item[5], (1, 0), Utils.formatTime(item[3]))
         elif item[2] == LogTypes.KICK:
             out += "[{}] **{}** - Kicked by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[5], item[4])
         else:
             out += "[{}] **{}** - Warning #{} by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[2], item[5], item[4])
-            Visualize.updateCache(sqlconn, item[1], (0, -1), Utils.formatTime(item[3]))
+            Visualize.updateCache(sqlconn, item[5], (0, -1), Utils.formatTime(item[3]))
         await client.send_message(m.channel, out)
 
         # Search logging channel for matching post, and remove it

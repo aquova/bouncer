@@ -291,6 +291,9 @@ async def reply(m):
         await client.send_message(m.channel, "Sorry, but they need to be in the server for me to message them")
         return
     try:
+        ts = m.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+        with open("DMs.txt", 'a', encoding='utf-8') as openFile:
+            openFile.write("{} - {} sent a DM to {}: {}".format(ts, m.author.name, u.name, Utils.removeCommand(m.content)))
         await client.send_message(u, "A message from the SDV staff: {}".format(Utils.removeCommand(m.content)))
         await client.send_message(m.channel, "Message sent.")
 
@@ -419,20 +422,17 @@ async def on_message(message):
     try:
         # If they sent a private DM to bouncer
         if message.channel.is_private:
-            if message.author.id in blockList:
-                ts = message.timestamp.strftime('%Y-%m-%d %H:%M:%S')
-                mes = "{} <{}> {}\n".format(ts, "{}#{}".format(message.author.name, message.author.discriminator), message.content)
-                if message.attachments != []:
-                    for item in message.attachments:
-                        mes += ' ' + item['url']
-                with open("DMs.txt", 'a', encoding='utf-8') as openFile:
-                    openFile.write(mes)
-            else:
-                mes = "**{}#{}** (ID: {}): {}".format(message.author.name, message.author.discriminator, message.author.id, message.content)
-                if message.attachments != []:
-                    for item in message.attachments:
-                        mes += '\n' + item['url']
-                await client.send_message(client.get_channel(validInputChannels[0]), mes)
+            # Regardless of blocklist or not, log their messages
+            ts = message.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
+            mes = "**{}#{}** (ID: {}): {}".format(message.author.name, message.author.discriminator, message.author.id, message.content)
+            if message.attachments != []:
+                for item in message.attachments:
+                    mes += '\n' + item['url']
+
+            with open("DMs.txt", 'a', encoding='utf-8') as openFile:
+                openFile.write("{} - {}".format(ts, mes))
+            await client.send_message(client.get_channel(validInputChannels[0]), mes)
 
         # Temporarily notify if UB3R-BOT has removed something on its word censor
         elif (message.author.id == "85614143951892480" and message.channel.id == "233039273207529472") and ("Word Censor Triggered" in message.content):

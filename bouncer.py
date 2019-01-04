@@ -157,10 +157,11 @@ async def logUser(m, state):
     else:
         logMessage = "Note made for {}".format(username)
 
+    await client.send_message(m.channel, logMessage)
+
     # Send ban recommendation, if needed
     if (count >= warnThreshold):
-        logMessage += "This user has received {} warnings or more. It is recommened that they be banned.".format(warnThreshold)
-    await client.send_message(m.channel, logMessage)
+        await client.send_message(m.channel, "This user has received {} warnings or more. It is recommended that they be banned.".format(warnThreshold))
 
     logMesID = 0
     if state != LogTypes.NOTE:

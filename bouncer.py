@@ -344,7 +344,7 @@ async def on_member_update(before, after):
             mes = "**{}#{}** has reset their username".format(after.name, after.discriminator)
         else:
             new = after.nick
-            mes = "**{}#{}** is now known as {}".format(after.name, after.discriminator, after.nick)
+            mes = "**{}#{}** is now known as `{}`".format(after.name, after.discriminator, after.nick)
         await client.send_message(client.get_channel(systemLog), mes)
     elif before.roles != after.roles:
         if len(before.roles) > len(after.roles):
@@ -410,9 +410,10 @@ async def on_member_join(member):
 async def on_voice_state_update(before, after):
     if (after.voice.voice_channel == None):
         mes = "**{}#{}** has left voice channel {}".format(after.name, after.discriminator, before.voice.voice_channel.name)
-    else:
+        await client.send_message(client.get_channel(systemLog), mes)
+    elif (before.voice.voice_channel == None):
         mes = "**{}#{}** has joined voice channel {}".format(after.name, after.discriminator, after.voice.voice_channel.name)
-    await client.send_message(client.get_channel(systemLog), mes)
+        await client.send_message(client.get_channel(systemLog), mes)
 
 @client.event
 async def on_message(message):

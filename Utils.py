@@ -69,6 +69,14 @@ def parseUsername(message, recentBans):
     except IndexError:
         return None
 
+# Since usernames can have spaces, first check if it's a username, otherwise just cut off first word as normal
+# 'user' will either be the correct username, or an ID.
+def parseMessage(message, username):
+    m = " ".join(message.split(" ")[1:])
+    if m.startswith(username):
+        return m[len(username)+1:]
+    return removeCommand(message)
+
 #########################################################
 # Functions that only need to be called once in a while #
 #########################################################

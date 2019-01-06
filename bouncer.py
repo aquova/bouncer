@@ -125,7 +125,14 @@ async def logUser(m, state):
         count = state
     globalcount = sqlconn.execute("SELECT COUNT(*) FROM badeggs").fetchone()[0]
     currentTime = datetime.datetime.utcnow()
-    mes = Utils.removeCommand(m.content)
+
+    try:
+        username = user.getName(recentBans)
+    except User.MessageError:
+        username = "ID: " + str(user.id)
+        await client.send_message(m.channel, "I wasn't able to find a username for that user, but whatever, I'll do it anyway.")
+
+    mes = Utils.parseMessage(m.content, username)
     if len(m.attachments) != 0:
         for item in m.attachments:
             mes += '\n{}'.format(item['url'])
@@ -133,12 +140,6 @@ async def logUser(m, state):
     if mes == "":
         await client.send_message(m.channel, "Please give a reason for why you want to log them.")
         return
-
-    try:
-        username = user.getName(recentBans)
-    except User.MessageError:
-        username = "ID: " + str(user.id)
-        await client.send_message(m.channel, "I wasn't able to find a username for that user, but whatever, I'll do it anyway.")
 
     params = [globalcount + 1, user.id, username, count, currentTime, mes, m.author.name]
 
@@ -206,8 +207,18 @@ async def removeError(m):
         await client.send_message(m.channel, "I wasn't able to understand that message: `$remove USER`")
         return
 
+    # Needed for multi-word usernames
     try:
-        index = int(m.content.split(" ")[2]) - 1
+        username = user.getName(recentBans)
+    except User.MessageError:
+        username = str(user.id)
+
+    mes = Utils.parseMessage(m.content, username)
+    if mes == "":
+        mes = 0
+
+    try:
+        index = int(mes) - 1
     except IndexError:
         index = -1
     except ValueError:

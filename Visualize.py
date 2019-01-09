@@ -20,7 +20,7 @@ def getMax(a):
     return roundup(maximum)
 
 def updateCache(sqlconn, staff, val, date):
-    formatDate = "{}-{}".format(date.split('-')[1], date.split('-')[0])
+    formatDate = "{}-{}".format(date.split('-')[0], date.split('-')[1])
 
     checkStaff = sqlconn.execute("SELECT * FROM staffLogs WHERE staff=?", [staff]).fetchall()
     checkDate = sqlconn.execute("SELECT * FROM monthLogs WHERE month=?", [formatDate]).fetchall()
@@ -81,12 +81,13 @@ def genMonthlyPlot():
     plt.clf()
     sqlconn = sqlite3.connect("sdv.db")
     data = sqlconn.execute("SELECT * FROM monthLogs").fetchall()
-    monthData = {x[0]: [x[1], x[2]] for x in data}
+    sortedData = sorted(data)
+    monthData = {x[0]: [x[1], x[2]] for x in sortedData}
     sqlconn.close()
 
     bans = [monthData[x][0] for x in monthData]
     warns = [monthData[x][1] for x in monthData]
-    labels = ["{} {}".format(months[int(x.split('-')[0])], x.split('-')[1]) for x in monthData.keys()]
+    labels = ["{} {}".format(months[int(x.split('-')[1])], x.split('-')[0]) for x in monthData.keys()]
 
     width = 0.5
 

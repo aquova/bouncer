@@ -391,6 +391,10 @@ async def on_message_delete(message):
 
 @client.event
 async def on_message_edit(before, after):
+    # This is to prevent embeding of content from triggering the log
+    if before.content == after.content:
+        return
+
     try:
         if len(before.content) + len(after.content) > 200:
             mes1 = "**{}#{}** modified in <#{}>: `{}`".format(before.author.name, before.author.discriminator, before.channel.id, before.content)

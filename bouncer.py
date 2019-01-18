@@ -5,7 +5,7 @@ https://github.com/aquova/bouncer
 """
 
 import discord, json, sqlite3, datetime, asyncio, os, subprocess, sys
-import Utils, Visualize
+import Utils
 from Member import User
 
 # Reading values from config file
@@ -45,6 +45,7 @@ sqlconn.commit()
 sqlconn.close()
 
 warnThreshold = 3
+reviewThreshold = 6 # In months
 
 # Containers to store needed information in memory
 recentBans = {}
@@ -333,6 +334,42 @@ async def notebook(m):
             out = note
     await client.send_message(m.channel, out)
 
+# Posts the usernames of all users whose oldest logs are older than reviewThreshold
+async def userReview(channel):
+    users = []
+    tooNew = []
+    sqlconn = sqlite3.connect("sdv.db")
+    # Reverse order so newest logs are checked/eliminated first
+    allLogs = sqlconn.execute("SELECT username, date, num FROM badeggs WHERE num > -1").fetchall()[::-1]
+
+    now = datetime.datetime.now()
+    for log in allLogs:
+        # Don't want to list users who have been banned
+        if log[2] == 0:
+            tooNew.append(log[0])
+        if log[0] not in users and log[0] not in tooNew:
+            day = log[1].split(" ")[0]
+            dateval = datetime.datetime.strptime(day, "%Y-%m-%d")
+            testDate = dateval + datetime.timedelta(days=30*reviewThreshold)
+            if testDate < now:
+                users.append(log[0])
+            else:
+                tooNew.append(log[0])
+
+    sqlconn.close()
+
+    mes = "These users had their most recent log greater than {} months ago.\n".format(reviewThreshold)
+    # Reverse order so oldest are first
+    for user in users[::-1]:
+        # This gets past Discord's 2000 char limit
+        if len(mes) + len(user) + 2 < 2000:
+            mes += "`{}`, ".format(user)
+        else:
+            await client.send_message(channel, mes)
+            mes = "`{}`, ".format(user)
+
+    await client.send_message(channel, mes)
+
 @client.event
 async def on_ready():
     global blockList
@@ -479,10 +516,13 @@ async def on_message(message):
                     subprocess.call("git pull", shell=True)
                     sys.exit()
                 elif message.content.upper() == "$GRAPH":
+                    import Visualize # Import here to avoid debugger crashing from matplotlib issue
                     Visualize.genUserPlot()
                     Visualize.genMonthlyPlot()
                     await client.send_file(message.channel, fp='./sdv_user_plot.png')
                     await client.send_file(message.channel, fp='./sdv_month_plot.png')
+                elif message.content.upper() == "$REVIEW":
+                    await userReview(message.channel)
                 return
 
             if message.content.startswith("$search"):

@@ -145,6 +145,7 @@ async def logUser(m, state):
     params = [globalcount + 1, user.id, username, count, currentTime, mes, m.author.name]
 
     # Generate message for log channel
+    import Visualize
     if state == LogTypes.BAN:
         logMessage = "[{}] **{}** - Banned by {} - {}\n".format(Utils.formatTime(currentTime), params[2], m.author.name, mes)
         Visualize.updateCache(sqlconn, m.author.name, (1, 0), Utils.formatTime(currentTime))
@@ -237,6 +238,8 @@ async def removeError(m):
     else:
         item = searchResults[index]
         sqlconn.execute("REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, NULL, NULL, NULL, NULL, NULL, NULL, NULL)", [item[0]])
+
+        import Visualize
         out = "The following log was deleted:\n"
         if item[2] == LogTypes.BAN:
             out += "[{}] **{}** - Banned by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[5], item[4])

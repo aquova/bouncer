@@ -2,6 +2,8 @@
 
 A Discord moderator bot, designed to be used with the Stardew Valley server
 
+Written by aquova, 2018-2019
+
 https://github.com/aquova/bouncer
 
 https://discord.gg/stardewvalley
@@ -17,29 +19,30 @@ My personal hosting of the bot will be private, but users are free to host a ver
 The bot has several moderation features:
 
 - Logging of user warnings
-    - Moderators can log user warnings with the command `$warn USER message`, where `USER` is the mention of the offending user or their ID/username, and `message` are notes to be saved with the warning (such as why they were warned).
+    - Moderators can log user warnings alongside an explanitory message.
     - Warnings are saved both in a channel specified in `config.json`, as well as saved to a local database.
-- Logging of user bans
-    - Similar to warnings, bans can be logged with `$ban USER message`
+    - In addition to warnings; bans, kicks, and unbannings can all be noted.
+- Storing moderation notes
+    - Notes about users are stored privately, for moderators to review later
 - User searching
-    - The database can be searched with the command `$search USER`. The bot will then post any noted infractions, as well as their timestamp and stored message
+    - The database can be searched by user ID, username or by 'ping'. The bot will then post any noted infractions, as well as their timestamp and stored message
 - Removal
-    - Everybody makes mistakes. The most recent log for a user can be removed with `$remove USER`
+    - Everybody makes mistakes. Individual user logs can be specified and deleted.
 - DM forwarding
     - Private messages sent to the bot will be automatically forwarded to the channel specified in `config.json`.
-    - This can be prevented with the command `$block ID` which will instead log the messages in a .txt file for later viewing.
-        - This can be undone with `$unblock ID`
+    - Moderators can also DM a user via the bot, allowing for collaborative viewing of direct messages.
+    - DMs from unruly users can be blocked and unblocked as desired.
+    - All DMs are also saved to a local .txt file for easy review.
 - User DMing
     - Upon being banned, there is the option to DM a user with the ban message. This can be disabled by setting the "DM" field in `config.json` to false.
+- Statistics visualization
+    - Statistics about moderator activity can be generated, namely how many warns/bans occurred each month, and how many total warns/bans have been created by each moderator.
+- Sorted review
+    - All users with logs over a specified timespan can be posted, for moderation review.
+- System logs
+    - The bot will also monitor all channels and post server-wide changes in users.
+    - These include nickname changes, joining, leaving, kicked, banned, joining/leaving VC, and logging of all deleted and modified messages.
 
 There is also a `$help` command, which will give the syntax for all of the previously listed commands
 
-For better security, the bot only listens in specific channels for commands, and only accepts commands for users with specific roles. These can both be specified in `config.json` under "listening" and "roles" respectively. The listening key must always have at least one channel, however the roles key can be left blank (with empty quotes) in which case all roles will be accepted.
-
-## Installation
-
-First install both Python3 and pip, then run the command `pip install -r /path/to/requirements.txt`
-
-Make a file called `config.json`, which contains your Discord bot key, channels IDs for the bot to listen to, a channel ID for the bot to post logs, and any role IDs for the bot to accept commands from.
-
-Once you have added your bot account to your server, the bot can be run by the command `./bot.sh`
+For better security, the bot only listens in specific channels for commands, and only accepts commands for users with specific roles. These can be specified, along with other parameters, in the `config.json` file. This is not included for obvious reasons, and a template is currently not stored due to the fact I am lazy.

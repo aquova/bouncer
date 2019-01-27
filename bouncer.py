@@ -1,12 +1,12 @@
 """
 Bouncer
-Written by aquova, 2018
+Written by aquova, 2018-2019
 https://github.com/aquova/bouncer
 """
 
 import discord, json, sqlite3, datetime, asyncio, os, subprocess, sys
 import Utils
-from Member import User
+from User import User
 
 # Reading values from config file
 with open('config.json') as config_file:

@@ -11,19 +11,24 @@ class User:
 
     # Gets the ID from a message
     def getID(self, banList):
+        # First check if they're mentioned
         if len(self.message.mentions) > 0:
             # Need to make sure pinged user is in the right position
             possibleUsername = self.message.mentions[0].id
             if (self.message.content.split(" ")[1] == "<@{}>".format(possibleUsername) or (self.message.content.split(" ")[1] == "<@!{}>".format(possibleUsername))):
                 return possibleUsername
+
+        # Then check if username is valid
+        checkUsername = Utils.parseUsername(self.message, banList)
+        if checkUsername != None:
+            return checkUsername
         checkID = self.message.content.split(" ")[1]
+
+        # Finally, check if it is an ID
         try:
             int(checkID)
             return checkID
         except ValueError:
-            checkUsername = Utils.parseUsername(self.message, banList)
-            if checkUsername != None:
-                return checkUsername
             raise self.MessageError("Couldn't understand message.")
 
     def getMember(self):

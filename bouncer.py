@@ -339,23 +339,26 @@ async def notebook(m):
 
 # Posts the usernames of all users whose oldest logs are older than reviewThreshold
 async def userReview(channel):
-    users = []
+    # There's probably a clever way to have these first two arrays merged
+    usernames = []
+    ids = []
     tooNew = []
     sqlconn = sqlite3.connect("sdv.db")
     # Reverse order so newest logs are checked/eliminated first
-    allLogs = sqlconn.execute("SELECT username, date, num FROM badeggs WHERE num > -1").fetchall()[::-1]
+    allLogs = sqlconn.execute("SELECT id, username, date, num FROM badeggs WHERE num > -1").fetchall()[::-1]
 
     now = datetime.datetime.now()
     for log in allLogs:
         # Don't want to list users who have been banned
-        if log[2] == 0:
+        if log[3] == 0:
             tooNew.append(log[0])
-        if log[0] not in users and log[0] not in tooNew:
-            day = log[1].split(" ")[0]
+        if log[0] not in ids and log[0] not in tooNew:
+            day = log[2].split(" ")[0]
             dateval = datetime.datetime.strptime(day, "%Y-%m-%d")
             testDate = dateval + datetime.timedelta(days=30*reviewThreshold)
             if testDate < now:
-                users.append(log[0])
+                ids.append(log[0])
+                usernames.append(log[1])
             else:
                 tooNew.append(log[0])
 
@@ -363,7 +366,7 @@ async def userReview(channel):
 
     mes = "These users had their most recent log greater than {} months ago.\n".format(reviewThreshold)
     # Reverse order so oldest are first
-    for user in users[::-1]:
+    for user in usernames[::-1]:
         # This gets past Discord's 2000 char limit
         if len(mes) + len(user) + 2 < 2000:
             mes += "`{}`, ".format(user)

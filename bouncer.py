@@ -308,10 +308,11 @@ async def reply(m):
         return
     try:
         ts = m.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+        uname = "{}#{}".format(u.name, u.discriminator)
         with open("DMs.txt", 'a', encoding='utf-8') as openFile:
-            openFile.write("{} - {} sent a DM to {}: {}".format(ts, m.author.name, u.name, Utils.removeCommand(m.content)))
+            openFile.write("{} - {} sent a DM to {}: {}\n".format(ts, m.author.name, uname, Utils.removeCommand(m.content)))
         await client.send_message(u, "A message from the SDV staff: {}".format(Utils.removeCommand(m.content)))
-        await client.send_message(m.channel, "Message sent.")
+        await client.send_message(m.channel, "Message sent to {}.".format(uname))
 
     # I don't know if any of these are ever getting tripped
     except discord.errors.HTTPException as e:
@@ -491,7 +492,7 @@ async def on_message(message):
                     mes += '\n' + item['url']
 
             with open("DMs.txt", 'a', encoding='utf-8') as openFile:
-                openFile.write("{} - {}".format(ts, mes))
+                openFile.write("{} - {}\n".format(ts, mes))
             await client.send_message(client.get_channel(validInputChannels[0]), mes)
 
         # Temporarily notify if UB3R-BOT has removed something on its word censor

@@ -13,13 +13,13 @@ with open('config.json') as config_file:
     cfg = json.load(config_file)
 
 # Configuring preferences
-discordKey = str(cfg['discord'])
+discordKey = cfg['discord']
 # The first entry in validInputChannels is the one DMs and censor warnings are sent
 validInputChannels = cfg['channels']['listening']
 # Channel to save notes/warns/etc
-logChannel = str(cfg['channels']['log'])
+logChannel = cfg['channels']['log']
 # Channel to save system logs - leaves, bans, joins, etc
-systemLog = str(cfg['channels']['syslog'])
+systemLog = cfg['channels']['syslog']
 validRoles = cfg['roles']
 
 sendBanDM = (cfg['DM']['ban'].upper() == "ON")
@@ -518,7 +518,7 @@ async def on_message(message):
                     await notebook(message)
                 elif message.content.upper() in helpInfo.keys():
                     await client.send_message(message.channel, helpInfo[message.content.upper()])
-                elif message.content.upper() == "$UPDATE" and message.author.id == "254640676233412610":
+                elif message.content.upper() == "$UPDATE" and message.author.id == cfg["owner"]:
                     await client.send_message(message.channel, "Updating and restarting...")
                     subprocess.call("git pull", shell=True)
                     sys.exit()
@@ -526,8 +526,8 @@ async def on_message(message):
                     import Visualize # Import here to avoid debugger crashing from matplotlib issue
                     Visualize.genUserPlot()
                     Visualize.genMonthlyPlot()
-                    await client.send_file(message.channel, fp='./sdv_user_plot.png')
-                    await client.send_file(message.channel, fp='./sdv_month_plot.png')
+                    await client.send_file(message.channel, fp='./user_plot.png')
+                    await client.send_file(message.channel, fp='./month_plot.png')
                 elif message.content.upper() == "$REVIEW":
                     await userReview(message.channel)
                 return

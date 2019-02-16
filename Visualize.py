@@ -66,7 +66,7 @@ def genUserPlot():
     p2 = plt.bar(ind, warns, width, bottom=bans, zorder=5)
     plt.ylabel("Logs")
     plt.xlabel("User")
-    plt.title("SDV Warns/Bans per User")
+    plt.title("Warns/Bans per User")
     plt.xticks(ind, sortedTotals)
     plt.xticks(rotation=-90)
     plt.yticks(np.arange(0, getMax(list(staffData.values())), 10))
@@ -74,7 +74,7 @@ def genUserPlot():
     plt.tight_layout()
     plt.grid(True, axis="y")
 
-    plt.savefig("sdv_user_plot.png")
+    plt.savefig("user_plot.png")
 
 # A lot of code could be reused if I wanted to combine these functions
 def genMonthlyPlot():
@@ -96,7 +96,7 @@ def genMonthlyPlot():
     p2 = plt.bar(ind, warns, width, bottom=bans, zorder=5)
     plt.ylabel("Logs")
     plt.xlabel("Month")
-    plt.title("SDV Warns/Bans per Month")
+    plt.title("Warns/Bans per Month")
     plt.xticks(ind, labels)
     plt.xticks(rotation=-90)
     plt.yticks(np.arange(0, getMax(list(monthData.values())), 10))
@@ -104,4 +104,4 @@ def genMonthlyPlot():
     plt.tight_layout()
     plt.grid(True, axis="y")
 
-    plt.savefig("sdv_month_plot.png")
+    plt.savefig("month_plot.png")

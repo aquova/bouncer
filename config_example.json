@@ -1,4 +1,4 @@
-{
+{   "discord":"TOKEN",
     "server":"ID",
     "channels":{
         "listening":["ID OF THE CHANNEL WHERE TH BOT WILL LISTEN"],

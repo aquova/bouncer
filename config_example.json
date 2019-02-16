@@ -1,0 +1,14 @@
+{
+    "server":"ID",
+    "channels":{
+        "listening":["ID OF THE CHANNEL WHERE TH BOT WILL LISTEN"],
+        "log":"ID",
+        "syslog":"ID"
+    },
+    "roles":["ID", "ID", "ID"],
+    "owner":"ID",
+    "DM":{
+        "ban":"ON",
+        "warn":"ON"
+    }
+}

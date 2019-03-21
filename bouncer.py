@@ -122,8 +122,6 @@ async def logUser(m, state):
     sqlconn = sqlite3.connect('sdv.db')
     if state == LogTypes.WARN:
         count = sqlconn.execute("SELECT COUNT(*) FROM badeggs WHERE id=? AND num > 0", [user.id]).fetchone()[0] + 1
-    elif state == LogTypes.NOTE:
-        count = sqlconn.execute("SELECT COUNT(*) FROM badeggs WHERE id=? AND num = -1", [user.id]).fetchone()[0] + 1
     else:
         count = state
     globalcount = sqlconn.execute("SELECT COUNT(*) FROM badeggs").fetchone()[0]
@@ -160,7 +158,8 @@ async def logUser(m, state):
         logMessage = "[{}] **{}** - Unbanned by {} - {}\n".format(Utils.formatTime(currentTime), params[2], m.author.name, mes)
         Visualize.updateCache(sqlconn, m.author.name, (-1, 0), Utils.formatTime(currentTime))
     else: # LogTypes.NOTE
-        logMessage = "Note #{} made for {}".format(count, username)
+        noteCount = sqlconn.execute("SELECT COUNT(*) FROM badeggs WHERE id=? AND num = -1", [user.id]).fetchone()[0] + 1
+        logMessage = "Note #{} made for {}".format(noteCount, username)
 
     await client.send_message(m.channel, logMessage)
 
@@ -186,7 +185,7 @@ async def logUser(m, state):
                 elif state == LogTypes.WARN and sendWarnDM:
                     await client.send_message(u, "Hi there! You received warning #{} in the Stardew Valley Discord for violating the rules: {}. Please review <#445729591533764620> and <#445729663885639680> for more info. If you have any questions, you can reply directly to this message to contact the staff.".format(count, mes))
                 elif state == LogTypes.KICK and sendBanDM:
-                    await client.send_message(u, "Hi there! You've been kicked from the Stardew Valley Discord for violating the rules: {}. If you have any questions, you can send a message to the moderators via the sidebar at <https://www.reddit.com/r/StardewValley>, and they'll forward it to us.".format(mes))
+                    await client.send_message(u, "Hi there! You've been kicked from the Stardew Valley Discord for violating the following reason: {}. If you have any questions, you can send a message to the moderators via the sidebar at <https://www.reddit.com/r/StardewValley>, and they'll forward it to us.".format(mes))
 
         # I don't know if any of these are ever getting tripped
         except discord.errors.HTTPException as e:

@@ -82,7 +82,7 @@ def parseMessage(message, username):
 #########################################################
 
 # Exports the user list to a .txt file
-def fetchUserList():
+def fetchUserList(message):
     with open("users.txt", 'w') as f:
         mems = message.server.members
         for u in mems:

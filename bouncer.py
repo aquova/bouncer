@@ -122,6 +122,8 @@ async def logUser(m, state):
     sqlconn = sqlite3.connect('sdv.db')
     if state == LogTypes.WARN:
         count = sqlconn.execute("SELECT COUNT(*) FROM badeggs WHERE id=? AND num > 0", [user.id]).fetchone()[0] + 1
+    elif state == LogTypes.NOTE:
+        count = sqlconn.execute("SELECT COUNT(*) FROM badeggs WHERE id=? AND num = -1", [user.id]).fetchone()[0] + 1
     else:
         count = state
     globalcount = sqlconn.execute("SELECT COUNT(*) FROM badeggs").fetchone()[0]
@@ -157,8 +159,8 @@ async def logUser(m, state):
     elif state == LogTypes.UNBAN:
         logMessage = "[{}] **{}** - Unbanned by {} - {}\n".format(Utils.formatTime(currentTime), params[2], m.author.name, mes)
         Visualize.updateCache(sqlconn, m.author.name, (-1, 0), Utils.formatTime(currentTime))
-    else:
-        logMessage = "Note made for {}".format(username)
+    else: # LogTypes.NOTE
+        logMessage = "Note #{} made for {}".format(count, username)
 
     await client.send_message(m.channel, logMessage)
 

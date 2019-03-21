@@ -165,7 +165,7 @@ async def logUser(m, state):
     await client.send_message(m.channel, logMessage)
 
     # Send ban recommendation, if needed
-    if (count >= warnThreshold):
+    if (state == LogTypes.WARN and count >= warnThreshold):
         await client.send_message(m.channel, "This user has received {} warnings or more. It is recommended that they be banned.".format(warnThreshold))
 
     logMesID = 0
@@ -517,7 +517,8 @@ async def on_message(message):
                     helpMes = "Issue a warning: `$warn USER message`\nLog a ban: `$ban USER reason`\nLog an unbanning: `$unban USER reason`\nLog a kick: `$kick USER reason`\nSearch for a user: `$search USER`\nCreate a note about a user: `$note USER message`\nShow all notes: `$notebook`\nRemove a user's last log: `$remove USER index(optional)`\nStop a user from sending DMs to us: `$block/$unblock USERID`\nReply to a user in DMs: `$reply USERID`\nPlot warn/ban stats: `$graph`\nReview which users have old logs: `$review`\nDMing users when they are banned is `{}`\nDMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
                     await client.send_message(message.channel, helpMes)
                 elif message.content.upper() == "$NOTEBOOK":
-                    await notebook(message)
+                    await client.send_message(message.channel, "I've disabled notebook for now. You know why.")
+                    # await notebook(message)
                 elif message.content.upper() in helpInfo.keys():
                     await client.send_message(message.channel, helpInfo[message.content.upper()])
                 elif message.content.upper() == "$UPDATE" and message.author.id == cfg["owner"]:

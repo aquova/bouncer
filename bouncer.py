@@ -50,6 +50,7 @@ reviewThreshold = 6 # In months
 # Containers to store needed information in memory
 recentBans = {}
 blockList = []
+recentReply = None
 
 helpInfo = {'$WARN':       '`$warn USER reason`',
             '$BAN':        '`$ban USER reason`',
@@ -297,13 +298,20 @@ async def blockUser(m, block):
 
 # Sends a private message to the specified user
 async def reply(m):
-    try:
-        user = User(m, recentBans)
-    except User.MessageError:
-        await client.send_message(m.channel, "I wasn't able to understand that message: `$reply USER`")
-        return
+    if m.content.split(" ")[1] == "^":
+        if recentReply != None:
+            u = recentReply
+        else:
+            await client.send_message(m.channel, "Sorry, I have no previous user stored. Gotta do it the old fashioned way.")
+            return
+    else:
+        try:
+            user = User(m, recentBans)
+        except User.MessageError:
+            await client.send_message(m.channel, "I wasn't able to understand that message: `$reply USER`")
+            return
 
-    u = user.getMember()
+        u = user.getMember()
     if u == None:
         await client.send_message(m.channel, "Sorry, but they need to be in the server for me to message them")
         return
@@ -477,8 +485,7 @@ async def on_voice_state_update(before, after):
 
 @client.event
 async def on_message(message):
-    global validInputChannels
-    global logChannel
+    global recentReply
     if message.author.id == client.user.id:
         return
     try:
@@ -486,6 +493,9 @@ async def on_message(message):
         if message.channel.is_private:
             # Regardless of blocklist or not, log their messages
             ts = message.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+
+            # Store who the most recent user was, for $reply ^
+            recentReply = message.author
 
             mes = "**{}#{}** (ID: {}): {}".format(message.author.name, message.author.discriminator, message.author.id, message.content)
             if message.attachments != []:
@@ -496,7 +506,7 @@ async def on_message(message):
                 openFile.write("{} - {}\n".format(ts, mes))
             await client.send_message(client.get_channel(validInputChannels[0]), mes)
 
-        # Temporarily notify if UB3R-BOT has removed something on its word censor
+        # Temporary - notify if UB3R-BOT has removed something on its word censor
         elif (message.author.id == "85614143951892480" and message.channel.id == "233039273207529472") and ("Word Censor Triggered" in message.content):
             await client.send_message(client.get_channel(validInputChannels[0]), "Uh oh, looks like the censor might've been tripped.")
 
@@ -513,7 +523,7 @@ async def on_message(message):
         elif (message.channel.id in validInputChannels) and Utils.checkRoles(message.author, validRoles):
             if len(message.content.split(" ")) == 1:
                 if message.content.upper() == "$HELP":
-                    helpMes = "Issue a warning: `$warn USER message`\nLog a ban: `$ban USER reason`\nLog an unbanning: `$unban USER reason`\nLog a kick: `$kick USER reason`\nSearch for a user: `$search USER`\nCreate a note about a user: `$note USER message`\nShow all notes: `$notebook`\nRemove a user's last log: `$remove USER index(optional)`\nStop a user from sending DMs to us: `$block/$unblock USERID`\nReply to a user in DMs: `$reply USERID`\nPlot warn/ban stats: `$graph`\nReview which users have old logs: `$review`\nDMing users when they are banned is `{}`\nDMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
+                    helpMes = "Issue a warning: `$warn USER message`\nLog a ban: `$ban USER reason`\nLog an unbanning: `$unban USER reason`\nLog a kick: `$kick USER reason`\nSearch for a user: `$search USER`\nCreate a note about a user: `$note USER message`\nShow all notes: `$notebook`\nRemove a user's last log: `$remove USER index(optional)`\nStop a user from sending DMs to us: `$block/$unblock USERID`\nReply to a user in DMs: `$reply USERID` - To reply to the most recent DM: `$reply ^`\nPlot warn/ban stats: `$graph`\nReview which users have old logs: `$review`\nDMing users when they are banned is `{}`\nDMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
                     await client.send_message(message.channel, helpMes)
                 elif message.content.upper() == "$NOTEBOOK":
                     await client.send_message(message.channel, "I've disabled notebook for now. You know why.")

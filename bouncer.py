@@ -27,6 +27,8 @@ sendWarnDM = (cfg['DM']['warn'].upper() == "ON")
 
 client = discord.Client()
 
+charLimit = 2000
+
 # Notes on database structure:
 # Most of the columns are self explanitory
 # num column is the category of the infraction
@@ -92,20 +94,26 @@ async def userSearch(m):
 
     out = "User {} was found with the following infractions\n".format(username)
     for index, item in enumerate(searchResults):
-        out += "{}. ".format(index+1)
+        n = "{}. ".format(index+1)
         if item[1] == LogTypes.BAN:
-            out += "[{}] **{}** - Banned by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[4], item[3])
+            n += "[{}] **{}** - Banned by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[4], item[3])
         elif item[1] == LogTypes.NOTE:
-            out += "[{}] **{}** - Note by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[4], item[3])
+            n += "[{}] **{}** - Note by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[4], item[3])
         elif item[1] == LogTypes.KICK:
-            out += "[{}] **{}** - Kicked by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[4], item[3])
+            n += "[{}] **{}** - Kicked by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[4], item[3])
         elif item[1] == LogTypes.UNBAN:
-            out += "[{}] **{}** - Unbanned by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[4], item[3])
+            n += "[{}] **{}** - Unbanned by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[4], item[3])
         else:
-            out += "[{}] **{}** - Warning #{} by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[1], item[4], item[3])
+            n += "[{}] **{}** - Warning #{} by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[1], item[4], item[3])
 
         if item[1] >= warnThreshold:
-            out += "They have received {} warnings, it is recommended that they be banned.\n".format(warnThreshold)
+            n += "They have received {} warnings, it is recommended that they be banned.\n".format(warnThreshold)
+
+        if len(out) + len(n) < charLimit:
+            out += n
+        else:
+            await client.send_message(m.channel, out)
+            out = n
     await client.send_message(m.channel, out)
 
 # Note a warn or ban for a user
@@ -340,7 +348,7 @@ async def notebook(m):
     out = "You asked for it...\n"
     for item in allNotes:
         note = "[{}] **{}** - Note by {} - {}\n".format(Utils.formatTime(item[4]), item[2], item[6], item[5])
-        if len(note) + len(out) < 2000:
+        if len(note) + len(out) < charLimit:
             out += note
         else:
             await client.send_message(m.channel, out)
@@ -378,7 +386,7 @@ async def userReview(channel):
     # Reverse order so oldest are first
     for user in usernames[::-1]:
         # This gets past Discord's 2000 char limit
-        if len(mes) + len(user) + 2 < 2000:
+        if len(mes) + len(user) + 2 < charLimit:
             mes += "`{}`, ".format(user)
         else:
             await client.send_message(channel, mes)

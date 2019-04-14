@@ -227,10 +227,10 @@ async def removeError(m):
 
     mes = Utils.parseMessage(m.content, username)
     if mes == "":
-        mes = 0
+        mes = "0"
 
     try:
-        index = int(mes) - 1
+        index = int(mes.split(" ")[0]) - 1
     except IndexError:
         index = -1
     except ValueError:

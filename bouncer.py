@@ -26,6 +26,7 @@ sendBanDM = (cfg['DM']['ban'].upper() == "ON")
 sendWarnDM = (cfg['DM']['warn'].upper() == "ON")
 
 client = discord.Client()
+startTime = 0
 
 charLimit = 2000
 
@@ -394,12 +395,24 @@ async def userReview(channel):
 
     await client.send_message(channel, mes)
 
+async def uptime(channel):
+    currTime = datetime.datetime.now()
+    delta = currTime - startTime
+    hours, remainder = divmod(delta.seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    mes = "I have been running for {} days, {} hours, and {} minutes".format(delta.days, hours, minutes)
+
+    await client.send_message(channel, mes)
+
 @client.event
 async def on_ready():
     global blockList
+    global startTime
     print('Logged in as')
     print(client.user.name)
     print(client.user.id)
+
+    startTime = datetime.datetime.now()
 
     sqlconn = sqlite3.connect('sdv.db')
     blockDB = sqlconn.execute("SELECT * FROM blocks").fetchall()
@@ -550,6 +563,8 @@ async def on_message(message):
                     await client.send_file(message.channel, fp='./month_plot.png')
                 elif message.content.upper() == "$REVIEW":
                     await userReview(message.channel)
+                elif message.content.upper() == "$UPTIME":
+                    await uptime(message.channel)
                 return
 
             if message.content.startswith("$search"):

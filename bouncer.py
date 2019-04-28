@@ -346,15 +346,14 @@ async def notebook(m):
     sqlconn.commit()
     sqlconn.close()
 
-    out = "You asked for it...\n"
-    for item in allNotes:
-        note = "[{}] **{}** - Note by {} - {}\n".format(Utils.formatTime(item[4]), item[2], item[6], item[5])
-        if len(note) + len(out) < charLimit:
-            out += note
-        else:
-            await client.send_message(m.channel, out)
-            out = note
-    await client.send_message(m.channel, out)
+    with open("notes.txt", "w") as f:
+        for item in allNotes:
+            note = "[{}] **{}** - Note by {} - {}\n".format(Utils.formatTime(item[4]), item[2], item[6], item[5])
+            f.write(note)
+
+    await client.send_message(m.channel, "Your notes, as requested.")
+
+    await client.send_file(m.channel, fp='./notes.txt')
 
 # Posts the usernames of all users whose oldest logs are older than reviewThreshold
 async def userReview(channel):
@@ -544,17 +543,21 @@ async def on_message(message):
         elif (message.channel.id in validInputChannels) and Utils.checkRoles(message.author, validRoles):
             if len(message.content.split(" ")) == 1:
                 if message.content.upper() == "$HELP":
-                    helpMes = "Issue a warning: `$warn USER message`\nLog a ban: `$ban USER reason`\nLog an unbanning: `$unban USER reason`\nLog a kick: `$kick USER reason`\nSearch for a user: `$search USER`\nCreate a note about a user: `$note USER message`\nShow all notes: `$notebook`\nRemove a user's last log: `$remove USER index(optional)`\nStop a user from sending DMs to us: `$block/$unblock USERID`\nReply to a user in DMs: `$reply USERID` - To reply to the most recent DM: `$reply ^`\nPlot warn/ban stats: `$graph`\nReview which users have old logs: `$review`\nDMing users when they are banned is `{}`\nDMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
+                    helpMes = "Issue a warning: `$warn USER message`\nLog a ban: `$ban USER reason`\nLog an unbanning: `$unban USER reason`\nLog a kick: `$kick USER reason`\nSearch for a user: `$search USER`\nCreate a note about a user: `$note USER message`\nShow all notes: `$notebook`\nRemove a user's last log: `$remove USER index(optional)`\nStop a user from sending DMs to us: `$block/$unblock USERID`\nReply to a user in DMs: `$reply USERID` - To reply to the most recent DM: `$reply ^`\nPlot warn/ban stats: `$graph`\nReview which users have old logs: `$review`\nView bot uptime: `$uptime`\nDMing users when they are banned is `{}`\nDMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
                     await client.send_message(message.channel, helpMes)
                 elif message.content.upper() == "$NOTEBOOK":
-                    await client.send_message(message.channel, "I've disabled notebook for now. You know why.")
-                    # await notebook(message)
+                    # await client.send_message(message.channel, "I've disabled notebook for now. You know why.")
+                    await notebook(message)
                 elif message.content.upper() in helpInfo.keys():
                     await client.send_message(message.channel, helpInfo[message.content.upper()])
-                elif message.content.upper() == "$UPDATE" and message.author.id == cfg["owner"]:
-                    await client.send_message(message.channel, "Updating and restarting...")
-                    subprocess.call("git pull", shell=True)
-                    sys.exit()
+                elif message.content.upper() == "$UPDATE":
+                    if message.author.id == cfg["owner"]:
+                        await client.send_message(message.channel, "Updating and restarting...")
+                        subprocess.call(["git", "pull"])
+                        sys.exit()
+                    else:
+                        await client.send_message(message.channel, "Who do you think you are.")
+                        return
                 elif message.content.upper() == "$GRAPH":
                     import Visualize # Import here to avoid debugger crashing from matplotlib issue
                     Visualize.genUserPlot()
@@ -567,6 +570,7 @@ async def on_message(message):
                     await uptime(message.channel)
                 return
 
+            # This if/elif thing isn't ideal, but it's by far the simpliest way
             if message.content.startswith("$search"):
                 await userSearch(message)
             elif message.content.startswith("$warn"):

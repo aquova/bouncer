@@ -3,6 +3,8 @@ config.json
 *.db
 *.csv
 DMs.txt
+notes.md
+notes.pdf
 *.png
 
 # Editor files

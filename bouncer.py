@@ -325,11 +325,15 @@ async def reply(m):
         await client.send_message(m.channel, "Sorry, but they need to be in the server for me to message them")
         return
     try:
+        mes = Utils.removeCommand(m.content)
+        if len(m.attachments) != 0:
+            for item in m.attachments:
+                mes += '\n{}'.format(item['url'])
         ts = m.timestamp.strftime('%Y-%m-%d %H:%M:%S')
         uname = "{}#{}".format(u.name, u.discriminator)
         with open("DMs.txt", 'a', encoding='utf-8') as openFile:
-            openFile.write("{} - {} sent a DM to {}: {}\n".format(ts, m.author.name, uname, Utils.removeCommand(m.content)))
-        await client.send_message(u, "A message from the SDV staff: {}".format(Utils.removeCommand(m.content)))
+            openFile.write("{} - {} sent a DM to {}: {}\n".format(ts, m.author.name, uname, mes))
+        await client.send_message(u, "A message from the SDV staff: {}".format(mes))
         await client.send_message(m.channel, "Message sent to {}.".format(uname))
 
     # I don't know if any of these are ever getting tripped

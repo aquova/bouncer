@@ -599,4 +599,7 @@ async def on_message(message):
     except discord.errors.HTTPException:
         pass
 
-client.run(discordKey)
+try:
+    client.run(discordKey)
+except CancelledError:
+    pass

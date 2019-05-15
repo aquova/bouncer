@@ -513,8 +513,6 @@ async def on_message(message):
     if message.author.id == client.user.id:
         return
     try:
-        if message.author.id == "164945860864507906":
-            await client.add_reaction(message, '🥄')
         # If they sent a private DM to bouncer
         if message.channel.is_private:
             # Regardless of blocklist or not, log their messages

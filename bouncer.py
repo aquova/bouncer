@@ -595,6 +595,14 @@ async def on_message(message):
                 await reply(message)
             elif message.content.startswith("$note"):
                 await logUser(message, LogTypes.NOTE)
+            elif message.content.startswith("$nug"):
+                val = Utils.removeCommand(message.content)
+                if val[0] == '$':
+                    val = val[1:]
+                try:
+                    return int(val) * 0.25
+                except ValueError:
+                    pass
 
     except discord.errors.HTTPException:
         pass

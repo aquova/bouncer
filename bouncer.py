@@ -600,7 +600,7 @@ async def on_message(message):
                 if val[0] == '$':
                     val = val[1:]
                 try:
-                    return int(val) * 0.25
+                    return "You can get {} for that amount".format(int(val) * 0.25)
                 except ValueError:
                     pass
 

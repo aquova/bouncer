@@ -532,7 +532,8 @@ async def on_message(message):
 
         # Temporary - notify if UB3R-BOT has removed something on its word censor
         elif (message.author.id == "85614143951892480" and message.channel.id == "233039273207529472") and ("Word Censor Triggered" in message.content):
-            await client.send_message(client.get_channel(validInputChannels[0]), "Uh oh, looks like the censor might've been tripped.")
+            mes = "Uh oh, looks like the censor might've been tripped.\nhttps://discordapp.com/channels/{}/{}/{}".format(message.server.id, message.channel.id, message.id)
+            await client.send_message(client.get_channel(validInputChannels[0]), mes)
 
         # If a user pings bouncer
         elif client.user in message.mentions:

@@ -603,4 +603,8 @@ async def on_message(message):
 try:
     client.run(discordKey)
 except CancelledError:
+    print("CancelledError occurred")
+    pass
+except ConnectionResetError:
+    print("ConnectionResetError occurred")
     pass

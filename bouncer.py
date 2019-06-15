@@ -379,14 +379,14 @@ async def notebook(m):
     sqlconn.commit()
     sqlconn.close()
 
-    with open("notes.txt", "w") as f:
+    with open("private/notes.txt", "w") as f:
         for item in allNotes:
             note = "[{}] **{}** - Note by {} - {}\n".format(Utils.formatTime(item[4]), item[2], item[6], item[5])
             f.write(note)
 
     await client.send_message(m.channel, "Your notes, as requested.")
 
-    await client.send_file(m.channel, fp='./notes.txt')
+    await client.send_file(m.channel, fp='./private/notes.txt')
 
 # Posts the usernames of all users whose oldest logs are older than reviewThreshold
 async def userReview(channel):

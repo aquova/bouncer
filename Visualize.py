@@ -19,6 +19,8 @@ def getMax(a):
             maximum = x[0] + x[1]
     return roundup(maximum)
 
+# Val is a tuple which determines what to modify
+# (ban # change, warn # change)
 def updateCache(sqlconn, staff, val, date):
     formatDate = "{}-{}".format(date.split('-')[0], date.split('-')[1])
 

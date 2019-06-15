@@ -213,7 +213,8 @@ async def logUser(m, state):
 
 # Removes last database entry for specified user
 # m: Discord message object
-async def removeError(m):
+# edit: Boolean, signifies if this is a deletion or an edit
+async def removeError(m, edit):
     try:
         user = User(m, recentBans)
     except User.MessageError:
@@ -228,49 +229,73 @@ async def removeError(m):
 
     mes = Utils.parseMessage(m.content, username)
     if mes == "":
-        mes = "0"
+        if edit:
+            await client.send_message(m.channel, "You need to specify an edit message")
+            return
+        else:
+            mes = "0"
 
     try:
         index = int(mes.split(" ")[0]) - 1
-    except IndexError:
+        mes = Utils.strip(mes)
+    except (IndexError, ValueError):
         index = -1
-    except ValueError:
-        await client.send_message(m.channel, "I don't know what `{}` is but I'm pretty sure it's not a number.".format(m.content.split(" ")[2]))
-        return
 
     # Find most recent entry in database for specified user
     sqlconn = sqlite3.connect('sdv.db')
-    searchResults = sqlconn.execute("SELECT dbid, username, num, date, message, staff, post FROM badeggs WHERE id=?", [user.id]).fetchall()
+    searchResults = sqlconn.execute("SELECT dbid, id, username, num, date, message, staff, post FROM badeggs WHERE id=?", [user.id]).fetchall()
 
     if searchResults == []:
         await client.send_message(m.channel, "I couldn't find that user in the database")
     elif (index > len(searchResults) - 1) or index < -1:
-        await client.send_message(m.channel, "I can't remove item number {}, there aren't that many for this user".format(index+1))
+        await client.send_message(m.channel, "I can't modify item number {}, there aren't that many for this user".format(index+1))
     else:
         item = searchResults[index]
-        sqlconn.execute("REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, NULL, NULL, NULL, NULL, NULL, NULL, NULL)", [item[0]])
-
         import Visualize
+        if edit:
+            if item[3] == LogTypes.NOTE:
+                currentTime = datetime.datetime.utcnow()
+                # Make a copy of the original log, then modify a few fields
+                params = list(item)
+                params[4] = currentTime
+                params[5] = mes
+                params[6] = m.author.name
+                sqlconn.execute("REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", params)
+                out = "The following log was edited:\n[{}] **{}** - Note by {} - {}\n".format(Utils.formatTime(item[4]), item[2], item[6], item[5])
+                out = "The log now reads as follows:\n[{}] **{}** - Note by {} - {}\n".format(Utils.formatTime(params[4]), params[2], params[6], params[5])
+                await client.send_message(m.channel, out)
+
+                sqlconn.commit()
+                sqlconn.close()
+                return
+            else:
+                await client.send_message(m.channel, "You can only edit notes for now")
+                sqlconn.close()
+                return
+
+        # Everything after here is deletion
+        sqlconn.execute("REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, NULL, NULL, NULL, NULL, NULL, NULL, NULL)", [item[0]])
         out = "The following log was deleted:\n"
-        if item[2] == LogTypes.BAN:
-            out += "[{}] **{}** - Banned by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[5], item[4])
-            Visualize.updateCache(sqlconn, item[5], (-1, 0), Utils.formatTime(item[3]))
-        elif item[2] == LogTypes.NOTE:
-            out += "[{}] **{}** - Note by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[5], item[4])
-        elif item[2] == LogTypes.UNBAN:
-            out += "[{}] **{}** - Unbanned by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[5], item[4])
-            Visualize.updateCache(sqlconn, item[5], (1, 0), Utils.formatTime(item[3]))
-        elif item[2] == LogTypes.KICK:
-            out += "[{}] **{}** - Kicked by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[5], item[4])
-        else:
-            out += "[{}] **{}** - Warning #{} by {} - {}\n".format(Utils.formatTime(item[3]), item[1], item[2], item[5], item[4])
-            Visualize.updateCache(sqlconn, item[5], (0, -1), Utils.formatTime(item[3]))
+
+        if item[3] == LogTypes.BAN:
+            out += "[{}] **{}** - Banned by {} - {}\n".format(Utils.formatTime(item[4]), item[2], item[6], item[5])
+            Visualize.updateCache(sqlconn, item[6], (-1, 0), Utils.formatTime(item[4]))
+        elif item[3] == LogTypes.NOTE:
+            out += "[{}] **{}** - Note by {} - {}\n".format(Utils.formatTime(item[4]), item[2], item[6], item[5])
+        elif item[3] == LogTypes.UNBAN:
+            out += "[{}] **{}** - Unbanned by {} - {}\n".format(Utils.formatTime(item[4]), item[2], item[6], item[5])
+            Visualize.updateCache(sqlconn, item[6], (1, 0), Utils.formatTime(item[4]))
+        elif item[3] == LogTypes.KICK:
+            out += "[{}] **{}** - Kicked by {} - {}\n".format(Utils.formatTime(item[4]), item[2], item[6], item[5])
+        else: # LogTypes.WARN
+            out += "[{}] **{}** - Warning #{} by {} - {}\n".format(Utils.formatTime(item[4]), item[2], item[3], item[6], item[5])
+            Visualize.updateCache(sqlconn, item[6], (0, -1), Utils.formatTime(item[4]))
         await client.send_message(m.channel, out)
 
         # Search logging channel for matching post, and remove it
-        if item[6] != 0:
+        if item[7] != 0:
             async for m in client.logs_from(client.get_channel(logChannel)):
-                if str(m.id) == str(item[6]):
+                if str(m.id) == str(item[7]):
                     await client.delete_message(m)
                     break
     sqlconn.commit()
@@ -587,7 +612,7 @@ async def on_message(message):
             elif message.content.startswith("$unban"):
                 await logUser(message, LogTypes.UNBAN)
             elif message.content.startswith("$remove"):
-                await removeError(message)
+                await removeError(message, False)
             elif message.content.startswith("$block"):
                 await blockUser(message, True)
             elif message.content.startswith("$unblock"):
@@ -596,15 +621,23 @@ async def on_message(message):
                 await reply(message)
             elif message.content.startswith("$note"):
                 await logUser(message, LogTypes.NOTE)
+            elif message.content.startswith("$edit"):
+                await removeError(message, True)
 
     except discord.errors.HTTPException:
         pass
 
 try:
     client.run(discordKey)
-except CancelledError:
-    print("CancelledError occurred")
+# TODO: I'm not sure what causes these. Should probably investigate someday
+except (CancelledError, ConnectionResetError, discord.errors.HTTPException) as e:
+#     print("CancelledError occurred")
+#     pass
+# except ConnectionResetError:
+#     print("ConnectionResetError occurred")
+#     pass
+# except discord.errors.HTTPException:
+#     print("Discord HTTPException occurred")
+    print("Exception has occurred: {}".format(str(e)))
     pass
-except ConnectionResetError:
-    print("ConnectionResetError occurred")
-    pass
+

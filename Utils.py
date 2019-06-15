@@ -2,6 +2,11 @@
 
 import discord, time, sqlite3
 
+# Removes the first word of a string
+def strip(m):
+    tmp = m.split(" ")[1:]
+    return " ".join(tmp)
+
 # Removes the '$command' to get just the request
 def removeCommand(m):
     tmp = m.split(" ")[2:]

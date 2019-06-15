@@ -24,7 +24,9 @@ To run the bot, firstly, you must have a configuration file named `config.json` 
 }
 ```
 
-This file should be kept private, as it contains the bot's user token.
+This file should be kept private, as it contains the bot's user token. It should be placed into a `private` folder, which by default will be ignored by git.
+
+The path to your database should be specifed in `Utils.py` as the `DATABASE_PATH` variable.
 
 Once the file is created, change to the bouncer directory. The necessary Python requirements can then be installed via:
 

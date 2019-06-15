@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from Utils import DATABASE_PATH
 
 months = ["", "Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"]
 
@@ -51,7 +52,7 @@ def updateCache(sqlconn, staff, val, date):
 
 def genUserPlot():
     plt.clf()
-    sqlconn = sqlite3.connect('sdv.db')
+    sqlconn = sqlite3.connect(DATABASE_PATH)
     data = sqlconn.execute("SELECT * FROM staffLogs").fetchall()
     staffData = {x[0]: [x[1], x[2]] for x in data}
     sqlconn.close()
@@ -76,12 +77,12 @@ def genUserPlot():
     plt.tight_layout()
     plt.grid(True, axis="y")
 
-    plt.savefig("user_plot.png")
+    plt.savefig("private/user_plot.png")
 
 # A lot of code could be reused if I wanted to combine these functions
 def genMonthlyPlot():
     plt.clf()
-    sqlconn = sqlite3.connect("sdv.db")
+    sqlconn = sqlite3.connect(DATABASE_PATH)
     data = sqlconn.execute("SELECT * FROM monthLogs").fetchall()
     sortedData = sorted(data)
     monthData = {x[0]: [x[1], x[2]] for x in sortedData}
@@ -106,4 +107,4 @@ def genMonthlyPlot():
     plt.tight_layout()
     plt.grid(True, axis="y")
 
-    plt.savefig("month_plot.png")
+    plt.savefig("private/month_plot.png")

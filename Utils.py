@@ -2,6 +2,8 @@
 
 import discord, time, sqlite3
 
+DATABASE_PATH = "private/sdv.db"
+
 # Removes the first word of a string
 def strip(m):
     tmp = m.split(" ")[1:]
@@ -64,7 +66,7 @@ def parseUsername(message, recentBans):
             revBans = {v: k for k, v in recentBans.items()}
             return revBans[user]
 
-        sqlconn = sqlite3.connect('sdv.db')
+        sqlconn = sqlite3.connect(DATABASE_PATH)
         searchResults = sqlconn.execute("SELECT id FROM badeggs WHERE username=?", [user]).fetchall()
         sqlconn.close()
         if searchResults != []:

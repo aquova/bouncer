@@ -1,5 +1,6 @@
 import discord, sqlite3
 import Utils
+from Utils import DATABASE_PATH
 
 class User:
     class MessageError(Exception):
@@ -46,7 +47,7 @@ class User:
         return checkDatabase[-1][0]
 
     def search(self):
-        sqlconn = sqlite3.connect('sdv.db')
+        sqlconn = sqlite3.connect(DATABASE_PATH)
         searchResults = sqlconn.execute("SELECT username, num, date, message, staff FROM badeggs WHERE id=?", [self.id]).fetchall()
         sqlconn.commit()
         sqlconn.close()

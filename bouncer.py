@@ -7,9 +7,10 @@ https://github.com/aquova/bouncer
 import discord, json, sqlite3, datetime, asyncio, os, subprocess, sys
 import Utils
 from User import User
+from Utils import DATABASE_PATH
 
 # Reading values from config file
-with open('config.json') as config_file:
+with open('private/config.json') as config_file:
     cfg = json.load(config_file)
 
 # Configuring preferences
@@ -39,7 +40,7 @@ charLimit = 2000
 # -2: Kick
 # -3: Unban
 
-sqlconn = sqlite3.connect('sdv.db')
+sqlconn = sqlite3.connect(DATABASE_PATH)
 sqlconn.execute("CREATE TABLE IF NOT EXISTS badeggs (dbid INT PRIMARY KEY, id INT, username TEXT, num INT, date DATE, message TEXT, staff TEXT, post INT);")
 sqlconn.execute("CREATE TABLE IF NOT EXISTS blocks (id TEXT);")
 sqlconn.execute("CREATE TABLE IF NOT EXISTS staffLogs (staff TEXT PRIMARY KEY, bans INT, warns INT);")
@@ -55,16 +56,19 @@ recentBans = {}
 blockList = []
 recentReply = None
 
-helpInfo = {'$WARN':       '`$warn USER reason`',
-            '$BAN':        '`$ban USER reason`',
-            '$UNBAN':      '`$unban USER reason`',
-            '$KICK':       '`$kick USER reason`',
-            '$SEARCH':     '`$search USER`',
-            '$NOTE':       '`$note USER message',
-            '$REMOVE':     '`$remove USER',
-            '$BLOCK':      '`$block USER`',
-            '$UNBLOCK':    '`$unblock USER',
-            '$REPLY':      '`$reply USER`'}
+helpInfo = {
+    '$WARN':       '`$warn USER reason`',
+    '$BAN':        '`$ban USER reason`',
+    '$UNBAN':      '`$unban USER reason`',
+    '$KICK':       '`$kick USER reason`',
+    '$SEARCH':     '`$search USER`',
+    '$NOTE':       '`$note USER message`',
+    '$REMOVE':     '`$remove USER [num]`',
+    '$BLOCK':      '`$block USER`',
+    '$UNBLOCK':    '`$unblock USER`',
+    '$REPLY':      '`$reply USER`',
+    '$EDIT':       '`$edit USER [num] new_message`'
+}
 
 # This is basically a makeshift enum
 class LogTypes:
@@ -129,7 +133,7 @@ async def logUser(m, state):
             await client.send_message(m.channel, "I wasn't able to understand that message: `$log USER`")
         return
 
-    sqlconn = sqlite3.connect('sdv.db')
+    sqlconn = sqlite3.connect(DATABASE_PATH)
     if state == LogTypes.WARN:
         count = sqlconn.execute("SELECT COUNT(*) FROM badeggs WHERE id=? AND num > 0", [user.id]).fetchone()[0] + 1
     else:
@@ -242,7 +246,7 @@ async def removeError(m, edit):
         index = -1
 
     # Find most recent entry in database for specified user
-    sqlconn = sqlite3.connect('sdv.db')
+    sqlconn = sqlite3.connect(DATABASE_PATH)
     searchResults = sqlconn.execute("SELECT dbid, id, username, num, date, message, staff, post FROM badeggs WHERE id=?", [user.id]).fetchall()
 
     if searchResults == []:
@@ -312,7 +316,7 @@ async def blockUser(m, block):
         await client.send_message(m.channel, "I wasn't able to understand that message: `$block USER`")
         return
 
-    sqlconn = sqlite3.connect('sdv.db')
+    sqlconn = sqlite3.connect(DATABASE_PATH)
     if block:
         if user.id in blockList:
             await client.send_message(m.channel, "Um... That user was already blocked...")
@@ -356,7 +360,7 @@ async def reply(m):
                 mes += '\n{}'.format(item['url'])
         ts = m.timestamp.strftime('%Y-%m-%d %H:%M:%S')
         uname = "{}#{}".format(u.name, u.discriminator)
-        with open("DMs.txt", 'a', encoding='utf-8') as openFile:
+        with open("private/DMs.txt", 'a', encoding='utf-8') as openFile:
             openFile.write("{} - {} sent a DM to {}: {}\n".format(ts, m.author.name, uname, mes))
         await client.send_message(u, "A message from the SDV staff: {}".format(mes))
         await client.send_message(m.channel, "Message sent to {}.".format(uname))
@@ -370,7 +374,7 @@ async def reply(m):
         await client.send_message(m.channel, "ERROR: I was unable to find the user to DM. I'm unsure how this can be the case, unless their account was deleted")
 
 async def notebook(m):
-    sqlconn = sqlite3.connect('sdv.db')
+    sqlconn = sqlite3.connect(DATABASE_PATH)
     allNotes = sqlconn.execute("SELECT * FROM badeggs WHERE num=-1").fetchall()
     sqlconn.commit()
     sqlconn.close()
@@ -390,7 +394,7 @@ async def userReview(channel):
     usernames = []
     ids = []
     tooNew = []
-    sqlconn = sqlite3.connect("sdv.db")
+    sqlconn = sqlite3.connect(DATABASE_PATH)
     # Reverse order so newest logs are checked/eliminated first
     allLogs = sqlconn.execute("SELECT id, username, date, num FROM badeggs WHERE num > -1").fetchall()[::-1]
 
@@ -442,7 +446,7 @@ async def on_ready():
 
     startTime = datetime.datetime.now()
 
-    sqlconn = sqlite3.connect('sdv.db')
+    sqlconn = sqlite3.connect(DATABASE_PATH)
     blockDB = sqlconn.execute("SELECT * FROM blocks").fetchall()
     blockList = [x[0] for x in blockDB]
     sqlconn.close()
@@ -551,7 +555,7 @@ async def on_message(message):
                 for item in message.attachments:
                     mes += '\n' + item['url']
 
-            with open("DMs.txt", 'a', encoding='utf-8') as openFile:
+            with open("private/DMs.txt", 'a', encoding='utf-8') as openFile:
                 openFile.write("{} - {}\n".format(ts, mes))
             await client.send_message(client.get_channel(validInputChannels[0]), mes)
 
@@ -573,10 +577,9 @@ async def on_message(message):
         elif (message.channel.id in validInputChannels) and Utils.checkRoles(message.author, validRoles):
             if len(message.content.split(" ")) == 1:
                 if message.content.upper() == "$HELP":
-                    helpMes = "Issue a warning: `$warn USER message`\nLog a ban: `$ban USER reason`\nLog an unbanning: `$unban USER reason`\nLog a kick: `$kick USER reason`\nSearch for a user: `$search USER`\nCreate a note about a user: `$note USER message`\nShow all notes: `$notebook`\nRemove a user's last log: `$remove USER index(optional)`\nStop a user from sending DMs to us: `$block/$unblock USERID`\nReply to a user in DMs: `$reply USERID` - To reply to the most recent DM: `$reply ^`\nPlot warn/ban stats: `$graph`\nReview which users have old logs: `$review`\nView bot uptime: `$uptime`\nDMing users when they are banned is `{}`\nDMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
+                    helpMes = "Issue a warning: `$warn USER message`\nLog a ban: `$ban USER reason`\nLog an unbanning: `$unban USER reason`\nLog a kick: `$kick USER reason`\nSearch for a user: `$search USER`\nCreate a note about a user: `$note USER message`\nShow all notes: `$notebook`\nRemove a user's log: `$remove USER index(optional)`\nEdit a user's note: `$edit USER index(optional) new_message`\nStop a user from sending DMs to us: `$block/$unblock USERID`\nReply to a user in DMs: `$reply USERID` - To reply to the most recent DM: `$reply ^`\nPlot warn/ban stats: `$graph`\nReview which users have old logs: `$review`\nView bot uptime: `$uptime`\nDMing users when they are banned is `{}`\nDMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
                     await client.send_message(message.channel, helpMes)
                 elif message.content.upper() == "$NOTEBOOK":
-                    # await client.send_message(message.channel, "I've disabled notebook for now. You know why.")
                     await notebook(message)
                 elif message.content.upper() in helpInfo.keys():
                     await client.send_message(message.channel, helpInfo[message.content.upper()])
@@ -592,8 +595,8 @@ async def on_message(message):
                     import Visualize # Import here to avoid debugger crashing from matplotlib issue
                     Visualize.genUserPlot()
                     Visualize.genMonthlyPlot()
-                    await client.send_file(message.channel, fp='./user_plot.png')
-                    await client.send_file(message.channel, fp='./month_plot.png')
+                    await client.send_file(message.channel, fp='./private/user_plot.png')
+                    await client.send_file(message.channel, fp='./private/month_plot.png')
                 elif message.content.upper() == "$REVIEW":
                     await userReview(message.channel)
                 elif message.content.upper() == "$UPTIME":
@@ -631,13 +634,6 @@ try:
     client.run(discordKey)
 # TODO: I'm not sure what causes these. Should probably investigate someday
 except (CancelledError, ConnectionResetError, discord.errors.HTTPException) as e:
-#     print("CancelledError occurred")
-#     pass
-# except ConnectionResetError:
-#     print("ConnectionResetError occurred")
-#     pass
-# except discord.errors.HTTPException:
-#     print("Discord HTTPException occurred")
     print("Exception has occurred: {}".format(str(e)))
     pass
 

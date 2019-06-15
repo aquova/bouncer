@@ -1,11 +1,7 @@
 # Private files
 config.json
+private/*
 *.db
-*.csv
-DMs.txt
-notes.md
-notes.pdf
-*.png
 
 # Editor files
 *.swp

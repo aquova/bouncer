@@ -475,7 +475,7 @@ async def on_member_update(before, after):
 @client.event
 async def on_member_ban(member):
     global recentBans
-    recentBans[member.id] = "{}#{}".format(member.name, member.discriminator)
+    recentBans[member.id] = "{}#{} : {}".format(member.name, member.discriminator, member.id)
     mes = "{}#{} has been banned.".format(member.name, member.discriminator)
     await client.send_message(client.get_channel(systemLog), mes)
 
@@ -483,12 +483,15 @@ async def on_member_ban(member):
 async def on_member_remove(member):
     # I know they aren't banned, but still we may want to log someone after they leave
     global recentBans
-    recentBans[member.id] = "{}#{}".format(member.name, member.discriminator)
+    recentBans[member.id] = "{}#{} : {}".format(member.name, member.discriminator, member.id)
     mes = "**{}#{}** has left".format(member.name, member.discriminator)
     await client.send_message(client.get_channel(systemLog), mes)
 
 @client.event
 async def on_message_delete(message):
+    # Don't allow bouncer to react to its own deleted messages
+    if message.author.id == client.user.id:
+        return
     mes = "**{}#{}** deleted in <#{}>: `{}`".format(message.author.name, message.author.discriminator, message.channel.id, message.content)
     if message.attachments != []:
         for item in message.attachments:
@@ -524,7 +527,7 @@ async def on_message_edit(before, after):
 
 @client.event
 async def on_member_join(member):
-    mes = "**{}#{}** has joined".format(member.name, member.discriminator)
+    mes = "**{}#{} ({})** has joined".format(member.name, member.discriminator, member.id)
     await client.send_message(client.get_channel(systemLog), mes)
 
 @client.event
@@ -535,6 +538,12 @@ async def on_voice_state_update(before, after):
     elif (before.voice.voice_channel == None):
         mes = "**{}#{}** has joined voice channel {}".format(after.name, after.discriminator, after.voice.voice_channel.name)
         await client.send_message(client.get_channel(systemLog), mes)
+
+@client.event
+async def on_reaction_add(reaction, user):
+    if reaction.emoji == '👑' and reaction.message.channel.id == cfg["gatekeeper"]["channel"]:
+        villager = discord.utils.get(reaction.message.server.roles, id=cfg["gatekeeper"]["role"])
+        await client.add_roles(user, villager)
 
 @client.event
 async def on_message(message):
@@ -601,6 +610,13 @@ async def on_message(message):
                     await userReview(message.channel)
                 elif message.content.upper() == "$UPTIME":
                     await uptime(message.channel)
+                # Debug functions only to be executed by the owner
+                elif message.content.upper() == "$DUMPBANS" and message.author.id == cfg["owner"]:
+                    output = await Utils.dumpbans(recentBans)
+                    await client.send_message(message.channel, output)
+                elif message.content.upper() == "$GETROLES" and message.author.id == cfg["owner"]:
+                    output = await Utils.fetchRoleList(message.server)
+                    await client.send_message(message.channel, output)
                 return
 
             # This if/elif thing isn't ideal, but it's by far the simpliest way

@@ -89,21 +89,23 @@ def parseMessage(message, username):
 #########################################################
 
 # Exports the user list to a .txt file
-def fetchUserList(message):
-    with open("users.txt", 'w') as f:
+async def fetchUserList(message):
+    with open("private/users.txt", 'w') as f:
         mems = message.server.members
         for u in mems:
             f.write("{}\n".format(u.name))
 
 # Fetches a dict of the role names to ID values for the given server
 # serverID needs to be a string
-def fetchRoleList(serverID, client):
-    s = client.get_server(serverID)
-    roles = {role.name: role.id for role in s.roles}
+async def fetchRoleList(server):
+    roles = {role.name: role.id for role in server.roles}
+    out = "```\n"
     for r in roles:
-        print("{} : {}".format(r, roles[r]))
+        out += "{} : {}\n".format(r, roles[r])
+    out += "```"
+    return out
 
-def dumpBans(banList):
+async def dumpBans(banList):
     output = ""
     for user in list(banList.items()):
         output += "{}: {}\n".format(user, banList[user])

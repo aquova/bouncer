@@ -222,7 +222,10 @@ async def removeError(m, edit):
     try:
         user = User(m, recentBans)
     except User.MessageError:
-        await client.send_message(m.channel, "I wasn't able to understand that message: `$remove USER`")
+        if edit:
+            await client.send_message(m.channel, "I wasn't able to understand that message: `$edit USER [num] new_message`")
+        else:
+            await client.send_message(m.channel, "I wasn't able to understand that message: `$remove USER [num]`")
         return
 
     # Needed for multi-word usernames

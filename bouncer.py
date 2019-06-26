@@ -84,17 +84,17 @@ async def userSearch(m):
     try:
         user = User(m, recentBans)
     except User.MessageError:
-        await client.send_message(m.channel, "I wasn't able to find a user anywhere based on that message. `$search USER`")
+        await m.channel.send("I wasn't able to find a user anywhere based on that message. `$search USER`")
         return
 
     searchResults = user.search()
     try:
         username = user.getName(recentBans)
         if searchResults == []:
-            await client.send_message(m.channel, "User {} was not found in the database\n".format(username))
+            await m.channel.send("User {} was not found in the database\n".format(username))
             return
     except User.MessageError:
-        await client.send_message(m.channel, "That user was not found in the database or the server\n")
+        await m.channel.send("That user was not found in the database or the server\n")
         return
 
     out = "User {} was found with the following infractions\n".format(username)
@@ -117,9 +117,9 @@ async def userSearch(m):
         if len(out) + len(n) < charLimit:
             out += n
         else:
-            await client.send_message(m.channel, out)
+            await m.channel.send(out)
             out = n
-    await client.send_message(m.channel, out)
+    await m.channel.send(out)
 
 # Note a warn or ban for a user
 # m: Discord message object
@@ -128,9 +128,9 @@ async def logUser(m, state):
         user = User(m, recentBans)
     except User.MessageError:
         if state == LogTypes.NOTE:
-            await client.send_message(m.channel, "I wasn't able to understand that message: `$note USER`")
+            await m.channel.send("I wasn't able to understand that message: `$note USER`")
         else:
-            await client.send_message(m.channel, "I wasn't able to understand that message: `$log USER`")
+            await m.channel.send("I wasn't able to understand that message: `$log USER`")
         return
 
     sqlconn = sqlite3.connect(DATABASE_PATH)
@@ -145,7 +145,7 @@ async def logUser(m, state):
         username = user.getName(recentBans)
     except User.MessageError:
         username = "ID: " + str(user.id)
-        await client.send_message(m.channel, "I wasn't able to find a username for that user, but whatever, I'll do it anyway.")
+        await m.channel.send("I wasn't able to find a username for that user, but whatever, I'll do it anyway.")
 
     mes = Utils.parseMessage(m.content, username)
     if len(m.attachments) != 0:
@@ -153,7 +153,7 @@ async def logUser(m, state):
             mes += '\n{}'.format(item['url'])
 
     if mes == "":
-        await client.send_message(m.channel, "Please give a reason for why you want to log them.")
+        await m.channel.send("Please give a reason for why you want to log them.")
         return
 
     params = [globalcount + 1, user.id, username, count, currentTime, mes, m.author.name]
@@ -175,39 +175,44 @@ async def logUser(m, state):
         noteCount = sqlconn.execute("SELECT COUNT(*) FROM badeggs WHERE id=? AND num = -1", [user.id]).fetchone()[0] + 1
         logMessage = "Note #{} made for {}".format(noteCount, username)
 
-    await client.send_message(m.channel, logMessage)
+    await m.channel.send(logMessage)
 
     # Send ban recommendation, if needed
     if (state == LogTypes.WARN and count >= warnThreshold):
-        await client.send_message(m.channel, "This user has received {} warnings or more. It is recommended that they be banned.".format(warnThreshold))
+        await m.channel.send("This user has received {} warnings or more. It is recommended that they be banned.".format(warnThreshold))
 
     logMesID = 0
     if state != LogTypes.NOTE:
         # Send message to log channel
         try:
-            logMes = await client.send_message(client.get_channel(logChannel), logMessage)
+            chan = client.get_channel(logChannel)
+            logMes = await chan.send(logMessage)
             logMesID = logMes.id
         except discord.errors.InvalidArgument:
-            await client.send_message(m.channel, "The logging channel has not been set up in `config.json`. In order to have a visual record, please specify a channel ID.")
+            await m.channel.send("The logging channel has not been set up in `config.json`. In order to have a visual record, please specify a channel ID.")
 
         # Send a DM to the user
         try:
             u = user.getMember()
             if u != None:
+                DMchan = u.dm_channel
+                if DMchan == None:
+                    DMchan = await u.create_dm()
+
                 if state == LogTypes.BAN and sendBanDM:
-                    await client.send_message(u, "Hi there! You've been banned from the Stardew Valley Discord for violating the rules: {}. If you have any questions, you can send a message to the moderators via the sidebar at <https://www.reddit.com/r/StardewValley>, and they'll forward it to us.".format(mes))
+                    await DMchan.send("Hi there! You've been banned from the Stardew Valley Discord for violating the rules: {}. If you have any questions, you can send a message to the moderators via the sidebar at <https://www.reddit.com/r/StardewValley>, and they'll forward it to us.".format(mes))
                 elif state == LogTypes.WARN and sendWarnDM:
-                    await client.send_message(u, "Hi there! You received warning #{} in the Stardew Valley Discord for violating the rules: {}. Please review <#445729591533764620> and <#445729663885639680> for more info. If you have any questions, you can reply directly to this message to contact the staff.".format(count, mes))
+                    await DMchan.send("Hi there! You received warning #{} in the Stardew Valley Discord for violating the rules: {}. Please review <#445729591533764620> and <#445729663885639680> for more info. If you have any questions, you can reply directly to this message to contact the staff.".format(count, mes))
                 elif state == LogTypes.KICK and sendBanDM:
-                    await client.send_message(u, "Hi there! You've been kicked from the Stardew Valley Discord for violating the following reason: {}. If you have any questions, you can send a message to the moderators via the sidebar at <https://www.reddit.com/r/StardewValley>, and they'll forward it to us.".format(mes))
+                    await DMchan.send("Hi there! You've been kicked from the Stardew Valley Discord for violating the following reason: {}. If you have any questions, you can send a message to the moderators via the sidebar at <https://www.reddit.com/r/StardewValley>, and they'll forward it to us.".format(mes))
 
         # I don't know if any of these are ever getting tripped
         except discord.errors.HTTPException as e:
-            await client.send_message(m.channel, "ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {}".format(e))
+            await m.channel.send("ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {}".format(e))
         except discord.errors.Forbidden:
-            await client.send_message(m.channel, "ERROR: I am not allowed to DM the user. It is likely that they are not accepting DM's from me.")
+            await m.channel.send( "ERROR: I am not allowed to DM the user. It is likely that they are not accepting DM's from me.")
         except discord.errors.NotFound:
-            await client.send_message(m.channel, "ERROR: I was unable to find the user to DM. I'm unsure how this can be the case, unless their account was deleted")
+            await m.channel.send("ERROR: I was unable to find the user to DM. I'm unsure how this can be the case, unless their account was deleted")
 
     # Update database
     params.append(logMesID)
@@ -222,7 +227,7 @@ async def removeError(m, edit):
     try:
         user = User(m, recentBans)
     except User.MessageError:
-        await client.send_message(m.channel, "I wasn't able to understand that message: `$remove USER`")
+        await m.channel.send("I wasn't able to understand that message: `$remove USER`")
         return
 
     # Needed for multi-word usernames
@@ -234,7 +239,7 @@ async def removeError(m, edit):
     mes = Utils.parseMessage(m.content, username)
     if mes == "":
         if edit:
-            await client.send_message(m.channel, "You need to specify an edit message")
+            await m.channel.send("You need to specify an edit message")
             return
         else:
             mes = "0"
@@ -250,9 +255,9 @@ async def removeError(m, edit):
     searchResults = sqlconn.execute("SELECT dbid, id, username, num, date, message, staff, post FROM badeggs WHERE id=?", [user.id]).fetchall()
 
     if searchResults == []:
-        await client.send_message(m.channel, "I couldn't find that user in the database")
+        await m.channel.send("I couldn't find that user in the database")
     elif (index > len(searchResults) - 1) or index < -1:
-        await client.send_message(m.channel, "I can't modify item number {}, there aren't that many for this user".format(index+1))
+        await m.channel.send("I can't modify item number {}, there aren't that many for this user".format(index+1))
     else:
         item = searchResults[index]
         import Visualize
@@ -267,13 +272,13 @@ async def removeError(m, edit):
                 sqlconn.execute("REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", params)
                 out = "The following log was edited:\n[{}] **{}** - Note by {} - {}\n".format(Utils.formatTime(item[4]), item[2], item[6], item[5])
                 out = "The log now reads as follows:\n[{}] **{}** - Note by {} - {}\n".format(Utils.formatTime(params[4]), params[2], params[6], params[5])
-                await client.send_message(m.channel, out)
+                await m.channel.send(out)
 
                 sqlconn.commit()
                 sqlconn.close()
                 return
             else:
-                await client.send_message(m.channel, "You can only edit notes for now")
+                await m.channel.send("You can only edit notes for now")
                 sqlconn.close()
                 return
 
@@ -294,14 +299,13 @@ async def removeError(m, edit):
         else: # LogTypes.WARN
             out += "[{}] **{}** - Warning #{} by {} - {}\n".format(Utils.formatTime(item[4]), item[2], item[3], item[6], item[5])
             Visualize.updateCache(sqlconn, item[6], (0, -1), Utils.formatTime(item[4]))
-        await client.send_message(m.channel, out)
+        await m.channel.send(out)
 
         # Search logging channel for matching post, and remove it
         if item[7] != 0:
-            async for m in client.logs_from(client.get_channel(logChannel)):
-                if str(m.id) == str(item[7]):
-                    await client.delete_message(m)
-                    break
+            chan = client.get_channel(logChannel)
+            m = await chan.fetch_message(item[7])
+            await m.delete()
     sqlconn.commit()
     sqlconn.close()
 
@@ -313,24 +317,24 @@ async def blockUser(m, block):
     try:
         user = User(m, recentBans)
     except User.MessageError:
-        await client.send_message(m.channel, "I wasn't able to understand that message: `$block USER`")
+        await m.channel.send("I wasn't able to understand that message: `$block USER`")
         return
 
     sqlconn = sqlite3.connect(DATABASE_PATH)
     if block:
         if user.id in blockList:
-            await client.send_message(m.channel, "Um... That user was already blocked...")
+            await m.channel.send("Um... That user was already blocked...")
         else:
             sqlconn.execute("INSERT INTO blocks (id) VALUES (?)", [user.id])
             blockList.append(user.id)
-            await client.send_message(m.channel, "I have now blocked {}. Their messages will no longer display in chat, but they will be logged for later review.".format(user.id))
+            await m.channel.send("I have now blocked {}. Their messages will no longer display in chat, but they will be logged for later review.".format(user.id))
     else:
         if user.id not in blockList:
-            await client.send_message(m.channel, "That user hasn't been blocked...")
+            await m.channel.send("That user hasn't been blocked...")
         else:
             sqlconn.execute("DELETE FROM blocks WHERE id=?", [user.id])
             blockList.remove(user.id)
-            await client.send_message(m.channel, "I have now unblocked {}. You will once again be able to hear their dumb bullshit in chat.".format(user.id))
+            await m.channel.send("I have now unblocked {}. You will once again be able to hear their dumb bullshit in chat.".format(user.id))
     sqlconn.commit()
     sqlconn.close()
 
@@ -340,38 +344,42 @@ async def reply(m):
         if recentReply != None:
             u = recentReply
         else:
-            await client.send_message(m.channel, "Sorry, I have no previous user stored. Gotta do it the old fashioned way.")
+            await m.channel.send("Sorry, I have no previous user stored. Gotta do it the old fashioned way.")
             return
     else:
         try:
             user = User(m, recentBans)
         except User.MessageError:
-            await client.send_message(m.channel, "I wasn't able to understand that message: `$reply USER`")
+            await m.channel.send("I wasn't able to understand that message: `$reply USER`")
             return
 
         u = user.getMember()
     if u == None:
-        await client.send_message(m.channel, "Sorry, but they need to be in the server for me to message them")
+        await m.channel.send("Sorry, but they need to be in the server for me to message them")
         return
     try:
         mes = Utils.removeCommand(m.content)
         if len(m.attachments) != 0:
             for item in m.attachments:
                 mes += '\n{}'.format(item['url'])
-        ts = m.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+        ts = m.created_at.strftime('%Y-%m-%d %H:%M:%S')
         uname = "{}#{}".format(u.name, u.discriminator)
         with open("private/DMs.txt", 'a', encoding='utf-8') as openFile:
             openFile.write("{} - {} sent a DM to {}: {}\n".format(ts, m.author.name, uname, mes))
-        await client.send_message(u, "A message from the SDV staff: {}".format(mes))
-        await client.send_message(m.channel, "Message sent to {}.".format(uname))
+
+        DMchan = u.dm_channel
+        if DMchan == None:
+            DMchan = await u.create_dm()
+        await DMchan.send("A message from the SDV staff: {}".format(mes))
+        await m.channel.send("Message sent to {}.".format(uname))
 
     # I don't know if any of these are ever getting tripped
     except discord.errors.HTTPException as e:
-        await client.send_message(m.channel, "ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {}".format(e))
+        await m.channel.send("ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {}".format(e))
     except discord.errors.Forbidden:
-        await client.send_message(m.channel, "ERROR: I am not allowed to DM the user. It is likely that they are not accepting DM's from me.")
+        await m.channel.send("ERROR: I am not allowed to DM the user. It is likely that they are not accepting DM's from me.")
     except discord.errors.NotFound:
-        await client.send_message(m.channel, "ERROR: I was unable to find the user to DM. I'm unsure how this can be the case, unless their account was deleted")
+        await m.channel.send("ERROR: I was unable to find the user to DM. I'm unsure how this can be the case, unless their account was deleted")
 
 async def notebook(m):
     sqlconn = sqlite3.connect(DATABASE_PATH)
@@ -384,7 +392,7 @@ async def notebook(m):
             note = "[{}] **{}** - Note by {} - {}\n".format(Utils.formatTime(item[4]), item[2], item[6], item[5])
             f.write(note)
 
-    await client.send_message(m.channel, "Your notes, as requested.")
+    await m.channel.send("Your notes, as requested.")
 
     await client.send_file(m.channel, fp='./private/notes.txt')
 
@@ -422,10 +430,10 @@ async def userReview(channel):
         if len(mes) + len(user) + 2 < charLimit:
             mes += "`{}`, ".format(user)
         else:
-            await client.send_message(channel, mes)
+            await channel.send(mes)
             mes = "`{}`, ".format(user)
 
-    await client.send_message(channel, mes)
+    await channel.send(mes)
 
 async def uptime(channel):
     currTime = datetime.datetime.now()
@@ -434,7 +442,7 @@ async def uptime(channel):
     minutes, seconds = divmod(remainder, 60)
     mes = "I have been running for {} days, {} hours, and {} minutes".format(delta.days, hours, minutes)
 
-    await client.send_message(channel, mes)
+    await channel.send(mes)
 
 @client.event
 async def on_ready():
@@ -452,7 +460,7 @@ async def on_ready():
     sqlconn.close()
 
     game_object = discord.Game(name="for your reports!", type=3)
-    await client.change_presence(game=game_object)
+    await client.change_presence(activity=game_object)
 
 @client.event
 async def on_member_update(before, after):
@@ -462,22 +470,32 @@ async def on_member_update(before, after):
         else:
             new = after.nick
             mes = "**{}#{}** is now known as `{}`".format(after.name, after.discriminator, after.nick)
-        await client.send_message(client.get_channel(systemLog), mes)
+        chan = client.get_channel(systemLog)
+        await chan.send(mes)
     elif before.roles != after.roles:
-        if len(before.roles) > len(after.roles):
-            missing = [r for r in before.roles if r not in after.roles]
-            mes = "**{}#{}** had the role `{}` removed.".format(after.name, after.discriminator, missing[0])
-        else:
-            newRoles = [r for r in after.roles if r not in before.roles]
-            mes = "**{}#{}** had the role `{}` added.".format(after.name, after.discriminator, newRoles[0])
-        await client.send_message(client.get_channel(systemLog), mes)
+        # Temporary debugging
+        try:
+            if len(before.roles) > len(after.roles):
+                missing = [r for r in before.roles if r not in after.roles]
+                mes = "**{}#{}** had the role `{}` removed.".format(after.name, after.discriminator, missing[0])
+            else:
+                newRoles = [r for r in after.roles if r not in before.roles]
+                mes = "**{}#{}** had the role `{}` added.".format(after.name, after.discriminator, newRoles[0])
+            chan = client.get_channel(systemLog)
+            await chan.send(mes)
+        except IndexError as e:
+            print("Error: Same role indexing issue as before.")
+            print("Old roles: {}".format(before.roles))
+            print("New roles: {}".format(after.roles))
+            print("Error message: {}".format(e))
 
 @client.event
 async def on_member_ban(member):
     global recentBans
     recentBans[member.id] = "{}#{} : {}".format(member.name, member.discriminator, member.id)
     mes = "{}#{} has been banned.".format(member.name, member.discriminator)
-    await client.send_message(client.get_channel(systemLog), mes)
+    chan = client.get_channel(systemLog)
+    await chan.send(mes)
 
 @client.event
 async def on_member_remove(member):
@@ -485,7 +503,8 @@ async def on_member_remove(member):
     global recentBans
     recentBans[member.id] = "{}#{} : {}".format(member.name, member.discriminator, member.id)
     mes = "**{}#{}** has left".format(member.name, member.discriminator)
-    await client.send_message(client.get_channel(systemLog), mes)
+    chan = client.get_channel(systemLog)
+    await chan.send(mes)
 
 @client.event
 async def on_message_delete(message):
@@ -496,7 +515,8 @@ async def on_message_delete(message):
     if message.attachments != []:
         for item in message.attachments:
             mes += '\n' + item['url']
-    await client.send_message(client.get_channel(systemLog), mes)
+    chan = client.get_channel(systemLog)
+    await chan.send(mes)
 
 @client.event
 async def on_message_edit(before, after):
@@ -514,35 +534,40 @@ async def on_message_edit(before, after):
             if after.attachments != []:
                 for item in after.attachments:
                     mes2 += '\n' + item['url']
-            await client.send_message(client.get_channel(systemLog), mes1)
-            await client.send_message(client.get_channel(systemLog), mes2)
+            chan = client.get_channel(systemLog)
+            await chan.send(mes1)
+            await chan.send(mes2)
         else:
             mes = "**{}#{}** modified in <#{}>: `{}` to `{}`".format(before.author.name, before.author.discriminator, before.channel.id, before.content, after.content)
             if after.attachments != []:
                 for item in after.attachments:
                     mes += '\n' + item['url']
-            await client.send_message(client.get_channel(systemLog), mes)
+            chan = client.get_channel(systemLog)
+            await chan.send(mes)
     except discord.errors.HTTPException as e:
         print("Unknown error with editing message. This message was unable to post for this reason: {}\n".format(e))
 
 @client.event
 async def on_member_join(member):
     mes = "**{}#{} ({})** has joined".format(member.name, member.discriminator, member.id)
-    await client.send_message(client.get_channel(systemLog), mes)
+    chan = client.get_channel(systemLog)
+    await chan.send(mes)
 
 @client.event
 async def on_voice_state_update(before, after):
     if (after.voice.voice_channel == None):
         mes = "**{}#{}** has left voice channel {}".format(after.name, after.discriminator, before.voice.voice_channel.name)
-        await client.send_message(client.get_channel(systemLog), mes)
+        chan = client.get_channel(systemLog)
+        await chan.send(mes)
     elif (before.voice.voice_channel == None):
         mes = "**{}#{}** has joined voice channel {}".format(after.name, after.discriminator, after.voice.voice_channel.name)
-        await client.send_message(client.get_channel(systemLog), mes)
+        chan = client.get_channel(systemLog)
+        await chan.send(mes)
 
 @client.event
 async def on_reaction_add(reaction, user):
     if reaction.emoji == '👑' and reaction.message.channel.id == cfg["gatekeeper"]["channel"]:
-        villager = discord.utils.get(reaction.message.server.roles, id=cfg["gatekeeper"]["role"])
+        villager = discord.utils.get(reaction.message.guild.roles, id=cfg["gatekeeper"]["role"])
         await client.add_roles(user, villager)
 
 @client.event
@@ -552,9 +577,9 @@ async def on_message(message):
         return
     try:
         # If they sent a private DM to bouncer
-        if message.channel.is_private:
+        if type(message.channel) is discord.channel.DMChannel:
             # Regardless of blocklist or not, log their messages
-            ts = message.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+            ts = message.created_at.strftime('%Y-%m-%d %H:%M:%S')
 
             # Store who the most recent user was, for $reply ^
             recentReply = message.author
@@ -566,12 +591,14 @@ async def on_message(message):
 
             with open("private/DMs.txt", 'a', encoding='utf-8') as openFile:
                 openFile.write("{} - {}\n".format(ts, mes))
-            await client.send_message(client.get_channel(validInputChannels[0]), mes)
+            chan = client.get_channel(validInputChannels[0])
+            await chan.send(mes)
 
         # Temporary - notify if UB3R-BOT has removed something on its word censor
         elif (message.author.id == "85614143951892480" and message.channel.id == "233039273207529472") and ("Word Censor Triggered" in message.content):
-            mes = "Uh oh, looks like the censor might've been tripped.\nhttps://discordapp.com/channels/{}/{}/{}".format(message.server.id, message.channel.id, message.id)
-            await client.send_message(client.get_channel(validInputChannels[0]), mes)
+            mes = "Uh oh, looks like the censor might've been tripped.\nhttps://discordapp.com/channels/{}/{}/{}".format(message.guild.id, message.channel.id, message.id)
+            chan = client.get_channel(validInputChannels[0])
+            await chan.send(mes)
 
         # If a user pings bouncer
         elif client.user in message.mentions:
@@ -579,26 +606,27 @@ async def on_message(message):
             if message.attachments != []:
                 for item in message.attachments:
                     mes += '\n' + item['url']
-            mes += "\nhttps://discordapp.com/channels/{}/{}/{}".format(message.server.id, message.channel.id, message.id)
-            await client.send_message(client.get_channel(validInputChannels[0]), mes)
+            mes += "\nhttps://discordapp.com/channels/{}/{}/{}".format(message.guild.id, message.channel.id, message.id)
+            chan = client.get_channel(validInputChannels[0])
+            await chan.send(mes)
 
         # If they have privledges to access bouncer functions
         elif (message.channel.id in validInputChannels) and Utils.checkRoles(message.author, validRoles):
             if len(message.content.split(" ")) == 1:
                 if message.content.upper() == "$HELP":
                     helpMes = "Issue a warning: `$warn USER message`\nLog a ban: `$ban USER reason`\nLog an unbanning: `$unban USER reason`\nLog a kick: `$kick USER reason`\nSearch for a user: `$search USER`\nCreate a note about a user: `$note USER message`\nShow all notes: `$notebook`\nRemove a user's log: `$remove USER index(optional)`\nEdit a user's note: `$edit USER index(optional) new_message`\nStop a user from sending DMs to us: `$block/$unblock USERID`\nReply to a user in DMs: `$reply USERID` - To reply to the most recent DM: `$reply ^`\nPlot warn/ban stats: `$graph`\nReview which users have old logs: `$review`\nView bot uptime: `$uptime`\nDMing users when they are banned is `{}`\nDMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
-                    await client.send_message(message.channel, helpMes)
+                    await message.channel.send(helpMes)
                 elif message.content.upper() == "$NOTEBOOK":
                     await notebook(message)
                 elif message.content.upper() in helpInfo.keys():
-                    await client.send_message(message.channel, helpInfo[message.content.upper()])
+                    await message.channel.send(helpInfo[message.content.upper()])
                 elif message.content.upper() == "$UPDATE":
                     if message.author.id == cfg["owner"]:
-                        await client.send_message(message.channel, "Updating and restarting...")
+                        await message.channel.send("Updating and restarting...")
                         subprocess.call(["git", "pull"])
                         sys.exit()
                     else:
-                        await client.send_message(message.channel, "Who do you think you are.")
+                        await message.channel.send("Who do you think you are.")
                         return
                 elif message.content.upper() == "$GRAPH":
                     import Visualize # Import here to avoid debugger crashing from matplotlib issue
@@ -613,10 +641,10 @@ async def on_message(message):
                 # Debug functions only to be executed by the owner
                 elif message.content.upper() == "$DUMPBANS" and message.author.id == cfg["owner"]:
                     output = await Utils.dumpbans(recentBans)
-                    await client.send_message(message.channel, output)
+                    await message.channel.send(output)
                 elif message.content.upper() == "$GETROLES" and message.author.id == cfg["owner"]:
-                    output = await Utils.fetchRoleList(message.server)
-                    await client.send_message(message.channel, output)
+                    output = await Utils.fetchRoleList(message.guild)
+                    await message.channel.send(output)
                 return
 
             # This if/elif thing isn't ideal, but it's by far the simpliest way
@@ -649,7 +677,7 @@ async def on_message(message):
 try:
     client.run(discordKey)
 # TODO: I'm not sure what causes these. Should probably investigate someday
-except (CancelledError, ConnectionResetError, discord.errors.HTTPException) as e:
+except (ConnectionResetError, discord.errors.HTTPException) as e:
     print("Exception has occurred: {}".format(str(e)))
     pass
 

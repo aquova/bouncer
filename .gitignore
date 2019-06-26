@@ -8,6 +8,13 @@ private/*
 .vscode
 *.code-workspace
 
+# Virtualenv stuff
+bin/*
+include/*
+lib/*
+.Python
+pip-selfcheck.json
+
 # Other junk
 .DS_Store
 __pycache__

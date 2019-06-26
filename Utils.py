@@ -58,7 +58,7 @@ def parseUsername(message, recentBans):
         discriminator = user[1].split(" ")
         user = "{}#{}".format(user[0], discriminator[0])
 
-        userFound = discord.utils.get(message.server.members, name=user.split("#")[0], discriminator=user.split("#")[1])
+        userFound = discord.utils.get(message.guild.members, name=user.split("#")[0], discriminator=user.split("#")[1])
         if userFound != None:
             return userFound.id
 
@@ -91,14 +91,14 @@ def parseMessage(message, username):
 # Exports the user list to a .txt file
 async def fetchUserList(message):
     with open("private/users.txt", 'w') as f:
-        mems = message.server.members
+        mems = message.guild.members
         for u in mems:
             f.write("{}\n".format(u.name))
 
 # Fetches a dict of the role names to ID values for the given server
 # serverID needs to be a string
 async def fetchRoleList(server):
-    roles = {role.name: role.id for role in server.roles}
+    roles = {role.name: role.id for role in guild.roles}
     out = "```\n"
     for r in roles:
         out += "{} : {}\n".format(r, roles[r])

@@ -33,7 +33,11 @@ class User:
             raise self.MessageError("Couldn't understand message.")
 
     def getMember(self):
-        return discord.utils.get(self.message.server.members, id=self.id)
+        u = [x for x in self.message.guild.members if x.id == int(self.id)]
+        if len(u) == 0:
+            return None
+        else:
+            return u[0]
 
     def getName(self, banList):
         member = self.getMember()

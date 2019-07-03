@@ -150,7 +150,7 @@ async def logUser(m, state):
     mes = Utils.parseMessage(m.content, username)
     if len(m.attachments) != 0:
         for item in m.attachments:
-            mes += '\n{}'.format(item['url'])
+            mes += '\n{}'.format(item.url)
 
     if mes == "":
         await m.channel.send("Please give a reason for why you want to log them.")
@@ -364,7 +364,7 @@ async def reply(m):
         mes = Utils.removeCommand(m.content)
         if len(m.attachments) != 0:
             for item in m.attachments:
-                mes += '\n{}'.format(item['url'])
+                mes += '\n{}'.format(item.url)
         ts = m.created_at.strftime('%Y-%m-%d %H:%M:%S')
         uname = "{}#{}".format(u.name, u.discriminator)
         with open("private/DMs.txt", 'a', encoding='utf-8') as openFile:
@@ -518,7 +518,7 @@ async def on_message_delete(message):
     mes = "**{}#{}** deleted in <#{}>: `{}`".format(message.author.name, message.author.discriminator, message.channel.id, message.content)
     if message.attachments != []:
         for item in message.attachments:
-            mes += '\n' + item['url']
+            mes += '\n' + item.url
     chan = client.get_channel(systemLog)
     await chan.send(mes)
 
@@ -534,10 +534,10 @@ async def on_message_edit(before, after):
             mes2 = "to `{}`".format(after.content)
             if before.attachments != []:
                 for item in before.attachments:
-                    mes1 += '\n' + item['url']
+                    mes1 += '\n' + item.url
             if after.attachments != []:
                 for item in after.attachments:
-                    mes2 += '\n' + item['url']
+                    mes2 += '\n' + item.url
             chan = client.get_channel(systemLog)
             await chan.send(mes1)
             await chan.send(mes2)
@@ -545,7 +545,7 @@ async def on_message_edit(before, after):
             mes = "**{}#{}** modified in <#{}>: `{}` to `{}`".format(before.author.name, before.author.discriminator, before.channel.id, before.content, after.content)
             if after.attachments != []:
                 for item in after.attachments:
-                    mes += '\n' + item['url']
+                    mes += '\n' + item.url
             chan = client.get_channel(systemLog)
             await chan.send(mes)
     except discord.errors.HTTPException as e:
@@ -591,7 +591,7 @@ async def on_message(message):
             mes = "**{}#{}** (ID: {}): {}".format(message.author.name, message.author.discriminator, message.author.id, message.content)
             if message.attachments != []:
                 for item in message.attachments:
-                    mes += '\n' + item['url']
+                    mes += '\n' + item.url
 
             with open("private/DMs.txt", 'a', encoding='utf-8') as openFile:
                 openFile.write("{} - {}\n".format(ts, mes))
@@ -609,7 +609,7 @@ async def on_message(message):
             mes = "**{}#{}** (ID: {}) pinged me in <#{}>: {}".format(message.author.name, message.author.discriminator, message.author.id, message.channel.id, message.content)
             if message.attachments != []:
                 for item in message.attachments:
-                    mes += '\n' + item['url']
+                    mes += '\n' + item.url
             mes += "\nhttps://discordapp.com/channels/{}/{}/{}".format(message.guild.id, message.channel.id, message.id)
             chan = client.get_channel(validInputChannels[0])
             await chan.send(mes)

@@ -11,6 +11,8 @@ private/*
 bin/*
 include/*
 lib/*
+local/*
+share/*
 .Python
 pip-selfcheck.json
 

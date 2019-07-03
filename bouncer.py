@@ -393,8 +393,9 @@ async def notebook(m):
             f.write(note)
 
     await m.channel.send("Your notes, as requested.")
+    with open("./private/notes.txt", "r") as f:
+        await m.channel.send(file=discord.File(f))
 
-    await client.send_file(m.channel, fp='./private/notes.txt')
 
 # Posts the usernames of all users whose oldest logs are older than reviewThreshold
 async def userReview(channel):
@@ -648,18 +649,21 @@ async def on_message(message):
                     import Visualize # Import here to avoid debugger crashing from matplotlib issue
                     Visualize.genUserPlot()
                     Visualize.genMonthlyPlot()
-                    await client.send_file(message.channel, fp='./private/user_plot.png')
-                    await client.send_file(message.channel, fp='./private/month_plot.png')
+                    with open("./private/user_plot.png", 'rb') as f:
+                        await message.channel.send(file=discord.File(f))
+
+                    with open("./private/month_plot.png", 'rb') as f:
+                        await message.channel.send(file=discord.File(f))
                 elif message.content.upper() == "$REVIEW":
                     await userReview(message.channel)
                 elif message.content.upper() == "$UPTIME":
                     await uptime(message.channel)
+                elif message.content.upper() == "$GETROLES":
+                    output = await Utils.fetchRoleList(message.guild)
+                    await message.channel.send(output)
                 # Debug functions only to be executed by the owner
                 elif message.content.upper() == "$DUMPBANS" and message.author.id == cfg["owner"]:
                     output = await Utils.dumpbans(recentBans)
-                    await message.channel.send(output)
-                elif message.content.upper() == "$GETROLES" and message.author.id == cfg["owner"]:
-                    output = await Utils.fetchRoleList(message.guild)
                     await message.channel.send(output)
                 return
 

@@ -98,7 +98,7 @@ async def fetchUserList(message):
 # Fetches a dict of the role names to ID values for the given server
 # serverID needs to be a string
 async def fetchRoleList(server):
-    roles = {role.name: role.id for role in guild.roles}
+    roles = {role.name: role.id for role in server.roles}
     out = "```\n"
     for r in roles:
         out += "{} : {}\n".format(r, roles[r])

@@ -200,11 +200,11 @@ async def logUser(m, state):
                     DMchan = await u.create_dm()
 
                 if state == LogTypes.BAN and sendBanDM:
-                    await DMchan.send("Hi there! You've been banned from the Stardew Valley Discord for violating the rules: {}. If you have any questions, you can send a message to the moderators via the sidebar at <https://www.reddit.com/r/StardewValley>, and they'll forward it to us.".format(mes))
+                    await DMchan.send("Hi there! You've been banned from the Stardew Valley Discord for violating the rules: `{}`. If you have any questions, you can send a message to the moderators via the sidebar at <https://www.reddit.com/r/StardewValley>, and they'll forward it to us.".format(mes))
                 elif state == LogTypes.WARN and sendWarnDM:
-                    await DMchan.send("Hi there! You received warning #{} in the Stardew Valley Discord for violating the rules: {}. Please review <#445729591533764620> and <#445729663885639680> for more info. If you have any questions, you can reply directly to this message to contact the staff.".format(count, mes))
+                    await DMchan.send("Hi there! You received warning #{} in the Stardew Valley Discord for violating the rules: `{}`. Please review <#445729591533764620> and <#445729663885639680> for more info. If you have any questions, you can reply directly to this message to contact the staff.".format(count, mes))
                 elif state == LogTypes.KICK and sendBanDM:
-                    await DMchan.send("Hi there! You've been kicked from the Stardew Valley Discord for violating the following reason: {}. If you have any questions, you can send a message to the moderators via the sidebar at <https://www.reddit.com/r/StardewValley>, and they'll forward it to us.".format(mes))
+                    await DMchan.send("Hi there! You've been kicked from the Stardew Valley Discord for violating the following reason: `{}`. If you have any questions, you can send a message to the moderators via the sidebar at <https://www.reddit.com/r/StardewValley>, and they'll forward it to us.".format(mes))
 
         # I don't know if any of these are ever getting tripped
         except discord.errors.HTTPException as e:
@@ -554,13 +554,13 @@ async def on_member_join(member):
     await chan.send(mes)
 
 @client.event
-async def on_voice_state_update(before, after):
-    if (after.voice.voice_channel == None):
-        mes = "**{}#{}** has left voice channel {}".format(after.name, after.discriminator, before.voice.voice_channel.name)
+async def on_voice_state_update(member, before, after):
+    if (after.channel == None):
+        mes = "**{}#{}** has left voice channel {}".format(member.name, member.discriminator, before.channel.name)
         chan = client.get_channel(systemLog)
         await chan.send(mes)
-    elif (before.voice.voice_channel == None):
-        mes = "**{}#{}** has joined voice channel {}".format(after.name, after.discriminator, after.voice.voice_channel.name)
+    elif (before.channel == None):
+        mes = "**{}#{}** has joined voice channel {}".format(member.name, member.discriminator, after.channel.name)
         chan = client.get_channel(systemLog)
         await chan.send(mes)
 
@@ -614,7 +614,23 @@ async def on_message(message):
         elif (message.channel.id in validInputChannels) and Utils.checkRoles(message.author, validRoles):
             if len(message.content.split(" ")) == 1:
                 if message.content.upper() == "$HELP":
-                    helpMes = "Issue a warning: `$warn USER message`\nLog a ban: `$ban USER reason`\nLog an unbanning: `$unban USER reason`\nLog a kick: `$kick USER reason`\nSearch for a user: `$search USER`\nCreate a note about a user: `$note USER message`\nShow all notes: `$notebook`\nRemove a user's log: `$remove USER index(optional)`\nEdit a user's note: `$edit USER index(optional) new_message`\nStop a user from sending DMs to us: `$block/$unblock USERID`\nReply to a user in DMs: `$reply USERID` - To reply to the most recent DM: `$reply ^`\nPlot warn/ban stats: `$graph`\nReview which users have old logs: `$review`\nView bot uptime: `$uptime`\nDMing users when they are banned is `{}`\nDMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
+                    helpMes = (
+                        "Issue a warning: `$warn USER message`\n"
+                        "Log a ban: `$ban USER reason`\n"
+                        "Log an unbanning: `$unban USER reason`\n"
+                        "Log a kick: `$kick USER reason`\n"
+                        "Search for a user: `$search USER`\n"
+                        "Create a note about a user: `$note USER message`\n"
+                        "Show all notes: `$notebook`\n"
+                        "Remove a user's log: `$remove USER index(optional)`\n"
+                        "Edit a user's note: `$edit USER index(optional) new_message`\n"
+                        "Stop a user from sending DMs to us: `$block/$unblock USERID`\n"
+                        "Reply to a user in DMs: `$reply USERID` - To reply to the most recent DM: `$reply ^`\n"
+                        "Plot warn/ban stats: `$graph`\nReview which users have old logs: `$review`\n"
+                        "View bot uptime: `$uptime`\n"
+                        "DMing users when they are banned is `{}`\n"
+                        "DMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
+                    )
                     await message.channel.send(helpMes)
                 elif message.content.upper() == "$NOTEBOOK":
                     await notebook(message)

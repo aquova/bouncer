@@ -5,7 +5,6 @@ private/*
 
 # Editor files
 *.swp
-.vscode
 *.code-workspace
 
 # Virtualenv stuff

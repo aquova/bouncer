@@ -524,7 +524,7 @@ async def on_message_delete(message):
 
 @client.event
 async def on_message_edit(before, after):
-    # This is to prevent embeding of content from triggering the log
+    # This is to prevent embedding of content from triggering the log
     if before.content == after.content:
         return
 
@@ -599,7 +599,7 @@ async def on_message(message):
             await chan.send(mes)
 
         # Temporary - notify if UB3R-BOT has removed something on its word censor
-        elif (message.author.id == "85614143951892480" and message.channel.id == "233039273207529472") and ("Word Censor Triggered" in message.content):
+        elif (message.author.id == 85614143951892480 and message.channel.id == 233039273207529472) and ("Word Censor Triggered" in message.content):
             mes = "Uh oh, looks like the censor might've been tripped.\nhttps://discordapp.com/channels/{}/{}/{}".format(message.guild.id, message.channel.id, message.id)
             chan = client.get_channel(validInputChannels[0])
             await chan.send(mes)

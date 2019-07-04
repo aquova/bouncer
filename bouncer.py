@@ -511,6 +511,22 @@ async def on_member_remove(member):
     await chan.send(mes)
 
 @client.event
+# Needs to be raw reaction so it can still get reactions after reboot
+async def on_raw_reaction_add(payload):
+    if payload.message_id == cfg["gatekeeper"]["message"] and payload.emoji.name == cfg["gatekeeper"]["emoji"]:
+        # Raw payload just returns IDs, so need to iterate through connected servers to get server object
+        # Since each bouncer instance will only be in one server, it should be quick.
+        # If bouncer becomes general purpose (god forbid), may need to rethink this
+        try:
+            server = [x for x in client.guilds if x.id == payload.guild_id][0]
+            new_role = discord.utils.get(server.roles, id=cfg["gatekeeper"]["role"])
+            target_user = discord.utils.get(server.members, id=payload.user_id)
+            await target_user.add_roles(new_role)
+        except IndexError as e:
+            print("Something has seriously gone wrong.")
+            print("Error: {}".format(e))
+
+@client.event
 async def on_message_delete(message):
     # Don't allow bouncer to react to its own deleted messages
     if message.author.id == client.user.id:
@@ -697,10 +713,4 @@ async def on_message(message):
     except discord.errors.HTTPException:
         pass
 
-try:
-    client.run(discordKey)
-# TODO: I'm not sure what causes these. Should probably investigate someday
-except (ConnectionResetError, discord.errors.HTTPException) as e:
-    print("Exception has occurred: {}".format(str(e)))
-    pass
-
+client.run(discordKey)

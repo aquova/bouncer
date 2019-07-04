@@ -42,6 +42,8 @@ The bot has several moderation features:
 - System logs
     - The bot will also monitor all channels and post server-wide changes in users.
     - These include nickname changes, joining, leaving, kicked, banned, joining/leaving VC, and logging of all deleted and modified messages.
+- Gatekeeping
+    - Users will be unable to speak until they react to a specified message with a specified emoji.
 
 There is also a `$help` command, which will give the syntax for all of the previously listed commands
 

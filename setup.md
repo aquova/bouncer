@@ -6,7 +6,7 @@ Keep in mind that since the bot was not designed to be run by others, there are 
 
 To run the bot, firstly, you must have a configuration file named `config.json` which is structured like so:
 
-```
+```json
 {
     "discord":"Bot's Discord Token",
     "server":"Server ID number",
@@ -20,9 +20,16 @@ To run the bot, firstly, you must have a configuration file named `config.json` 
     "DM":{
         "ban":"On", // Whether the bot should send DMs when banning or warning. Should be "On" or "Off"
         "warn":"On" // Don't forget to delete these commends, JSON can't have comments
+    },
+    "gatekeeper": {
+        "role": "Role ID to give",
+        "message": "ID of message to watch",
+        "emoji": "Emoji reaction to watch for"
     }
 }
 ```
+
+Note that all IDs need to be ints and not strings (unlike older versions of the bot/library).
 
 This file should be kept private, as it contains the bot's user token. It should be placed into a `private` folder, which by default will be ignored by git.
 

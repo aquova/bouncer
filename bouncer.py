@@ -494,10 +494,10 @@ async def on_member_update(before, after):
             print("Error message: {}".format(e))
 
 @client.event
-async def on_member_ban(member):
+async def on_member_ban(server, member):
     global recentBans
     recentBans[member.id] = "{}#{} : {}".format(member.name, member.discriminator, member.id)
-    mes = "{}#{} has been banned.".format(member.name, member.discriminator)
+    mes = "**{}#{} ({})** has been banned.".format(member.name, member.discriminator, member.id)
     chan = client.get_channel(systemLog)
     await chan.send(mes)
 
@@ -506,7 +506,7 @@ async def on_member_remove(member):
     # I know they aren't banned, but still we may want to log someone after they leave
     global recentBans
     recentBans[member.id] = "{}#{} : {}".format(member.name, member.discriminator, member.id)
-    mes = "**{}#{}** has left".format(member.name, member.discriminator)
+    mes = "**{}#{} ({})** has left".format(member.name, member.discriminator, member.id)
     chan = client.get_channel(systemLog)
     await chan.send(mes)
 

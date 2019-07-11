@@ -50,6 +50,7 @@ sqlconn.close()
 
 warnThreshold = 3
 reviewThreshold = 6 # In months
+noteThreshold = 5
 
 # Containers to store needed information in memory
 recentBans = {}
@@ -97,6 +98,8 @@ async def userSearch(m):
         await m.channel.send("That user was not found in the database or the server\n")
         return
 
+    noteTotal = 0
+    criticizeNotes = True
     out = "User {} was found with the following infractions\n".format(username)
     for index, item in enumerate(searchResults):
         n = "{}. ".format(index+1)
@@ -104,12 +107,14 @@ async def userSearch(m):
             n += "[{}] **{}** - Banned by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[4], item[3])
         elif item[1] == LogTypes.NOTE:
             n += "[{}] **{}** - Note by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[4], item[3])
+            noteTotal += 1
         elif item[1] == LogTypes.KICK:
             n += "[{}] **{}** - Kicked by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[4], item[3])
         elif item[1] == LogTypes.UNBAN:
             n += "[{}] **{}** - Unbanned by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[4], item[3])
-        else:
+        else: # LogTypes.WARN
             n += "[{}] **{}** - Warning #{} by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[1], item[4], item[3])
+            criticizeNotes = False
 
         if item[1] >= warnThreshold:
             n += "They have received {} warnings, it is recommended that they be banned.\n".format(warnThreshold)
@@ -119,6 +124,10 @@ async def userSearch(m):
         else:
             await m.channel.send(out)
             out = n
+
+    # People have been giving too many notes to people without warns. Tell them to knock it off
+    if noteTotal >= noteThreshold and criticizeNotes:
+        out += "They have {} notes and no warns are you kidding me.\n".format(noteTotal)
     await m.channel.send(out)
 
 # Note a warn or ban for a user

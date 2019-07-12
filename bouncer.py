@@ -1,8 +1,6 @@
-"""
-Bouncer
-Written by aquova, 2018-2019
-https://github.com/aquova/bouncer
-"""
+# Bouncer
+# Written by aquova, 2018-2019
+# https://github.com/aquova/bouncer
 
 import discord, json, sqlite3, datetime, asyncio, os, subprocess, sys
 import Utils
@@ -25,6 +23,10 @@ validRoles = cfg['roles']
 
 sendBanDM = (cfg['DM']['ban'].upper() == "ON")
 sendWarnDM = (cfg['DM']['warn'].upper() == "ON")
+
+# Determine if this is a debugging instance
+debugBot = (cfg['debug'].upper() == "TRUE")
+debugging = False
 
 client = discord.Client()
 startTime = 0
@@ -602,9 +604,20 @@ async def on_reaction_add(reaction, user):
 @client.event
 async def on_message(message):
     global recentReply
+    global debugging
     if message.author.id == client.user.id:
         return
     try:
+        # Enable debugging
+        if message.content.startswith("$DEBUG") and message.author.id == cfg['owner']:
+            if not debugBot:
+                debugging = not debugging
+                message.channel.send("Debugging {}".format("enabled" if debugging else "disabled"))
+
+        # If debugging, the real bouncer should ignore my commands
+        if debugging and message.author.id == cfg['owner']:
+            return
+
         # If they sent a private DM to bouncer
         if type(message.channel) is discord.channel.DMChannel:
             # Regardless of blocklist or not, log their messages
@@ -641,62 +654,55 @@ async def on_message(message):
 
         # If they have privledges to access bouncer functions
         elif (message.channel.id in validInputChannels) and Utils.checkRoles(message.author, validRoles):
-            if len(message.content.split(" ")) == 1:
-                if message.content.upper() == "$HELP":
-                    helpMes = (
-                        "Issue a warning: `$warn USER message`\n"
-                        "Log a ban: `$ban USER reason`\n"
-                        "Log an unbanning: `$unban USER reason`\n"
-                        "Log a kick: `$kick USER reason`\n"
-                        "Search for a user: `$search USER`\n"
-                        "Create a note about a user: `$note USER message`\n"
-                        "Show all notes: `$notebook`\n"
-                        "Remove a user's log: `$remove USER index(optional)`\n"
-                        "Edit a user's note: `$edit USER index(optional) new_message`\n"
-                        "Stop a user from sending DMs to us: `$block/$unblock USERID`\n"
-                        "Reply to a user in DMs: `$reply USERID` - To reply to the most recent DM: `$reply ^`\n"
-                        "Plot warn/ban stats: `$graph`\nReview which users have old logs: `$review`\n"
-                        "View bot uptime: `$uptime`\n"
-                        "DMing users when they are banned is `{}`\n"
-                        "DMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
-                    )
-                    await message.channel.send(helpMes)
-                elif message.content.upper() == "$NOTEBOOK":
-                    await notebook(message)
-                elif message.content.upper() in helpInfo.keys():
-                    await message.channel.send(helpInfo[message.content.upper()])
-                elif message.content.upper() == "$UPDATE":
-                    if message.author.id == cfg["owner"]:
-                        await message.channel.send("Updating and restarting...")
-                        subprocess.call(["git", "pull"])
-                        sys.exit()
-                    else:
-                        await message.channel.send("Who do you think you are.")
-                        return
-                elif message.content.upper() == "$GRAPH":
-                    import Visualize # Import here to avoid debugger crashing from matplotlib issue
-                    Visualize.genUserPlot()
-                    Visualize.genMonthlyPlot()
-                    with open("./private/user_plot.png", 'rb') as f:
-                        await message.channel.send(file=discord.File(f))
-
-                    with open("./private/month_plot.png", 'rb') as f:
-                        await message.channel.send(file=discord.File(f))
-                elif message.content.upper() == "$REVIEW":
-                    await userReview(message.channel)
-                elif message.content.upper() == "$UPTIME":
-                    await uptime(message.channel)
-                elif message.content.upper() == "$GETROLES":
-                    output = await Utils.fetchRoleList(message.guild)
-                    await message.channel.send(output)
-                # Debug functions only to be executed by the owner
-                elif message.content.upper() == "$DUMPBANS" and message.author.id == cfg["owner"]:
-                    output = await Utils.dumpbans(recentBans)
-                    await message.channel.send(output)
-                return
-
             # This if/elif thing isn't ideal, but it's by far the simpliest way
-            if message.content.startswith("$search"):
+            if message.content.upper() == "$HELP":
+                helpMes = (
+                    "Issue a warning: `$warn USER message`\n"
+                    "Log a ban: `$ban USER reason`\n"
+                    "Log an unbanning: `$unban USER reason`\n"
+                    "Log a kick: `$kick USER reason`\n"
+                    "Search for a user: `$search USER`\n"
+                    "Create a note about a user: `$note USER message`\n"
+                    "Show all notes: `$notebook`\n"
+                    "Remove a user's log: `$remove USER index(optional)`\n"
+                    "Edit a user's note: `$edit USER index(optional) new_message`\n"
+                    "Stop a user from sending DMs to us: `$block/$unblock USERID`\n"
+                    "Reply to a user in DMs: `$reply USERID` - To reply to the most recent DM: `$reply ^`\n"
+                    "Plot warn/ban stats: `$graph`\nReview which users have old logs: `$review`\n"
+                    "View bot uptime: `$uptime`\n"
+                    "DMing users when they are banned is `{}`\n"
+                    "DMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
+                )
+                await message.channel.send(helpMes)
+            elif message.content.upper() == "$NOTEBOOK":
+                await notebook(message)
+            elif message.content.upper() in helpInfo.keys():
+                await message.channel.send(helpInfo[message.content.upper()])
+            elif message.content.upper() == "$UPDATE":
+                if message.author.id == cfg["owner"]:
+                    await message.channel.send("Updating and restarting...")
+                    subprocess.call(["git", "pull"])
+                    sys.exit()
+                else:
+                    await message.channel.send("Who do you think you are.")
+                    return
+            elif message.content.upper() == "$GRAPH":
+                import Visualize # Import here to avoid debugger crashing from matplotlib issue
+                Visualize.genUserPlot()
+                Visualize.genMonthlyPlot()
+                with open("./private/user_plot.png", 'rb') as f:
+                    await message.channel.send(file=discord.File(f))
+
+                with open("./private/month_plot.png", 'rb') as f:
+                    await message.channel.send(file=discord.File(f))
+            elif message.content.upper() == "$REVIEW":
+                await userReview(message.channel)
+            elif message.content.upper() == "$UPTIME":
+                await uptime(message.channel)
+            elif message.content.upper() == "$GETROLES":
+                output = await Utils.fetchRoleList(message.guild)
+                await message.channel.send(output)
+            elif message.content.startswith("$search"):
                 await userSearch(message)
             elif message.content.startswith("$warn"):
                 await logUser(message, LogTypes.WARN)
@@ -718,8 +724,14 @@ async def on_message(message):
                 await logUser(message, LogTypes.NOTE)
             elif message.content.startswith("$edit"):
                 await removeError(message, True)
+            # Debug functions only to be executed by the owner
+            elif message.content.upper() == "$DUMPBANS" and message.author.id == cfg["owner"]:
+                output = await Utils.dumpbans(recentBans)
+                await message.channel.send(output)
 
     except discord.errors.HTTPException:
+        # Curious to see if this ever gets hit
+        print("There was an HTTPException")
         pass
 
 client.run(discordKey)

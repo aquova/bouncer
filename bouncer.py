@@ -609,13 +609,17 @@ async def on_message(message):
         return
     try:
         # Enable debugging
-        if message.content.startswith("$DEBUG") and message.author.id == cfg['owner']:
+        if message.content.startswith("$debug") and message.author.id == cfg['owner']:
             if not debugBot:
                 debugging = not debugging
-                message.channel.send("Debugging {}".format("enabled" if debugging else "disabled"))
+                await message.channel.send("Debugging {}".format("enabled" if debugging else "disabled"))
+                return
 
-        # If debugging, the real bouncer should ignore my commands
+        # If debugging, the real bot should ignore the owner
         if debugging and message.author.id == cfg['owner']:
+            return
+        # The debug bot should only ever obey the owner
+        elif debugBot and message.author.id != cfg['owner']:
             return
 
         # If they sent a private DM to bouncer

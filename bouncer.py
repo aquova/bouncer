@@ -474,11 +474,13 @@ async def on_ready():
     blockList = [x[0] for x in blockDB]
     sqlconn.close()
 
-    game_object = discord.Game(name="for your reports!", type=3)
-    await client.change_presence(activity=game_object)
+    activity_object = discord.Activity(name="for your reports!", type=discord.ActivityType.watching)
+    await client.change_presence(activity=activity_object)
 
 @client.event
 async def on_member_update(before, after):
+    if debugBot:
+        return
     if before.nick != after.nick:
         if after.nick == None:
             mes = "**{}#{}** has reset their username".format(after.name, after.discriminator)
@@ -507,6 +509,8 @@ async def on_member_update(before, after):
 @client.event
 async def on_member_ban(server, member):
     global recentBans
+    if debugBot:
+        return
     recentBans[member.id] = "{}#{} : {}".format(member.name, member.discriminator, member.id)
     mes = "**{}#{} ({})** has been banned.".format(member.name, member.discriminator, member.id)
     chan = client.get_channel(systemLog)
@@ -516,6 +520,8 @@ async def on_member_ban(server, member):
 async def on_member_remove(member):
     # I know they aren't banned, but still we may want to log someone after they leave
     global recentBans
+    if debugBot:
+        return
     recentBans[member.id] = "{}#{} : {}".format(member.name, member.discriminator, member.id)
     mes = "**{}#{} ({})** has left".format(member.name, member.discriminator, member.id)
     chan = client.get_channel(systemLog)
@@ -524,6 +530,8 @@ async def on_member_remove(member):
 @client.event
 # Needs to be raw reaction so it can still get reactions after reboot
 async def on_raw_reaction_add(payload):
+    if debugBot:
+        return
     if payload.message_id == cfg["gatekeeper"]["message"] and payload.emoji.name == cfg["gatekeeper"]["emoji"]:
         # Raw payload just returns IDs, so need to iterate through connected servers to get server object
         # Since each bouncer instance will only be in one server, it should be quick.
@@ -539,6 +547,8 @@ async def on_raw_reaction_add(payload):
 
 @client.event
 async def on_message_delete(message):
+    if debugBot:
+        return
     # Don't allow bouncer to react to its own deleted messages
     if message.author.id == client.user.id:
         return
@@ -551,10 +561,11 @@ async def on_message_delete(message):
 
 @client.event
 async def on_message_edit(before, after):
+    if debugBot:
+        return
     # This is to prevent embedding of content from triggering the log
     if before.content == after.content:
         return
-
     try:
         if len(before.content) + len(after.content) > 200:
             mes1 = "**{}#{}** modified in <#{}>: `{}`".format(before.author.name, before.author.discriminator, before.channel.id, before.content)
@@ -580,12 +591,16 @@ async def on_message_edit(before, after):
 
 @client.event
 async def on_member_join(member):
+    if debugBot:
+        return
     mes = "**{}#{} ({})** has joined".format(member.name, member.discriminator, member.id)
     chan = client.get_channel(systemLog)
     await chan.send(mes)
 
 @client.event
 async def on_voice_state_update(member, before, after):
+    if debugBot:
+        return
     if (after.channel == None):
         mes = "**{}#{}** has left voice channel {}".format(member.name, member.discriminator, before.channel.name)
         chan = client.get_channel(systemLog)
@@ -597,6 +612,8 @@ async def on_voice_state_update(member, before, after):
 
 @client.event
 async def on_reaction_add(reaction, user):
+    if debugBot:
+        return
     if reaction.emoji == '👑' and reaction.message.channel.id == cfg["gatekeeper"]["channel"]:
         villager = discord.utils.get(reaction.message.guild.roles, id=cfg["gatekeeper"]["role"])
         await client.add_roles(user, villager)
@@ -641,7 +658,7 @@ async def on_message(message):
             await chan.send(mes)
 
         # Temporary - notify if UB3R-BOT has removed something on its word censor
-        elif (message.author.id == 85614143951892480 and message.channel.id == 233039273207529472) and ("Word Censor Triggered" in message.content):
+        elif (message.author.id == 85614143951892480 and message.channel.id == 233039273207529472) and ("Word Censor Triggered" in message.content) and not debugBot:
             mes = "Uh oh, looks like the censor might've been tripped.\nhttps://discordapp.com/channels/{}/{}/{}".format(message.guild.id, message.channel.id, message.id)
             chan = client.get_channel(validInputChannels[0])
             await chan.send(mes)

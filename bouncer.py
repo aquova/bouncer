@@ -471,7 +471,7 @@ async def on_ready():
 
     sqlconn = sqlite3.connect(DATABASE_PATH)
     blockDB = sqlconn.execute("SELECT * FROM blocks").fetchall()
-    blockList = [x[0] for x in blockDB]
+    blockList = [str(x[0]) for x in blockDB]
     sqlconn.close()
 
     activity_object = discord.Activity(name="for your reports!", type=discord.ActivityType.watching)
@@ -654,8 +654,10 @@ async def on_message(message):
 
             with open("private/DMs.txt", 'a', encoding='utf-8') as openFile:
                 openFile.write("{} - {}\n".format(ts, mes))
-            chan = client.get_channel(validInputChannels[0])
-            await chan.send(mes)
+
+            if str(message.author.id) not in blockList:
+                chan = client.get_channel(validInputChannels[0])
+                await chan.send(mes)
 
         # Temporary - notify if UB3R-BOT has removed something on its word censor
         elif (message.author.id == 85614143951892480 and message.channel.id == 233039273207529472) and ("Word Censor Triggered" in message.content) and not debugBot:

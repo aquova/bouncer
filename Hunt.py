@@ -30,3 +30,12 @@ class Hunter:
     # Add user to set
     def addReaction(self, user):
         self.hunters.add(user)
+
+    def export(self):
+        sqlconn = sqlite3.connect(DATABASE_PATH)
+        userlist = sqlconn.execute("SELECT * FROM hunters;").fetchall()
+        with open("private/hunters.csv", 'w', encoding='utf-8') as openFile:
+            openFile.write("Username, ID, Count\n")
+            for user in userlist:
+                openFile.write("{}, {}, {}\n".format(user[1], user[0], user[2]))
+        sqlconn.close()

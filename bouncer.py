@@ -783,6 +783,10 @@ async def on_message(message):
             elif message.content.startswith("$endhunt"):
                 hunter.stopWatching()
                 await message.channel.send("I hope your hunt has been victorious!")
+            elif message.content.startswith("$gethunt"):
+                hunter.export()
+                with open("./private/hunters.csv", "r") as f:
+                    await message.channel.send(file=discord.File(f))
 
             # Debug functions only to be executed by the owner
             elif message.content.upper() == "$DUMPBANS" and message.author.id == cfg["owner"]:

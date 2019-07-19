@@ -8,7 +8,7 @@ class Hunter:
         self.hunters = set()
 
     def getWatchedChannel(self):
-        return self.watchedChannel.id
+        return self.watchedChannel.id if self.watchedChannel != None else None
 
     # Sets the channel object to watch for reactions
     def setWatchedChannel(self, channel):

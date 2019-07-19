@@ -766,7 +766,16 @@ async def on_message(message):
                 await logUser(message, LogTypes.NOTE)
             elif message.content.startswith("$edit"):
                 await removeError(message, True)
-            elif message.content.startswith("$starthunt"):
+
+            # Debug functions only to be executed by the owner
+            elif message.content.upper() == "$DUMPBANS" and message.author.id == cfg["owner"]:
+                output = await Utils.dumpbans(recentBans)
+                await message.channel.send(output)
+
+        # Special case for the egg hunt functions. We want only permitted roles to access them,
+        # but their channel will always be new, so allow any channel access
+        if Utils.checkRoles(message.author, validRoles):
+            if message.content.startswith("$starthunt"):
                 words = message.clean_content.split(" ")
                 if len(words) != 2:
                     await message.channel.send("Invalid command. `$starthunt EMOJI`")
@@ -787,11 +796,6 @@ async def on_message(message):
                 hunter.export()
                 with open("./private/hunters.csv", "r") as f:
                     await message.channel.send(file=discord.File(f))
-
-            # Debug functions only to be executed by the owner
-            elif message.content.upper() == "$DUMPBANS" and message.author.id == cfg["owner"]:
-                output = await Utils.dumpbans(recentBans)
-                await message.channel.send(output)
 
     except discord.errors.HTTPException as e:
         print("HTTPException: {}", e)

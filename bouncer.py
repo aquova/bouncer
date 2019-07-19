@@ -6,6 +6,7 @@ import discord, json, sqlite3, datetime, asyncio, os, subprocess, sys
 import Utils
 from User import User
 from Utils import DATABASE_PATH
+from Hunt import Hunter
 
 # Reading values from config file
 with open('private/config.json') as config_file:
@@ -33,6 +34,9 @@ startTime = 0
 
 charLimit = 2000
 
+# Event hunt object
+hunter = Hunter()
+
 # Notes on database structure:
 # Most of the columns are self explanitory
 # num column is the category of the infraction
@@ -47,6 +51,7 @@ sqlconn.execute("CREATE TABLE IF NOT EXISTS badeggs (dbid INT PRIMARY KEY, id IN
 sqlconn.execute("CREATE TABLE IF NOT EXISTS blocks (id TEXT);")
 sqlconn.execute("CREATE TABLE IF NOT EXISTS staffLogs (staff TEXT PRIMARY KEY, bans INT, warns INT);")
 sqlconn.execute("CREATE TABLE IF NOT EXISTS monthLogs (month TEXT PRIMARY KEY, bans INT, warns INT);")
+sqlconn.execute("CREATE TABLE IF NOT EXISTS hunters (id INT PRIMARY KEY, username TEXT, count INT);")
 sqlconn.commit()
 sqlconn.close()
 
@@ -612,11 +617,16 @@ async def on_voice_state_update(member, before, after):
 
 @client.event
 async def on_reaction_add(reaction, user):
-    if debugBot:
+    if user.id == client.user.id:
         return
-    if reaction.emoji == '👑' and reaction.message.channel.id == cfg["gatekeeper"]["channel"]:
-        villager = discord.utils.get(reaction.message.guild.roles, id=cfg["gatekeeper"]["role"])
-        await client.add_roles(user, villager)
+
+    if not debugBot:
+        if reaction.emoji == '👑' and reaction.message.channel.id == cfg["gatekeeper"]["channel"]:
+            villager = discord.utils.get(reaction.message.guild.roles, id=cfg["gatekeeper"]["role"])
+            await client.add_roles(user, villager)
+
+    if hunter.getWatchedChannel() == reaction.message.channel.id:
+        hunter.addReaction(user)
 
 @client.event
 # Temporary function. Will notify us if Mayor Lewis ever goes offline.
@@ -756,14 +766,31 @@ async def on_message(message):
                 await logUser(message, LogTypes.NOTE)
             elif message.content.startswith("$edit"):
                 await removeError(message, True)
+            elif message.content.startswith("$starthunt"):
+                words = message.clean_content.split(" ")
+                if len(words) != 2:
+                    await message.channel.send("Invalid command. `$starthunt EMOJI`")
+                    return
+                hunter.setWatchedChannel(message.channel)
+                mes = await message.channel.send("{}".format(words[1]))
+                try:
+                    emoji = words[1].split(":")[1]
+                    emojiObject = [x for x in message.guild.emojis if x.name == emoji][0]
+                    await mes.add_reaction(emojiObject)
+                except IndexError:
+                    emoji = words[1].replace(":", "")
+                    await mes.add_reaction(emoji)
+            elif message.content.startswith("$endhunt"):
+                hunter.stopWatching()
+                await message.channel.send("I hope your hunt has been victorious!")
+
             # Debug functions only to be executed by the owner
             elif message.content.upper() == "$DUMPBANS" and message.author.id == cfg["owner"]:
                 output = await Utils.dumpbans(recentBans)
                 await message.channel.send(output)
 
-    except discord.errors.HTTPException:
-        # Curious to see if this ever gets hit
-        print("There was an HTTPException")
+    except discord.errors.HTTPException as e:
+        print("HTTPException: {}", e)
         pass
 
 client.run(discordKey)

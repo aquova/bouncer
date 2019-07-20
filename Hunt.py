@@ -21,7 +21,7 @@ class Hunter:
             userCount = sqlconn.execute("SELECT count FROM hunters WHERE id=?", [user.id]).fetchone()
             try:
                 count = userCount[0] + 1
-            except IndexError:
+            except TypeError:
                 count = 1
             params = [user.id, "{}#{}".format(user.name, user.discriminator), count]
             sqlconn.execute("REPLACE INTO hunters (id, username, count) VALUES (?, ?, ?)", params)

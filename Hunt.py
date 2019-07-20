@@ -18,7 +18,11 @@ class Hunter:
     def stopWatching(self):
         sqlconn = sqlite3.connect(DATABASE_PATH)
         for user in self.hunters:
-            count = sqlconn.execute("SELECT COUNT(*) FROM hunters WHERE id=?", [user.id]).fetchone()[0] + 1
+            userCount = sqlconn.execute("SELECT count FROM hunters WHERE id=?", [user.id]).fetchone()
+            try:
+                count = userCount[0] + 1
+            except IndexError:
+                count = 1
             params = [user.id, "{}#{}".format(user.name, user.discriminator), count]
             sqlconn.execute("REPLACE INTO hunters (id, username, count) VALUES (?, ?, ?)", params)
 

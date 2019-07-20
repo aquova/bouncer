@@ -32,13 +32,16 @@ def formatTime(t):
 
 # Checks if given user has one of the roles specified in config.json
 def checkRoles(user, validRoles):
-    if len(validRoles) == 1 and validRoles[0] == "":
-        return True
-    for role in user.roles:
-        for r in validRoles:
-            if role.id == r:
-                return True
-    return False
+    try:
+        if len(validRoles) == 1 and validRoles[0] == "":
+            return True
+        for role in user.roles:
+            for r in validRoles:
+                if role.id == r:
+                    return True
+        return False
+    except AttributeError as e:
+        print("The user {}#{} had this issue {}".format(user.name, user.discriminator, e))
 
 # Parses the message to check if there's a valid username, then attempts to find their ID
 def parseUsername(message, recentBans):

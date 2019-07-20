@@ -789,6 +789,7 @@ async def on_message(message):
                 except IndexError:
                     emoji = words[1].replace(":", "")
                     await mes.add_reaction(emoji)
+                await message.delete()
             elif message.content.startswith("$endhunt"):
                 hunter.stopWatching()
                 await message.channel.send("I hope your hunt has been victorious!")

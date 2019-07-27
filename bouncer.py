@@ -694,87 +694,9 @@ async def on_message(message):
             chan = client.get_channel(validInputChannels[0])
             await chan.send(mes)
 
-        # If they have privledges to access bouncer functions
-        elif (message.channel.id in validInputChannels) and Utils.checkRoles(message.author, validRoles):
-            # This if/elif thing isn't ideal, but it's by far the simpliest way
-            if message.content.upper() == "$HELP":
-                helpMes = (
-                    "Issue a warning: `$warn USER message`\n"
-                    "Log a ban: `$ban USER reason`\n"
-                    "Log an unbanning: `$unban USER reason`\n"
-                    "Log a kick: `$kick USER reason`\n"
-                    "Search for a user: `$search USER`\n"
-                    "Create a note about a user: `$note USER message`\n"
-                    "Show all notes: `$notebook`\n"
-                    "Remove a user's log: `$remove USER index(optional)`\n"
-                    "Edit a user's note: `$edit USER index(optional) new_message`\n"
-                    "Stop a user from sending DMs to us: `$block/$unblock USERID`\n"
-                    "Reply to a user in DMs: `$reply USERID` - To reply to the most recent DM: `$reply ^`\n"
-                    "Plot warn/ban stats: `$graph`\nReview which users have old logs: `$review`\n"
-                    "View bot uptime: `$uptime`\n"
-                    "DMing users when they are banned is `{}`\n"
-                    "DMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
-                )
-                await message.channel.send(helpMes)
-            elif message.content.upper() == "$NOTEBOOK":
-                await notebook(message)
-            elif message.content.upper() in helpInfo.keys():
-                await message.channel.send(helpInfo[message.content.upper()])
-            elif message.content.upper() == "$UPDATE":
-                if message.author.id == cfg["owner"]:
-                    await message.channel.send("Updating and restarting...")
-                    subprocess.call(["git", "pull"])
-                    sys.exit()
-                else:
-                    await message.channel.send("Who do you think you are.")
-                    return
-            elif message.content.upper() == "$GRAPH":
-                import Visualize # Import here to avoid debugger crashing from matplotlib issue
-                Visualize.genUserPlot()
-                Visualize.genMonthlyPlot()
-                with open("./private/user_plot.png", 'rb') as f:
-                    await message.channel.send(file=discord.File(f))
-
-                with open("./private/month_plot.png", 'rb') as f:
-                    await message.channel.send(file=discord.File(f))
-            elif message.content.upper() == "$REVIEW":
-                await userReview(message.channel)
-            elif message.content.upper() == "$UPTIME":
-                await uptime(message.channel)
-            elif message.content.upper() == "$GETROLES":
-                output = await Utils.fetchRoleList(message.guild)
-                await message.channel.send(output)
-            elif message.content.startswith("$search"):
-                await userSearch(message)
-            elif message.content.startswith("$warn"):
-                await logUser(message, LogTypes.WARN)
-            elif message.content.startswith("$ban"):
-                await logUser(message, LogTypes.BAN)
-            elif message.content.startswith("$kick"):
-                await logUser(message, LogTypes.KICK)
-            elif message.content.startswith("$unban"):
-                await logUser(message, LogTypes.UNBAN)
-            elif message.content.startswith("$remove"):
-                await removeError(message, False)
-            elif message.content.startswith("$block"):
-                await blockUser(message, True)
-            elif message.content.startswith("$unblock"):
-                await blockUser(message, False)
-            elif message.content.startswith("$reply"):
-                await reply(message)
-            elif message.content.startswith("$note"):
-                await logUser(message, LogTypes.NOTE)
-            elif message.content.startswith("$edit"):
-                await removeError(message, True)
-
-            # Debug functions only to be executed by the owner
-            elif message.content.upper() == "$DUMPBANS" and message.author.id == cfg["owner"]:
-                output = await Utils.dumpbans(recentBans)
-                await message.channel.send(output)
-
-        # Special case for the egg hunt functions. We want only permitted roles to access them,
-        # but their channel will always be new, so allow any channel access
-        if Utils.checkRoles(message.author, validRoles):
+        elif Utils.checkRoles(message.author, validRoles):
+            # Special case for the egg hunt functions. We want only permitted roles to access them,
+            # but their channel will always be new, so allow any channel access
             if message.content.startswith("$starthunt"):
                 words = message.clean_content.split(" ")
                 if len(words) != 2:
@@ -797,6 +719,84 @@ async def on_message(message):
                 hunter.export()
                 with open("./private/hunters.csv", "r") as f:
                     await message.channel.send(file=discord.File(f))
+
+            # If they have privledges to access bouncer functions
+            elif message.channel.id in validInputChannels:
+                # This if/elif thing isn't ideal, but it's by far the simpliest way
+                if message.content.upper() == "$HELP":
+                    helpMes = (
+                        "Issue a warning: `$warn USER message`\n"
+                        "Log a ban: `$ban USER reason`\n"
+                        "Log an unbanning: `$unban USER reason`\n"
+                        "Log a kick: `$kick USER reason`\n"
+                        "Search for a user: `$search USER`\n"
+                        "Create a note about a user: `$note USER message`\n"
+                        "Show all notes: `$notebook`\n"
+                        "Remove a user's log: `$remove USER index(optional)`\n"
+                        "Edit a user's note: `$edit USER index(optional) new_message`\n"
+                        "Stop a user from sending DMs to us: `$block/$unblock USERID`\n"
+                        "Reply to a user in DMs: `$reply USERID` - To reply to the most recent DM: `$reply ^`\n"
+                        "Plot warn/ban stats: `$graph`\nReview which users have old logs: `$review`\n"
+                        "View bot uptime: `$uptime`\n"
+                        "DMing users when they are banned is `{}`\n"
+                        "DMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
+                    )
+                    await message.channel.send(helpMes)
+                elif message.content.upper() == "$NOTEBOOK":
+                    await notebook(message)
+                elif message.content.upper() in helpInfo.keys():
+                    await message.channel.send(helpInfo[message.content.upper()])
+                elif message.content.upper() == "$UPDATE":
+                    if message.author.id == cfg["owner"]:
+                        await message.channel.send("Updating and restarting...")
+                        subprocess.call(["git", "pull"])
+                        sys.exit()
+                    else:
+                        await message.channel.send("Who do you think you are.")
+                        return
+                elif message.content.upper() == "$GRAPH":
+                    import Visualize # Import here to avoid debugger crashing from matplotlib issue
+                    Visualize.genUserPlot()
+                    Visualize.genMonthlyPlot()
+                    with open("./private/user_plot.png", 'rb') as f:
+                        await message.channel.send(file=discord.File(f))
+
+                    with open("./private/month_plot.png", 'rb') as f:
+                        await message.channel.send(file=discord.File(f))
+                elif message.content.upper() == "$REVIEW":
+                    await userReview(message.channel)
+                elif message.content.upper() == "$UPTIME":
+                    await uptime(message.channel)
+                elif message.content.upper() == "$GETROLES":
+                    output = await Utils.fetchRoleList(message.guild)
+                    await message.channel.send(output)
+                elif message.content.startswith("$search"):
+                    await userSearch(message)
+                elif message.content.startswith("$warn"):
+                    await logUser(message, LogTypes.WARN)
+                elif message.content.startswith("$ban"):
+                    await logUser(message, LogTypes.BAN)
+                elif message.content.startswith("$kick"):
+                    await logUser(message, LogTypes.KICK)
+                elif message.content.startswith("$unban"):
+                    await logUser(message, LogTypes.UNBAN)
+                elif message.content.startswith("$remove"):
+                    await removeError(message, False)
+                elif message.content.startswith("$block"):
+                    await blockUser(message, True)
+                elif message.content.startswith("$unblock"):
+                    await blockUser(message, False)
+                elif message.content.startswith("$reply"):
+                    await reply(message)
+                elif message.content.startswith("$note"):
+                    await logUser(message, LogTypes.NOTE)
+                elif message.content.startswith("$edit"):
+                    await removeError(message, True)
+
+                # Debug functions only to be executed by the owner
+                elif message.content.upper() == "$DUMPBANS" and message.author.id == cfg["owner"]:
+                    output = await Utils.dumpbans(recentBans)
+                    await message.channel.send(output)
 
     except discord.errors.HTTPException as e:
         print("HTTPException: {}", e)

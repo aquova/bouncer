@@ -628,14 +628,14 @@ async def on_reaction_add(reaction, user):
     if hunter.getWatchedChannel() == reaction.message.channel.id:
         hunter.addReaction(user)
 
-@client.event
-# Temporary function. Will notify us if Mayor Lewis ever goes offline.
-async def on_member_update(before, after):
-    if before.id == 253373477539545090:
-        if before.status == discord.Status.online and after.status == discord.Status.offline:
-            mes = "Mayor Lewis has gone offline!"
-            chan = client.get_channel(validInputChannels[0])
-            await chan.send(mes)
+# @client.event
+# # Temporary function. Will notify us if Mayor Lewis ever goes offline.
+# async def on_member_update(before, after):
+#     if before.id == 253373477539545090:
+#         if before.status == discord.Status.online and after.status == discord.Status.offline:
+#             mes = "Mayor Lewis has gone offline!"
+#             chan = client.get_channel(validInputChannels[0])
+#             await chan.send(mes)
 
 @client.event
 async def on_message(message):

@@ -644,11 +644,6 @@ async def on_reaction_add(reaction, user):
     if user.id == client.user.id:
         return
 
-    if not debugBot:
-        if reaction.emoji == '👑' and reaction.message.channel.id == cfg["gatekeeper"]["channel"]:
-            villager = discord.utils.get(reaction.message.guild.roles, id=cfg["gatekeeper"]["role"])
-            await client.add_roles(user, villager)
-
     if hunter.getWatchedChannel() == reaction.message.channel.id:
         hunter.addReaction(user)
 

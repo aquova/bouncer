@@ -185,8 +185,32 @@ async def logUser(m, state):
     elif state == LogTypes.KICK:
         logMessage = "[{}] **{}** - Kicked by {} - {}\n".format(Utils.formatTime(currentTime), params[2], m.author.name, mes)
     elif state == LogTypes.UNBAN:
-        logMessage = "[{}] **{}** - Unbanned by {} - {}\n".format(Utils.formatTime(currentTime), params[2], m.author.name, mes)
-        Visualize.updateCache(sqlconn, m.author.name, (-1, 0), Utils.formatTime(currentTime))
+        def unban_check(check_mes):
+            if check_mes.author == m.author and check_mes.channel == m.channel:
+                # The API is stupid, returning a boolean will keep the check open, you have to return something non-false
+                if check_mes.content.upper() == 'YES' or check_mes.content.upper() == 'Y':
+                    return 'Y'
+                else:
+                    return 'N'
+
+        # In the event of an unban, we need to first
+        # A. Ask if they are sure they meant to do this
+        await m.channel.send("In order to log an unban, all old logs will be removed. Are you sure? Y/[N]")
+        check = await client.wait_for('message', check=unban_check, timeout=10.0)
+        if check == 'Y':
+            # B. If so, clear out all previous logs
+            await m.channel.send("Very well, removing all old logs to unban")
+            logs = user.search()
+            for log in logs:
+                sqlconn.execute("REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, NULL, NULL, NULL, NULL, NULL, NULL, NULL)", [log[5]])
+
+            # C. Proceed with the unbanning
+            logMessage = "[{}] **{}** - Unbanned by {} - {}\n".format(Utils.formatTime(currentTime), params[2], m.author.name, mes)
+            Visualize.updateCache(sqlconn, m.author.name, (-1, 0), Utils.formatTime(currentTime))
+        else:
+            await m.channel.send("Unban aborted.")
+            sqlconn.close()
+            return
     else: # LogTypes.NOTE
         noteCount = sqlconn.execute("SELECT COUNT(*) FROM badeggs WHERE id=? AND num = -1", [user.id]).fetchone()[0] + 1
         logMessage = "Note #{} made for {}".format(noteCount, username)
@@ -627,15 +651,6 @@ async def on_reaction_add(reaction, user):
 
     if hunter.getWatchedChannel() == reaction.message.channel.id:
         hunter.addReaction(user)
-
-# @client.event
-# # Temporary function. Will notify us if Mayor Lewis ever goes offline.
-# async def on_member_update(before, after):
-#     if before.id == 253373477539545090:
-#         if before.status == discord.Status.online and after.status == discord.Status.offline:
-#             mes = "Mayor Lewis has gone offline!"
-#             chan = client.get_channel(validInputChannels[0])
-#             await chan.send(mes)
 
 @client.event
 async def on_message(message):

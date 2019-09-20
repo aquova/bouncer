@@ -57,7 +57,6 @@ sqlconn.close()
 
 warnThreshold = 3
 reviewThreshold = 6 # In months
-noteThreshold = 5
 
 # Containers to store needed information in memory
 recentBans = {}
@@ -132,9 +131,6 @@ async def userSearch(m):
             await m.channel.send(out)
             out = n
 
-    # People have been giving too many notes to people without warns. Tell them to knock it off
-    if noteTotal >= noteThreshold and criticizeNotes:
-        out += "They have {} notes and no warns are you kidding me.\n".format(noteTotal)
     await m.channel.send(out)
 
 # Note a warn or ban for a user

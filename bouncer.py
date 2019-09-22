@@ -193,7 +193,8 @@ async def logUser(m, state):
         # A. Ask if they are sure they meant to do this
         await m.channel.send("In order to log an unban, all old logs will be removed. Are you sure? Y/[N]")
         check = await client.wait_for('message', check=unban_check, timeout=10.0)
-        if check == 'Y':
+        # I have no idea why this returns a message and not just 'Y'
+        if check.content.upper() == 'Y':
             # B. If so, clear out all previous logs
             await m.channel.send("Very well, removing all old logs to unban")
             logs = user.search()

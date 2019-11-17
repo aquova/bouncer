@@ -485,6 +485,22 @@ async def uptime(channel):
 
     await channel.send(mes)
 
+async def archive_channel(channel):
+    await channel.send("You got it boss")
+    os.mkdir("private/{}".format(channel.name))
+    with open("private/{}/messages.txt".format(channel.name), 'a', encoding='utf-8') as openFile:
+        async for message in channel.history(oldest_first=True):
+            if len(message.attachments) != 0:
+                for item in message.attachments:
+                    # The proper way is to use aiohttp, but I couldn't be bothered, so I'm calling a subprocess which is bad, I know.
+                    img_name = item.url.split("/")[-1]
+                    file_name = "private/{}/{}#{}-{}".format(channel.name, message.author.name, message.author.discriminator, img_name)
+                    subprocess.call(["wget", "-O", file_name, item.url])
+
+            if message.content != "":
+                openFile.write("<{}#{}> {}\n".format(message.author.name, message.author.discriminator, message.content))
+    await channel.send("Done sir!")
+
 @client.event
 async def on_ready():
     global blockList
@@ -726,6 +742,8 @@ async def on_message(message):
                 hunter.export()
                 with open("./private/hunters.csv", "r") as f:
                     await message.channel.send(file=discord.File(f))
+            elif message.content.startswith("$archive"):
+                await archive_channel(message.channel)
 
             # If they have privledges to access bouncer functions
             elif message.channel.id in validInputChannels:

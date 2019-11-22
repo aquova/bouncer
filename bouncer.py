@@ -553,7 +553,7 @@ async def on_member_ban(server, member):
     global recentBans
     if debugBot:
         return
-    recentBans[member.id] = "{}#{} : {}".format(member.name, member.discriminator, member.id)
+    recentBans[member.id] = "{}#{}".format(member.name, member.discriminator)
     mes = "**{}#{} ({})** has been banned.".format(member.name, member.discriminator, member.id)
     chan = client.get_channel(systemLog)
     await chan.send(mes)
@@ -564,7 +564,7 @@ async def on_member_remove(member):
     global recentBans
     if debugBot:
         return
-    recentBans[member.id] = "{}#{} : {}".format(member.name, member.discriminator, member.id)
+    recentBans[member.id] = "{}#{}".format(member.name, member.discriminator)
     mes = "**{}#{} ({})** has left".format(member.name, member.discriminator, member.id)
     chan = client.get_channel(systemLog)
     await chan.send(mes)
@@ -742,7 +742,7 @@ async def on_message(message):
                 hunter.export()
                 with open("./private/hunters.csv", "r") as f:
                     await message.channel.send(file=discord.File(f))
-            elif message.content.startswith("$archive"):
+            elif message.content.startswith("$archive") and message.author.id == cfg["owner"]:
                 await archive_channel(message.channel)
 
             # If they have privledges to access bouncer functions
@@ -820,8 +820,11 @@ async def on_message(message):
 
                 # Debug functions only to be executed by the owner
                 elif message.content.upper() == "$DUMPBANS" and message.author.id == cfg["owner"]:
-                    output = await Utils.dumpbans(recentBans)
-                    await message.channel.send(output)
+                    output = await Utils.dumpBans(recentBans)
+                    if output != "":
+                        await message.channel.send(output)
+                    else:
+                        await message.channel.send("There has been no bans since I was rebooted.")
 
     except discord.errors.HTTPException as e:
         print("HTTPException: {}", e)

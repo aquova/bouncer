@@ -46,6 +46,7 @@ hunter = Hunter()
 # -2: Kick
 # -3: Unban
 
+# Create database and tables, if not created already
 sqlconn = sqlite3.connect(DATABASE_PATH)
 sqlconn.execute("CREATE TABLE IF NOT EXISTS badeggs (dbid INT PRIMARY KEY, id INT, username TEXT, num INT, date DATE, message TEXT, staff TEXT, post INT);")
 sqlconn.execute("CREATE TABLE IF NOT EXISTS blocks (id TEXT);")
@@ -62,20 +63,6 @@ reviewThreshold = 6 # In months
 recentBans = {}
 blockList = []
 recentReply = None
-
-helpInfo = {
-    '$WARN':       '`$warn USER reason`',
-    '$BAN':        '`$ban USER reason`',
-    '$UNBAN':      '`$unban USER reason`',
-    '$KICK':       '`$kick USER reason`',
-    '$SEARCH':     '`$search USER`',
-    '$NOTE':       '`$note USER message`',
-    '$REMOVE':     '`$remove USER [num]`',
-    '$BLOCK':      '`$block USER`',
-    '$UNBLOCK':    '`$unblock USER`',
-    '$REPLY':      '`$reply USER`',
-    '$EDIT':       '`$edit USER [num] new_message`'
-}
 
 # This is basically a makeshift enum
 class LogTypes:
@@ -105,22 +92,14 @@ async def userSearch(m):
         return
 
     noteTotal = 0
-    criticizeNotes = True
     out = "User {} was found with the following infractions\n".format(username)
     for index, item in enumerate(searchResults):
         n = "{}. ".format(index+1)
-        if item[1] == LogTypes.BAN:
-            n += "[{}] **{}** - Banned by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[4], item[3])
-        elif item[1] == LogTypes.NOTE:
-            n += "[{}] **{}** - Note by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[4], item[3])
+
+        n += Utils.formatMessage(item)
+
+        if item[1] == LogTypes.NOTE:
             noteTotal += 1
-        elif item[1] == LogTypes.KICK:
-            n += "[{}] **{}** - Kicked by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[4], item[3])
-        elif item[1] == LogTypes.UNBAN:
-            n += "[{}] **{}** - Unbanned by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[4], item[3])
-        else: # LogTypes.WARN
-            n += "[{}] **{}** - Warning #{} by {} - {}\n".format(Utils.formatTime(item[2]), item[0], item[1], item[4], item[3])
-            criticizeNotes = False
 
         if item[1] >= warnThreshold:
             n += "They have received {} warnings, it is recommended that they be banned.\n".format(warnThreshold)
@@ -326,18 +305,13 @@ async def removeError(m, edit):
         sqlconn.execute("REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, NULL, NULL, NULL, NULL, NULL, NULL, NULL)", [item[0]])
         out = "The following log was deleted:\n"
 
+        out += Utils.formatMessage(item)
+
         if item[3] == LogTypes.BAN:
-            out += "[{}] **{}** - Banned by {} - {}\n".format(Utils.formatTime(item[4]), item[2], item[6], item[5])
             Visualize.updateCache(sqlconn, item[6], (-1, 0), Utils.formatTime(item[4]))
-        elif item[3] == LogTypes.NOTE:
-            out += "[{}] **{}** - Note by {} - {}\n".format(Utils.formatTime(item[4]), item[2], item[6], item[5])
         elif item[3] == LogTypes.UNBAN:
-            out += "[{}] **{}** - Unbanned by {} - {}\n".format(Utils.formatTime(item[4]), item[2], item[6], item[5])
             Visualize.updateCache(sqlconn, item[6], (1, 0), Utils.formatTime(item[4]))
-        elif item[3] == LogTypes.KICK:
-            out += "[{}] **{}** - Kicked by {} - {}\n".format(Utils.formatTime(item[4]), item[2], item[6], item[5])
-        else: # LogTypes.WARN
-            out += "[{}] **{}** - Warning #{} by {} - {}\n".format(Utils.formatTime(item[4]), item[2], item[3], item[6], item[5])
+        elif item[3] == LogTypes.WARN:
             Visualize.updateCache(sqlconn, item[6], (0, -1), Utils.formatTime(item[4]))
         await m.channel.send(out)
 
@@ -769,8 +743,6 @@ async def on_message(message):
                     await message.channel.send(helpMes)
                 elif message.content.upper() == "$NOTEBOOK":
                     await notebook(message)
-                elif message.content.upper() in helpInfo.keys():
-                    await message.channel.send(helpInfo[message.content.upper()])
                 elif message.content.upper() == "$UPDATE":
                     if message.author.id == cfg["owner"]:
                         await message.channel.send("Updating and restarting...")

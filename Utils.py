@@ -2,6 +2,8 @@
 
 import discord, time, sqlite3
 
+from bouncer import LogTypes
+
 DATABASE_PATH = "private/sdv.db"
 
 # Removes the first word of a string
@@ -86,6 +88,29 @@ def parseMessage(message, username):
     if m.startswith(username):
         return m[len(username)+1:]
     return removeCommand(message)
+
+def formatMessage(info):
+    logType = info[1]
+    if logType == LogTypes.BAN:
+        logWord = "Banned"
+    elif logType == LogTypes.NOTE:
+        logWord = "Note"
+    elif logType == LogTypes.KICK:
+        logWord = "Kicked"
+    elif logType == LogTypes.UNBAN:
+        logWord = "Unbanned"
+    else: # LogTypes.WARN
+        logWord = "Warning #{}".format(item[1])
+
+    output = "[{date}] **{name}** - {word} by {staff} - {message}\n".format(
+        date = formatTime(info[2]),
+        name = info[0],
+        word = logWord,
+        staff = info[4],
+        message = info[3]
+    )
+
+    return output
 
 #########################################################
 # Functions that only need to be called once in a while #

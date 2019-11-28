@@ -5,7 +5,7 @@
 import discord, json, sqlite3, datetime, asyncio, os, subprocess, sys
 import Utils
 from User import User
-from Utils import DATABASE_PATH
+from Utils import DATABASE_PATH, LogTypes
 from Hunt import Hunter
 
 # Reading values from config file
@@ -67,14 +67,6 @@ CHAR_LIMIT = 2000
 WARN_THRESHOLD = 3
 # If older than threshold, add to review list, in months
 REVIEW_THRESHOLD = 6
-
-# This is basically a makeshift enum
-class LogTypes:
-    UNBAN = -3
-    KICK = -2
-    NOTE = -1
-    BAN = 0
-    WARN = 1
 
 """
 User Search
@@ -563,17 +555,18 @@ async def archive_channel(channel):
     await channel.send("You got it boss")
     # Create a git ignored directory to store everything in
     os.mkdir("private/{}".format(channel.name))
+    messages = await channel.history(limit=None, oldest_first=True).flatten()
     # All text posts will go into messages.txt
     with open("private/{}/messages.txt".format(channel.name), 'a', encoding='utf-8') as openFile:
-        async for message in channel.history(oldest_first=True):
-            if len(message.attachments) != 0:
-                # Download any attachment to any messages
-                # TODO: Need to note this in messages.txt as well
-                for item in message.attachments:
-                    # The proper way is to use aiohttp, but I couldn't be bothered, so I'm calling a subprocess which is bad, I know.
-                    img_name = item.url.split("/")[-1]
-                    file_name = "private/{}/{}#{}-{}".format(channel.name, message.author.name, message.author.discriminator, img_name)
-                    subprocess.call(["wget", "-O", file_name, item.url])
+        for message in messages:
+            # if len(message.attachments) != 0:
+            #     # Download any attachment to any messages
+            #     # TODO: Need to note this in messages.txt as well
+            #     for item in message.attachments:
+            #         # The proper way is to use aiohttp, but I couldn't be bothered, so I'm calling a subprocess which is bad, I know.
+            #         img_name = item.url.split("/")[-1]
+            #         file_name = "private/{}/{}#{}-{}".format(channel.name, message.author.name, message.author.discriminator, img_name)
+            #         subprocess.call(["wget", "-O", file_name, item.url])
 
             # Add text body to .txt file
             if message.content != "":
@@ -628,16 +621,15 @@ async def on_member_update(before, after):
         await chan.send(mes)
     # If role quantity has changed
     elif before.roles != after.roles:
-        try:
-            # Determine role difference, post about it
-            if len(before.roles) > len(after.roles):
-                missing = [r for r in before.roles if r not in after.roles]
-                mes = "**{}#{}** had the role `{}` removed.".format(after.name, after.discriminator, missing[0])
-            else:
-                newRoles = [r for r in after.roles if r not in before.roles]
-                mes = "**{}#{}** had the role `{}` added.".format(after.name, after.discriminator, newRoles[0])
-            chan = client.get_channel(systemLog)
-            await chan.send(mes)
+        # Determine role difference, post about it
+        if len(before.roles) > len(after.roles):
+            missing = [r for r in before.roles if r not in after.roles]
+            mes = "**{}#{}** had the role `{}` removed.".format(after.name, after.discriminator, missing[0])
+        else:
+            newRoles = [r for r in after.roles if r not in before.roles]
+            mes = "**{}#{}** had the role `{}` added.".format(after.name, after.discriminator, newRoles[0])
+        chan = client.get_channel(systemLog)
+        await chan.send(mes)
 
 """
 On Member Ban

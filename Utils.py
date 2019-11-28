@@ -2,9 +2,15 @@
 
 import discord, time, sqlite3
 
-from bouncer import LogTypes
-
 DATABASE_PATH = "private/sdv.db"
+
+# This is basically a makeshift enum
+class LogTypes:
+    UNBAN = -3
+    KICK = -2
+    NOTE = -1
+    BAN = 0
+    WARN = 1
 
 # Removes the first word of a string
 def strip(m):

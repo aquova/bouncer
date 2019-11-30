@@ -660,7 +660,7 @@ async def on_member_remove(member):
     if debugBot:
         return
     # Remember that the user has left, in case we want to log after they're gone
-    recentBans[member.id] = "{}#{}".format(member.name, member.discriminator)
+    recentBans[str(member.id)] = "{}#{}".format(member.name, member.discriminator)
     mes = "**{}#{} ({})** has left".format(member.name, member.discriminator, member.id)
     chan = client.get_channel(systemLog)
     await chan.send(mes)

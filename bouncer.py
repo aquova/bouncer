@@ -103,16 +103,16 @@ async def userSearch(m):
 
         n += Utils.formatMessage(item)
 
-        # Special
-        if item[1] >= WARN_THRESHOLD:
-            n += "They have received {} warnings, it is recommended that they be banned.\n".format(WARN_THRESHOLD)
-
         # If message becomes too long, send what we have and start a new post
         if len(out) + len(n) < CHAR_LIMIT:
             out += n
         else:
             await m.channel.send(out)
             out = n
+
+    # Special notice if warns exceed threshold
+    if len(searchResults) >= WARN_THRESHOLD:
+        n += "They have received {} warnings, it is recommended that they be banned.\n".format(WARN_THRESHOLD)
 
     await m.channel.send(out)
 
@@ -205,7 +205,7 @@ async def logUser(m, state):
             return
 
     # Generate message for log channel
-    formatArray = [username, state, currentTime, mes, m.author.name]
+    formatArray = [None, m.author.id, username, state, currentTime, mes, m.author.name, None]
     logMessage = Utils.formatMessage(formatArray)
     await m.channel.send(logMessage)
 
@@ -345,10 +345,14 @@ async def removeError(m, edit):
         await m.channel.send(out)
 
         # Search logging channel for matching post, and remove it
-        if item[7] != 0:
-            chan = client.get_channel(logChannel)
-            m = await chan.fetch_message(item[7])
-            await m.delete()
+        try:
+            if item[7] != 0:
+                chan = client.get_channel(logChannel)
+                m = await chan.fetch_message(item[7])
+                await m.delete()
+        # Print message if unable to find message to delete, but don't stop
+        except HTTPException as e:
+            print("Unable to find message to delete: {}", str(e))
     sqlconn.commit()
     sqlconn.close()
 
@@ -541,37 +545,6 @@ async def uptime(channel):
     mes = "I have been running for {} days, {} hours, and {} minutes".format(delta.days, hours, minutes)
 
     await channel.send(mes)
-
-"""
-Archive Channel
-
-Grabs all text and images from the specified channel
-This has not been checked for large channels. Use at your own risk.
-
-Input:
-    channel: Discord channel object, will archive the channel the command was issued in
-"""
-async def archive_channel(channel):
-    await channel.send("You got it boss")
-    # Create a git ignored directory to store everything in
-    os.mkdir("private/{}".format(channel.name))
-    messages = await channel.history(limit=None, oldest_first=True).flatten()
-    # All text posts will go into messages.txt
-    with open("private/{}/messages.txt".format(channel.name), 'a', encoding='utf-8') as openFile:
-        for message in messages:
-            # if len(message.attachments) != 0:
-            #     # Download any attachment to any messages
-            #     # TODO: Need to note this in messages.txt as well
-            #     for item in message.attachments:
-            #         # The proper way is to use aiohttp, but I couldn't be bothered, so I'm calling a subprocess which is bad, I know.
-            #         img_name = item.url.split("/")[-1]
-            #         file_name = "private/{}/{}#{}-{}".format(channel.name, message.author.name, message.author.discriminator, img_name)
-            #         subprocess.call(["wget", "-O", file_name, item.url])
-
-            # Add text body to .txt file
-            if message.content != "":
-                openFile.write("<{}#{}> {}\n".format(message.author.name, message.author.discriminator, message.content))
-    await channel.send("Done sir!")
 
 """
 On Ready
@@ -892,9 +865,6 @@ async def on_message(message):
                 hunter.export()
                 with open("./private/hunters.csv", "r") as f:
                     await message.channel.send(file=discord.File(f))
-            # Triggering an archive can be done anywhere, but also must be done by the owner
-            elif message.content.startswith("$archive") and message.author.id == cfg["owner"]:
-                await archive_channel(message.channel)
 
             # Functions in this category must have both the correct roles, and also be invoked in specified channels
             elif message.channel.id in validInputChannels:

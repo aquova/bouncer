@@ -96,7 +96,8 @@ def parseMessage(message, username):
     return removeCommand(message)
 
 def formatMessage(info):
-    logType = info[1]
+    logType = info[3]
+    logWord = ""
     if logType == LogTypes.BAN:
         logWord = "Banned"
     elif logType == LogTypes.NOTE:
@@ -106,14 +107,14 @@ def formatMessage(info):
     elif logType == LogTypes.UNBAN:
         logWord = "Unbanned"
     else: # LogTypes.WARN
-        logWord = "Warning #{}".format(item[1])
+        logWord = "Warning #{}".format(logType)
 
     output = "[{date}] **{name}** - {word} by {staff} - {message}\n".format(
-        date = formatTime(info[2]),
-        name = info[0],
+        date = formatTime(info[4]),
+        name = info[2],
         word = logWord,
-        staff = info[4],
-        message = info[3]
+        staff = info[6],
+        message = info[5]
     )
 
     return output

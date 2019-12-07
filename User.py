@@ -110,7 +110,7 @@ class User:
     """
     def search(self):
         sqlconn = sqlite3.connect(DATABASE_PATH)
-        searchResults = sqlconn.execute("SELECT username FROM badeggs WHERE id=?", [self.id]).fetchall()
+        searchResults = sqlconn.execute("SELECT dbid, id, username, num, date, message, staff, post FROM badeggs WHERE id=?", [self.id]).fetchall()
         sqlconn.commit()
         sqlconn.close()
 

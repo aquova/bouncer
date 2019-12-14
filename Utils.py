@@ -71,7 +71,7 @@ def parseUsername(message, recentBans):
 
         userFound = discord.utils.get(message.guild.members, name=user.split("#")[0], discriminator=user.split("#")[1])
         if userFound != None:
-            return userFound.id
+            return str(userFound.id)
 
         if user in list(recentBans.values()):
             revBans = {v: k for k, v in recentBans.items()}

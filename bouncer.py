@@ -193,7 +193,7 @@ async def logUser(m, state):
             await m.channel.send("Very well, removing all old logs to unban")
             logs = user.search()
             for log in logs:
-                sqlconn.execute("REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, NULL, NULL, NULL, NULL, NULL, NULL, NULL)", [log[5]])
+                sqlconn.execute("REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, NULL, NULL, NULL, NULL, NULL, NULL, NULL)", [log[0]])
 
             # C. Proceed with the unbanning
             logMessage = "[{}] **{}** - Unbanned by {} - {}\n".format(Utils.formatTime(currentTime), username, m.author.name, mes)

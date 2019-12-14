@@ -1,4 +1,4 @@
-import discord, sqlite3
+import discord, sqlite3, re
 import Utils
 from Utils import DATABASE_PATH
 
@@ -44,6 +44,7 @@ class User:
             # The pinging should take place as the first word of the message (in case users want to ping someone else in the log body)
             possibleID = self.message.mentions[0].id
             # Discord pings are of the form '<@ID>' or '<@!ID>'. Need to check for both
+            # TODO: Change this to match regex pattern below
             if (self.message.content.split(" ")[1] == "<@{}>".format(possibleID) or (self.message.content.split(" ")[1] == "<@!{}>".format(possibleID))):
                 return possibleID
 
@@ -52,8 +53,16 @@ class User:
         if checkUsername != None:
             return checkUsername
 
-        # Finally, check if it is an ID
+        # Check if it is an ID
         checkID = self.message.content.split(" ")[1]
+
+        # If ping is typed out by user using their ID, it doesn't count as a mention
+        # Thus, try and match with regex
+        checkPing = re.search(r"<@!?(\d+)>", checkID)
+        if checkPing != None:
+            return checkPing.group(1)
+
+        # Finally, see if it's just an ID
         try:
             # Simply verify by attempting to cast to an int. If it doesn't raise an error, return it
             # Lengths of Discord IDs seem to be no longer a constant length, so difficult to verify that way
@@ -101,7 +110,7 @@ class User:
         checkDatabase = self.search()
         if checkDatabase == []:
             raise self.MessageError("User not found")
-        return checkDatabase[-1][0]
+        return checkDatabase[-1][2]
 
     """
     Search

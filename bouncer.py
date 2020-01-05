@@ -197,7 +197,6 @@ async def logUser(m, state):
 
             # C. Proceed with the unbanning
             logMessage = "[{}] **{}** - Unbanned by {} - {}\n".format(Utils.formatTime(currentTime), username, m.author.name, mes)
-            Visualize.updateCache(sqlconn, m.author.name, (-1, 0), Utils.formatTime(currentTime))
         else:
             # Abort if they responded negatively
             await m.channel.send("Unban aborted.")
@@ -338,8 +337,6 @@ async def removeError(m, edit):
 
         if item[3] == LogTypes.BAN:
             Visualize.updateCache(sqlconn, item[6], (-1, 0), Utils.formatTime(item[4]))
-        elif item[3] == LogTypes.UNBAN:
-            Visualize.updateCache(sqlconn, item[6], (1, 0), Utils.formatTime(item[4]))
         elif item[3] == LogTypes.WARN:
             Visualize.updateCache(sqlconn, item[6], (0, -1), Utils.formatTime(item[4]))
         await m.channel.send(out)

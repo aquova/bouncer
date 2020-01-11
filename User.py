@@ -45,7 +45,7 @@ class User:
             possibleID = self.message.mentions[0].id
             # Discord pings are of the form '<@ID>' or '<@!ID>'. Need to check for both
             # TODO: Change this to match regex pattern below
-            if (self.message.content.split(" ")[1] == "<@{}>".format(possibleID) or (self.message.content.split(" ")[1] == "<@!{}>".format(possibleID))):
+            if (self.message.content.split()[1] == "<@{}>".format(possibleID) or (self.message.content.split()[1] == "<@!{}>".format(possibleID))):
                 return possibleID
 
         # Check if the username was provided
@@ -54,7 +54,7 @@ class User:
             return checkUsername
 
         # Check if it is an ID
-        checkID = self.message.content.split(" ")[1]
+        checkID = self.message.content.split()[1]
 
         # If ping is typed out by user using their ID, it doesn't count as a mention
         # Thus, try and match with regex

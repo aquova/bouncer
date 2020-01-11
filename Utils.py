@@ -14,27 +14,17 @@ class LogTypes:
 
 # Removes the first word of a string
 def strip(m):
-    tmp = m.split(" ")[1:]
+    tmp = m.split()[1:]
     return " ".join(tmp)
 
 # Removes the '$command' to get just the request
 def removeCommand(m):
-    tmp = m.split(" ")[2:]
+    tmp = m.split()[2:]
     return " ".join(tmp)
-
-# Formats a datetime object to be European-style time string
-# The old formatTime function. Has now been replaced with YYYY-MM-DD
-def formatTime_euro(t):
-    # Input t is of the form: YYYY-MM-DD HH:MM:SS.SSSSSS
-    date = str(t).split(" ")[0]
-    pieces = date.split("-")
-    # output is of the form DD/MM/YYYY
-    european = "{}/{}/{}".format(pieces[2], pieces[1], pieces[0])
-    return european
 
 def formatTime(t):
     # Input t is of the form: YYYY-MM-DD HH:MM:SS.SSSSSS
-    date = str(t).split(" ")[0]
+    date = str(t).split()[0]
     # output is of the form YYYY-MM-DD
     return date
 
@@ -57,7 +47,7 @@ def parseUsername(message, recentBans):
     # and then everything after the discriminator
 
     # Remove command
-    testUsername = message.content.split(" ")[1:]
+    testUsername = message.content.split()[1:]
     testUsername = " ".join(testUsername)
     # Remove a "@" if it exists at the front of the message
     if testUsername[0] == "@":
@@ -66,7 +56,7 @@ def parseUsername(message, recentBans):
     try:
         # Parse out the actual username
         user = testUsername.split("#")
-        discriminator = user[1].split(" ")
+        discriminator = user[1].split()
         user = "{}#{}".format(user[0], discriminator[0])
 
         userFound = discord.utils.get(message.guild.members, name=user.split("#")[0], discriminator=user.split("#")[1])
@@ -90,7 +80,7 @@ def parseUsername(message, recentBans):
 # Since usernames can have spaces, first check if it's a username, otherwise just cut off first word as normal
 # 'user' will either be the correct username, or an ID.
 def parseMessage(message, username):
-    m = " ".join(message.split(" ")[1:])
+    m = " ".join(message.split()[1:])
     if m.startswith(username):
         return m[len(username)+1:]
     return removeCommand(message)

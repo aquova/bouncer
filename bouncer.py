@@ -290,7 +290,7 @@ async def removeError(m, edit):
             mes = "0"
 
     try:
-        index = int(mes.split(" ")[0]) - 1
+        index = int(mes.split()[0]) - 1
         mes = Utils.strip(mes)
     except (IndexError, ValueError):
         index = -1
@@ -402,7 +402,7 @@ Input:
 async def reply(m):
     # If given '^' instead of user, message the last person to DM bouncer
     # Uses whoever DMed last since last startup, don't bother keeping in database or anything like that
-    if m.content.split(" ")[1] == "^":
+    if m.content.split()[1] == "^":
         if recentReply != None:
             u = recentReply
         else:
@@ -504,7 +504,7 @@ async def userReview(channel):
             tooNew.append(log[0])
         # Only check users if they haven't been included/eliminated
         if logTuple not in tooOld and log[0] not in tooNew:
-            day = log[2].split(" ")[0]
+            day = log[2].split()[0]
             dateval = datetime.datetime.strptime(day, "%Y-%m-%d")
             testDate = dateval + datetime.timedelta(days=30*REVIEW_THRESHOLD)
             if testDate < now:
@@ -841,7 +841,7 @@ async def on_message(message):
             # Special case for the egg hunt functions. We want only permitted roles to access them,
             # but their channel will always be new, so allow any channel access
             if message.content.startswith("$starthunt"):
-                words = message.clean_content.split(" ")
+                words = message.clean_content.split()
                 if len(words) != 2:
                     await message.channel.send("Invalid command. `$starthunt EMOJI`")
                     return

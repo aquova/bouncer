@@ -204,7 +204,7 @@ async def logUser(m, state):
             return
 
     # Generate message for log channel
-    formatArray = [None, m.author.id, username, state, currentTime, mes, m.author.name, None]
+    formatArray = [None, m.author.id, username, count, currentTime, mes, m.author.name, None]
     logMessage = Utils.formatMessage(formatArray)
     await m.channel.send(logMessage)
 

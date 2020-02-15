@@ -683,7 +683,12 @@ async def on_message_delete(message):
     # These will likely become invalid, but it's nice to note them anyway
     if message.attachments != []:
         for item in message.attachments:
-            mes += '\n' + item.url
+            # Break into seperate parts if we're going to cross character limit
+            if len(mes) + len(item.url) > CHAR_LIMIT:
+                await chan.send(mes)
+                mes = item.url
+            else:
+                mes += '\n' + item.url
     chan = client.get_channel(systemLog)
     await chan.send(mes)
 
@@ -701,29 +706,16 @@ async def on_message_edit(before, after):
     if before.content == after.content:
         return
     try:
-        # Since we note both the before and after message, it's possible we'll surpass Discord's character limit
-        # In that case, break the message up into two parts
-        # TODO: The code reusability of this can be improved
-        if len(before.content) + len(after.content) > CHAR_LIMIT:
-            mes1 = "**{}#{}** modified in <#{}>: `{}`".format(before.author.name, before.author.discriminator, before.channel.id, before.content)
-            mes2 = "to `{}`".format(after.content)
-            # Note URLs for any attachments
-            if before.attachments != []:
-                for item in before.attachments:
-                    mes1 += '\n' + item.url
-            if after.attachments != []:
-                for item in after.attachments:
-                    mes2 += '\n' + item.url
-            chan = client.get_channel(systemLog)
-            await chan.send(mes1)
-            await chan.send(mes2)
-        else:
-            mes = "**{}#{}** modified in <#{}>: `{}` to `{}`".format(before.author.name, before.author.discriminator, before.channel.id, before.content, after.content)
-            if after.attachments != []:
-                for item in after.attachments:
-                    mes += '\n' + item.url
-            chan = client.get_channel(systemLog)
+        chan = client.get_channel(systemLog)
+        mes = "**{}#{}** modified in <#{}>: `{}`".format(before.author.name, before.author.discriminator, before.channel.id, before.content)
+
+        # Break into seperate parts if we're going to cross character limit
+        if len(mes) + len(after.content) > (CHAR_LIMIT + 5):
             await chan.send(mes)
+            mes = ""
+
+        mes += "to `{}`".format(after.content)
+        await chan.send(mes)
     except discord.errors.HTTPException as e:
         print("Unknown error with editing message. This message was unable to post for this reason: {}\n".format(e))
 

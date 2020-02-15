@@ -427,6 +427,12 @@ async def reply(m):
         if len(m.attachments) != 0:
             for item in m.attachments:
                 mes += '\n{}'.format(item.url)
+
+        # Don't allow blank messages
+        if len(mes) == 0 or mes.isspace():
+            await m.channel.send("...That message was blank. Please send an actual message")
+            return
+
         # Keep local log of all DMs
         ts = m.created_at.strftime('%Y-%m-%d %H:%M:%S')
         uname = "{}#{}".format(u.name, u.discriminator)

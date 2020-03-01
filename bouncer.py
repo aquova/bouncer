@@ -6,7 +6,6 @@ import discord, json, sqlite3, datetime, asyncio, os, subprocess, sys
 import Utils
 from User import User
 from Utils import DATABASE_PATH, LogTypes
-from Hunt import Hunter
 
 # Reading values from config file
 with open('private/config.json') as config_file:
@@ -33,9 +32,6 @@ client = discord.Client()
 # Used to determine uptime
 startTime = 0
 
-# Event hunt object
-hunter = Hunter()
-
 # Notes on database structure:
 # Most of the columns are self explanitory
 # num column is the category of the infraction
@@ -51,7 +47,6 @@ sqlconn.execute("CREATE TABLE IF NOT EXISTS badeggs (dbid INT PRIMARY KEY, id IN
 sqlconn.execute("CREATE TABLE IF NOT EXISTS blocks (id TEXT);")
 sqlconn.execute("CREATE TABLE IF NOT EXISTS staffLogs (staff TEXT PRIMARY KEY, bans INT, warns INT);")
 sqlconn.execute("CREATE TABLE IF NOT EXISTS monthLogs (month TEXT PRIMARY KEY, bans INT, warns INT);")
-sqlconn.execute("CREATE TABLE IF NOT EXISTS hunters (id INT PRIMARY KEY, username TEXT, count INT);")
 sqlconn.commit()
 sqlconn.close()
 
@@ -796,22 +791,6 @@ async def on_voice_state_update(member, before, after):
         await chan.send(mes)
 
 """
-On Reaction Add
-
-Occurs when a reaction was added to a message
-Only used for egg hunting
-"""
-@client.event
-async def on_reaction_add(reaction, user):
-    # Bouncer should not react to its own reactions
-    if user.id == client.user.id:
-        return
-
-    # If hunting, process event
-    if hunter.getWatchedChannel() == reaction.message.channel.id:
-        hunter.addReaction(user)
-
-"""
 On Message
 
 Occurs when a user posts a message
@@ -883,33 +862,8 @@ async def on_message(message):
 
         # Functions in this category are those where we care that the user has the correct roles, but don't care about which channel they're invoked in
         elif Utils.checkRoles(message.author, validRoles):
-            # Special case for the egg hunt functions. We want only permitted roles to access them,
-            # but their channel will always be new, so allow any channel access
-            if message.content.startswith("$starthunt"):
-                words = message.clean_content.split()
-                if len(words) != 2:
-                    await message.channel.send("Invalid command. `$starthunt EMOJI`")
-                    return
-                hunter.setWatchedChannel(message.channel)
-                mes = await message.channel.send("{}".format(words[1]))
-                try:
-                    emoji = words[1].split(":")[1]
-                    emojiObject = [x for x in message.guild.emojis if x.name == emoji][0]
-                    await mes.add_reaction(emojiObject)
-                except IndexError:
-                    emoji = words[1].replace(":", "")
-                    await mes.add_reaction(emoji)
-                await message.delete()
-            elif message.content.startswith("$endhunt"):
-                hunter.stopWatching()
-                await message.channel.send("I hope your hunt has been victorious!")
-            elif message.content.startswith("$gethunt"):
-                hunter.export()
-                with open("./private/hunters.csv", "r") as f:
-                    await message.channel.send(file=discord.File(f))
-
             # Functions in this category must have both the correct roles, and also be invoked in specified channels
-            elif message.channel.id in validInputChannels:
+            if message.channel.id in validInputChannels:
                 # This if/elif thing isn't ideal, but it's by far the simpliest way to mimic a switch case
                 # Print help message
                 if message.content.upper() == "$HELP":

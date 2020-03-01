@@ -59,6 +59,7 @@ sqlconn.close()
 recentBans = {}
 blockList = []
 recentReply = None
+answeringMachine = {}
 
 # Constants
 # Discord has a 2000 message character limit
@@ -400,6 +401,8 @@ Input:
     m: Discord message object
 """
 async def reply(m):
+    global answeringMachine
+
     # If given '^' instead of user, message the last person to DM bouncer
     # Uses whoever DMed last since last startup, don't bother keeping in database or anything like that
     if m.content.split()[1] == "^":
@@ -447,6 +450,10 @@ async def reply(m):
         await DMchan.send("A message from the SDV staff: {}".format(mes))
         # Notification of sent message to the senders
         await m.channel.send("Message sent to {}.".format(uname))
+
+        # If they were in our answering machine, they have been replied to, and can be removed
+        if u.id in answeringMachine:
+            del answeringMachine[u.id]
 
     # Exception handling
     except discord.errors.HTTPException as e:
@@ -532,6 +539,32 @@ async def userReview(channel):
 
     await channel.send(mes)
 
+
+"""
+List Answering Machine
+
+Provides a list of users who are awaiting replies
+Also purges the list while we're at it
+"""
+@client.event
+async def listAnsweringMachine(message):
+    global answeringMachine
+
+    currTime = datetime.datetime.utcnow()
+    out = "Users who are still awaiting replies:\n"
+
+    for key, item in answeringMachine.items():
+        days, hours, minutes = Utils.getTimeDelta(currTime, item[1])
+        hoursFrac = round(minutes / 60, 2)
+        # Purge items that are older than one day
+        if days > 1:
+            del answeringMachine[key]
+        else:
+            out += "{} ({}) {} hours ago\n".format(item[0], key, hours + hoursFrac)
+
+    # I *really* doubt this can go over the 2000 char limit, but it is a possibility, so watch out.
+    await message.channel.send(out)
+
 """
 Uptime
 
@@ -542,10 +575,8 @@ Input:
 """
 async def uptime(channel):
     currTime = datetime.datetime.now()
-    delta = currTime - startTime
-    hours, remainder = divmod(delta.seconds, 3600)
-    minutes, seconds = divmod(remainder, 60)
-    mes = "I have been running for {} days, {} hours, and {} minutes".format(delta.days, hours, minutes)
+    days, hours, minutes = Utils.getTimeDelta(currTime, startTime)
+    mes = "I have been running for {} days, {} hours, and {} minutes".format(days, hours, minutes)
 
     await channel.send(mes)
 
@@ -615,9 +646,15 @@ Occurs when a user is banned
 @client.event
 async def on_member_ban(server, member):
     global recentBans
+    global answeringMachine
     # If debugging, don't process
     if debugBot:
         return
+
+    # We can remove banned user from our answering machine now
+    if member.id in answeringMachine:
+        del answeringMachine[member.id]
+
     # Keep a record of their banning, in case the log is made after they're no longer here
     recentBans[member.id] = "{}#{}".format(member.name, member.discriminator)
     mes = "**{}#{} ({})** has been banned.".format(member.name, member.discriminator, member.id)
@@ -632,9 +669,15 @@ Occurs when a user leaves the server
 @client.event
 async def on_member_remove(member):
     global recentBans
+    global answeringMachine
     # If debugging, don't process
     if debugBot:
         return
+
+    # We can remove left users from our answering machine
+    if member.id in answeringMachine:
+        del answeringMachine[member.id]
+
     # Remember that the user has left, in case we want to log after they're gone
     recentBans[str(member.id)] = "{}#{}".format(member.name, member.discriminator)
     mes = "**{}#{} ({})** has left".format(member.name, member.discriminator, member.id)
@@ -778,6 +821,7 @@ More or less the main function
 async def on_message(message):
     global recentReply
     global debugging
+    global answeringMachine
     # Bouncer should not react to its own messages
     if message.author.id == client.user.id:
         return
@@ -803,6 +847,9 @@ async def on_message(message):
 
             # Store who the most recent user was, for $reply ^
             recentReply = message.author
+
+            # Lets also add/update them in answering machine
+            answeringMachine[message.author.id] = ("{}#{}".format(message.author.name, message.author.discriminator), message.created_at)
 
             mes = "**{}#{}** (ID: {}): {}".format(message.author.name, message.author.discriminator, message.author.id, message.content)
             if message.attachments != []:
@@ -876,6 +923,7 @@ async def on_message(message):
                         "Show all notes: `$notebook`\n"
                         "Remove a user's log: `$remove USER index(optional)`\n"
                         "Edit a user's note: `$edit USER index(optional) new_message`\n"
+                        "View users waiting for a reply: `$waiting`\n"
                         "Stop a user from sending DMs to us: `$block/$unblock USERID`\n"
                         "Reply to a user in DMs: `$reply USERID` - To reply to the most recent DM: `$reply ^`\n"
                         "Plot warn/ban stats: `$graph`\nReview which users have old logs: `$review`\n"
@@ -934,6 +982,8 @@ async def on_message(message):
                     await logUser(message, LogTypes.NOTE)
                 elif message.content.startswith("$edit"):
                     await removeError(message, True)
+                elif message.content.startswith("$waiting"):
+                    await listAnsweringMachine(message)
 
                 # Debug functions only to be executed by the owner
                 elif message.content.upper() == "$DUMPBANS" and message.author.id == cfg["owner"]:

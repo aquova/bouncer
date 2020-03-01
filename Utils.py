@@ -109,6 +109,13 @@ def formatMessage(info):
 
     return output
 
+def getTimeDelta(t1, t2):
+    # t1 should be larger than t2
+    delta = t1 - t2
+    hours, remainder = divmod(delta.seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return delta.days, hours, minutes
+
 #########################################################
 # Functions that only need to be called once in a while #
 #########################################################

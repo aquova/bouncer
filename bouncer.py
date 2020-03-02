@@ -1,5 +1,5 @@
 # Bouncer
-# Written by aquova, 2018-2019
+# Written by aquova, 2018-2020
 # https://github.com/aquova/bouncer
 
 import discord, json, sqlite3, datetime, asyncio, os, subprocess, sys
@@ -21,8 +21,8 @@ logChannel = cfg['channels']['log']
 systemLog = cfg['channels']['syslog']
 validRoles = cfg['roles']
 
-sendBanDM = (cfg['DM']['ban'].upper() == "ON")
-sendWarnDM = (cfg['DM']['warn'].upper() == "ON")
+sendBanDM = (cfg['DM']['ban'].upper() == "TRUE")
+sendWarnDM = (cfg['DM']['warn'].upper() == "TRUE")
 
 # Determine if this is a debugging instance
 debugBot = (cfg['debug'].upper() == "TRUE")
@@ -547,6 +547,7 @@ async def listAnsweringMachine(message):
 
     currTime = datetime.datetime.utcnow()
     first = True
+    # Assume there are no messages in the queue
     out = "There are no users awaiting replies."
 
     for key, item in answeringMachine.items():
@@ -556,13 +557,14 @@ async def listAnsweringMachine(message):
         if days > 1:
             del answeringMachine[key]
         else:
+            # If we find a message, change the printout message
             if first:
                 out = "Users who are still awaiting replies:\n"
                 first = False
 
-            out += "{} ({}) {} hours ago\n".format(item[0], key, hours + hoursFrac)
+            out += "{} ({}) said `{}` | {} hours ago\n".format(item[0], key, item[2], hours + hoursFrac)
 
-    # I *really* doubt this can go over the 2000 char limit, but it is a possibility, so watch out.
+    # We probably won't get enough messages for this to go over the 2000 char limit, but it is a possibility, so watch out.
     await message.channel.send(out)
 
 """
@@ -833,7 +835,7 @@ async def on_message(message):
             recentReply = message.author
 
             # Lets also add/update them in answering machine
-            answeringMachine[message.author.id] = ("{}#{}".format(message.author.name, message.author.discriminator), message.created_at)
+            answeringMachine[message.author.id] = ("{}#{}".format(message.author.name, message.author.discriminator), message.created_at, message.content)
 
             mes = "**{}#{}** (ID: {}): {}".format(message.author.name, message.author.discriminator, message.author.id, message.content)
             if message.attachments != []:
@@ -872,6 +874,8 @@ async def on_message(message):
                 # This if/elif thing isn't ideal, but it's by far the simpliest way to mimic a switch case
                 # Print help message
                 if message.content.upper() == "$HELP":
+                    dmWarns = "On" if sendWarnDM else "Off"
+                    dmBans = "On" if sendBanDM else "Off"
                     helpMes = (
                         "Issue a warning: `$warn USER message`\n"
                         "Log a ban: `$ban USER reason`\n"
@@ -888,7 +892,7 @@ async def on_message(message):
                         "Plot warn/ban stats: `$graph`\nReview which users have old logs: `$review`\n"
                         "View bot uptime: `$uptime`\n"
                         "DMing users when they are banned is `{}`\n"
-                        "DMing users when they are warned is `{}`".format(sendBanDM, sendWarnDM)
+                        "DMing users when they are warned is `{}`".format(dmBans, dmWarns)
                     )
                     await message.channel.send(helpMes)
                 elif message.content.upper() == "$NOTEBOOK":

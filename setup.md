@@ -9,6 +9,7 @@ To run the bot, firstly, you must have a configuration file named `config.json` 
 ```json
 {
     "discord":"Bot's Discord Token",
+    "debug":"False" // Whether this instance is a debugging instance. Should be "True" or "False"
     "server":"Server ID number",
     "channels":{
         "listening":["A list of channel IDs for the bot to listen in, note the [] must be there."],
@@ -18,8 +19,8 @@ To run the bot, firstly, you must have a configuration file named `config.json` 
     "roles":["A list of role IDs that the bot will obey, again the [] must be there."],
     "owner":"The user ID of the owner",
     "DM":{
-        "ban":"On", // Whether the bot should send DMs when banning or warning. Should be "On" or "Off"
-        "warn":"On" // Don't forget to delete these commends, JSON can't have comments
+        "ban":"True", // Whether the bot should send DMs when banning or warning. Should be "True" or "False"
+        "warn":"True" // Don't forget to delete these commends, JSON can't have comments
     },
     "gatekeeper": {
         "role": "Role ID to give",

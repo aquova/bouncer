@@ -2,7 +2,7 @@
 
 A Discord moderator bot, designed to be used with the Stardew Valley server
 
-Written by aquova, 2018-2019
+Written by aquova, 2018-2020
 
 https://github.com/aquova/bouncer
 
@@ -33,6 +33,9 @@ The bot has several moderation features:
     - Moderators can also DM a user via the bot, allowing for collaborative viewing of direct messages.
     - DMs from unruly users can be blocked and unblocked as desired.
     - All DMs are also saved to a local .txt file for easy review.
+- Answering Machine
+    - A list of unreplied users users can be viewed, to avoid accidentally overlooking a message.
+    - The list is automatically pruned after the message gets too old, or if they are replied to.
 - User DMing
     - Upon being banned, there is the option to DM a user with the ban message. This can be disabled by setting the "DM" field in `config.json` to false.
 - Statistics visualization
@@ -44,6 +47,9 @@ The bot has several moderation features:
     - These include nickname changes, joining, leaving, kicked, banned, joining/leaving VC, and logging of all deleted and modified messages.
 - Gatekeeping
     - Users will be unable to speak until they react to a specified message with a specified emoji.
+- Debugging
+    - A bot instance can be specified as a debugging instance.
+    - Non-debugging instances will ignore owner commands when debugging enabled, allowing development work while other instances remain live in the server.
 
 There is also a `$help` command, which will give the syntax for all of the previously listed commands
 

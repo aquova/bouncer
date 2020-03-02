@@ -72,7 +72,7 @@ def genUserPlot():
     plt.title("Warns/Bans per User")
     plt.xticks(ind, sortedTotals)
     plt.xticks(rotation=-90)
-    plt.yticks(np.arange(0, getMax(list(staffData.values())), 10))
+    plt.yticks(np.arange(0, getMax(list(staffData.values())), 20))
     plt.legend((p1[0], p2[0]), ("Bans", "Warns"))
     plt.tight_layout()
     plt.grid(True, axis="y")

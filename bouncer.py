@@ -546,7 +546,8 @@ async def listAnsweringMachine(message):
     global answeringMachine
 
     currTime = datetime.datetime.utcnow()
-    out = "Users who are still awaiting replies:\n"
+    first = True
+    out = "There are no users awaiting replies."
 
     for key, item in answeringMachine.items():
         days, hours, minutes = Utils.getTimeDelta(currTime, item[1])
@@ -555,6 +556,10 @@ async def listAnsweringMachine(message):
         if days > 1:
             del answeringMachine[key]
         else:
+            if first:
+                out = "Users who are still awaiting replies:\n"
+                first = False
+
             out += "{} ({}) {} hours ago\n".format(item[0], key, hours + hoursFrac)
 
     # I *really* doubt this can go over the 2000 char limit, but it is a possibility, so watch out.

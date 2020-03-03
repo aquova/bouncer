@@ -552,7 +552,6 @@ async def listAnsweringMachine(message):
 
     for key, item in answeringMachine.items():
         days, hours, minutes = Utils.getTimeDelta(currTime, item[1])
-        hoursFrac = round(minutes / 60, 2)
         # Purge items that are older than one day
         if days > 1:
             del answeringMachine[key]
@@ -562,7 +561,7 @@ async def listAnsweringMachine(message):
                 out = "Users who are still awaiting replies:\n"
                 first = False
 
-            out += "{} ({}) said `{}` | {} hours ago\n".format(item[0], key, item[2], hours + hoursFrac)
+            out += "{} ({}) said `{}` | {}h{}m ago\n".format(item[0], key, item[2], hours, minutes)
 
     # We probably won't get enough messages for this to go over the 2000 char limit, but it is a possibility, so watch out.
     await message.channel.send(out)
@@ -886,7 +885,7 @@ async def on_message(message):
                         "Show all notes: `$notebook`\n"
                         "Remove a user's log: `$remove USER index(optional)`\n"
                         "Edit a user's note: `$edit USER index(optional) new_message`\n"
-                        "View users waiting for a reply: `$waiting`\n"
+                        "View users waiting for a reply: `$waiting`. Clear the list with `$clear`\n"
                         "Stop a user from sending DMs to us: `$block/$unblock USERID`\n"
                         "Reply to a user in DMs: `$reply USERID` - To reply to the most recent DM: `$reply ^`\n"
                         "Plot warn/ban stats: `$graph`\nReview which users have old logs: `$review`\n"
@@ -947,6 +946,8 @@ async def on_message(message):
                     await removeError(message, True)
                 elif message.content.startswith("$waiting"):
                     await listAnsweringMachine(message)
+                elif message.content.startswith("$clear"):
+                    answeringMachine.clear()
 
                 # Debug functions only to be executed by the owner
                 elif message.content.upper() == "$DUMPBANS" and message.author.id == cfg["owner"]:

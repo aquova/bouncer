@@ -948,6 +948,7 @@ async def on_message(message):
                     await listAnsweringMachine(message)
                 elif message.content.startswith("$clear"):
                     answeringMachine.clear()
+                    await message.channel.send("Waiting queue has been cleared")
 
                 # Debug functions only to be executed by the owner
                 elif message.content.upper() == "$DUMPBANS" and message.author.id == cfg["owner"]:

@@ -553,7 +553,7 @@ async def listAnsweringMachine(message):
     for key, item in answeringMachine.items():
         days, hours, minutes = Utils.getTimeDelta(currTime, item[1])
         # Purge items that are older than one day
-        if days > 1:
+        if days > 0:
             del answeringMachine[key]
         else:
             # If we find a message, change the printout message

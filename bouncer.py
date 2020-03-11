@@ -719,8 +719,8 @@ async def on_message_delete(message):
     # If debugging, don't process
     if debugBot:
         return
-    # Don't allow bouncer to react to its own deleted messages
-    if message.author.id == client.user.id:
+    # Don't process bot accounts
+    if message.author.bot:
         return
     mes = "**{}#{}** deleted in <#{}>: `{}`".format(message.author.name, message.author.discriminator, message.channel.id, message.content)
     # Adds URLs for any attachments that were included in deleted message
@@ -746,6 +746,11 @@ async def on_message_edit(before, after):
     # If debugging, don't process
     if debugBot:
         return
+
+    # Don't process bot accounts
+    if before.author.bot:
+        return
+
     # Prevent embedding of content from triggering the log
     if before.content == after.content:
         return
@@ -787,6 +792,11 @@ async def on_voice_state_update(member, before, after):
     # If debugging, don't process
     if debugBot:
         return
+
+    # Don't process bot accounts
+    if member.bot:
+        return
+
     if after.channel == None:
         mes = "**{}#{}** has left voice channel {}".format(member.name, member.discriminator, before.channel.name)
         chan = client.get_channel(systemLog)
@@ -807,9 +817,11 @@ async def on_message(message):
     global recentReply
     global debugging
     global answeringMachine
-    # Bouncer should not react to its own messages
-    if message.author.id == client.user.id:
+
+    # Bouncer should not react to bot accounts
+    if message.author.bot:
         return
+
     try:
         # Allows the owner to enable debug mode
         if message.content.startswith("$debug") and message.author.id == cfg['owner']:

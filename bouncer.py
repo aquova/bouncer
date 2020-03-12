@@ -150,10 +150,8 @@ async def logUser(m, state):
         await m.channel.send("I wasn't able to find a username for that user, but whatever, I'll do it anyway.")
 
     # Generate log message, adding URLs of any attachments
-    mes = Utils.parseMessage(m.content, username)
-    if len(m.attachments) != 0:
-        for item in m.attachments:
-            mes += '\n{}'.format(item.url)
+    content = Utils.combineMessage(m)
+    mes = Utils.parseMessage(content, username)
 
     # If they didn't give a message, abort
     if mes == "":
@@ -420,11 +418,8 @@ async def reply(m):
         await m.channel.send("Sorry, but they need to be in the server for me to message them")
         return
     try:
-        mes = Utils.removeCommand(m.content)
-        # Add URLs for any attached messages into text body
-        if len(m.attachments) != 0:
-            for item in m.attachments:
-                mes += '\n{}'.format(item.url)
+        content = Utils.combineMessage(mes)
+        mes = Utils.removeCommand(content)
 
         # Don't allow blank messages
         if len(mes) == 0 or mes.isspace():
@@ -818,8 +813,8 @@ async def on_message(message):
     global debugging
     global answeringMachine
 
-    # Bouncer should not react to bot accounts
-    if message.author.bot:
+    # Bouncer should not react to its own messages
+    if message.author.id == client.user.id:
         return
 
     try:
@@ -846,12 +841,10 @@ async def on_message(message):
             recentReply = message.author
 
             # Lets also add/update them in answering machine
-            answeringMachine[message.author.id] = ("{}#{}".format(message.author.name, message.author.discriminator), message.created_at, message.content)
+            content = Utils.combineMessage(message.content)
+            answeringMachine[message.author.id] = ("{}#{}".format(message.author.name, message.author.discriminator), message.created_at, content)
 
-            mes = "**{}#{}** (ID: {}): {}".format(message.author.name, message.author.discriminator, message.author.id, message.content)
-            if message.attachments != []:
-                for item in message.attachments:
-                    mes += '\n' + item.url
+            mes = "**{}#{}** (ID: {}): {}".format(message.author.name, message.author.discriminator, message.author.id, content)
 
             # Regardless of blocklist or not, log their messages
             with open("private/DMs.txt", 'a', encoding='utf-8') as openFile:
@@ -870,10 +863,8 @@ async def on_message(message):
 
         # If a user pings bouncer, log into mod channel
         elif client.user in message.mentions:
-            mes = "**{}#{}** (ID: {}) pinged me in <#{}>: {}".format(message.author.name, message.author.discriminator, message.author.id, message.channel.id, message.content)
-            if message.attachments != []:
-                for item in message.attachments:
-                    mes += '\n' + item.url
+            content = Utils.combineMessage(message)
+            mes = "**{}#{}** (ID: {}) pinged me in <#{}>: {}".format(message.author.name, message.author.discriminator, message.author.id, message.channel.id, content)
             mes += "\nhttps://discordapp.com/channels/{}/{}/{}".format(message.guild.id, message.channel.id, message.id)
             chan = client.get_channel(validInputChannels[0])
             await chan.send(mes)

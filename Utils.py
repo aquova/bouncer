@@ -116,6 +116,15 @@ def getTimeDelta(t1, t2):
     minutes, seconds = divmod(remainder, 60)
     return delta.days, hours, minutes
 
+# Combines message content and attachment URLs together
+def combineMessage(mes):
+    out = mes.content
+    if mes.attachments != []:
+        for item in mes.attachments:
+            out += '\n' + item.url
+
+    return out
+
 #########################################################
 # Functions that only need to be called once in a while #
 #########################################################

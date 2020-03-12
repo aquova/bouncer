@@ -418,7 +418,7 @@ async def reply(m):
         await m.channel.send("Sorry, but they need to be in the server for me to message them")
         return
     try:
-        content = Utils.combineMessage(mes)
+        content = Utils.combineMessage(m)
         mes = Utils.removeCommand(content)
 
         # Don't allow blank messages
@@ -841,7 +841,7 @@ async def on_message(message):
             recentReply = message.author
 
             # Lets also add/update them in answering machine
-            content = Utils.combineMessage(message.content)
+            content = Utils.combineMessage(message)
             answeringMachine[message.author.id] = ("{}#{}".format(message.author.name, message.author.discriminator), message.created_at, content)
 
             mes = "**{}#{}** (ID: {}): {}".format(message.author.name, message.author.discriminator, message.author.id, content)

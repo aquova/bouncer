@@ -447,7 +447,10 @@ async def reply(m):
 
     # Exception handling
     except discord.errors.HTTPException as e:
-        await m.channel.send("ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {}".format(e))
+        if e.status == 403:
+            await m.channel.send("This user has blocked me. I cannot send messages to this user")
+        else:
+            await m.channel.send("ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {}".format(e))
     except discord.errors.Forbidden:
         await m.channel.send("ERROR: I am not allowed to DM the user. It is likely that they are not accepting DM's from me.")
     except discord.errors.NotFound:
@@ -556,7 +559,7 @@ async def listAnsweringMachine(message):
                 out = "Users who are still awaiting replies:\n"
                 first = False
 
-            out += "{} ({}) said `{}` | {}h{}m ago\n".format(item[0], key, item[2], hours, minutes)
+            out += "{} ({}) said `{}` | {}h{}m ago\n{}\n".format(item[0], key, item[2], hours, minutes, item[3])
 
     # We probably won't get enough messages for this to go over the 2000 char limit, but it is a possibility, so watch out.
     await message.channel.send(out)
@@ -840,10 +843,7 @@ async def on_message(message):
             # Store who the most recent user was, for $reply ^
             recentReply = message.author
 
-            # Lets also add/update them in answering machine
             content = Utils.combineMessage(message)
-            answeringMachine[message.author.id] = ("{}#{}".format(message.author.name, message.author.discriminator), message.created_at, content)
-
             mes = "**{}#{}** (ID: {}): {}".format(message.author.name, message.author.discriminator, message.author.id, content)
 
             # Regardless of blocklist or not, log their messages
@@ -853,11 +853,15 @@ async def on_message(message):
             # If not blocked, send message along to specified mod channel
             if str(message.author.id) not in blockList:
                 chan = client.get_channel(validInputChannels[0])
-                await chan.send(mes)
+                logMes = await chan.send(mes)
+
+                # Lets also add/update them in answering machine
+                mes_link = Utils.get_mes_link(logMes)
+                answeringMachine[message.author.id] = ("{}#{}".format(message.author.name, message.author.discriminator), message.created_at, content, mes_link)
 
         # Temporary - notify if UB3R-BOT has removed something on its word censor
         elif (message.author.id == 85614143951892480 and message.channel.id == 233039273207529472) and ("Word Censor Triggered" in message.content) and not debugBot:
-            mes = "Uh oh, looks like the censor might've been tripped.\nhttps://discordapp.com/channels/{}/{}/{}".format(message.guild.id, message.channel.id, message.id)
+            mes = "Uh oh, looks like the censor might've been tripped.\n{}".format(Utils.get_mes_link(message))
             chan = client.get_channel(validInputChannels[0])
             await chan.send(mes)
 
@@ -865,7 +869,7 @@ async def on_message(message):
         elif client.user in message.mentions:
             content = Utils.combineMessage(message)
             mes = "**{}#{}** (ID: {}) pinged me in <#{}>: {}".format(message.author.name, message.author.discriminator, message.author.id, message.channel.id, content)
-            mes += "\nhttps://discordapp.com/channels/{}/{}/{}".format(message.guild.id, message.channel.id, message.id)
+            mes += "\n{}".format(Utils.get_mes_link(message))
             chan = client.get_channel(validInputChannels[0])
             await chan.send(mes)
 

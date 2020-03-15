@@ -125,6 +125,9 @@ def combineMessage(mes):
 
     return out
 
+def get_mes_link(mes):
+    return "https://discordapp.com/channels/{}/{}/{}".format(mes.guild.id, mes.channel.id, mes.id)
+
 #########################################################
 # Functions that only need to be called once in a while #
 #########################################################

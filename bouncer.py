@@ -548,7 +548,9 @@ async def listAnsweringMachine(message):
     # Assume there are no messages in the queue
     out = "There are no users awaiting replies."
 
-    for key, item in answeringMachine.items():
+    # Make a copy so that we aren't editing the original while iterating through it
+    origAnsMachine = answeringMachine.copy()
+    for key, item in origAnsMachine.items():
         days, hours, minutes = Utils.getTimeDelta(currTime, item[1])
         # Purge items that are older than one day
         if days > 0:

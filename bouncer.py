@@ -448,7 +448,7 @@ async def reply(m):
     # Exception handling
     except discord.errors.HTTPException as e:
         if e.status == 403:
-            await m.channel.send("This user has blocked me. I cannot send messages to this user")
+            await m.channel.send("I cannot send messages to this user -- they may have closed DMs, left the server, or blocked me. Or something.")
         else:
             await m.channel.send("ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {}".format(e))
     except discord.errors.Forbidden:

@@ -2,6 +2,10 @@ import discord, re
 import db
 from Utils import parseUsername
 
+def remove_command(mes):
+    request = mes.split()[1:]
+    return " ".join(request)
+
 # Attempts to return a user ID
 def parse_mention(message, banList):
     # Users can be mentioned one of three ways:
@@ -73,6 +77,27 @@ def check_id(message):
         return checkID
     except (IndexError, ValueError):
         return None
+
+def fetch_username(server, userid, banList):
+    username = None
+
+    member = discord.utils.get(server.members, id=userid)
+    if member != None:
+        # If we found a member in the server, simply format the username
+        username = "{}#{}".format(member.name, member.discriminator)
+
+    if username == None:
+        # If user has recently left, use that username
+        if userid in banList:
+            username = banList[userid]
+
+    if username == None:
+        # Check the database to see if we can get their name from their most recent infraction (if any)
+        checkDatabase = db.search(userid)
+        if checkDatabase != []:
+            username = checkDatabase[-1][2]
+
+    return username
 
 #####
 

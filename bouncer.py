@@ -6,7 +6,7 @@ import discord, sqlite3, datetime, asyncio, os, subprocess, sys
 from dataclasses import dataclass
 import Utils
 import config, db, waiting
-from User import User
+from User import User, parse_mention, fetch_username
 from config import LogTypes
 
 client = discord.Client()
@@ -49,22 +49,20 @@ Input:
     m: Discord message object
 """
 async def userSearch(m):
-    # Attempt to generate user object
-    try:
-        user = User(m, recentBans)
-    except User.MessageError:
+    userid = parse_mention(m, recentBans)
+    if userid == None:
         await m.channel.send("I wasn't able to find a user anywhere based on that message. `$search USER`")
         return
 
     # Get database values for given user
-    searchResults = db.search(user.id)
-    try:
-        username = user.getName(recentBans)
-        if searchResults == []:
+    searchResults = db.search(userid)
+    username = fetch_username(m.guild, userid, recentBans)
+
+    if searchResults == []:
+        if username != None:
             await m.channel.send("User {} was not found in the database\n".format(username))
-            return
-    except User.MessageError:
-        await m.channel.send("That user was not found in the database or the server\n")
+        else:
+            await m.channel.send("That user was not found in the database or the server\n")
         return
 
     # Format output message
@@ -81,10 +79,6 @@ async def userSearch(m):
         else:
             await m.channel.send(out)
             out = n
-
-    # Special notice if warns exceed threshold
-    if len(searchResults) >= WARN_THRESHOLD:
-        n += "They have received {} warnings, it is recommended that they be banned.\n".format(WARN_THRESHOLD)
 
     await m.channel.send(out)
 

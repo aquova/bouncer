@@ -6,7 +6,7 @@ import discord, sqlite3, datetime, asyncio, os, subprocess, sys
 import Utils
 import config
 from User import User
-from Utils import LogTypes
+from config import LogTypes
 
 client = discord.Client()
 # Used to determine uptime

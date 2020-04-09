@@ -2,6 +2,13 @@ import json
 
 DATABASE_PATH = "private/sdv.db"
 
+class LogTypes:
+    UNBAN = -3
+    KICK = -2
+    NOTE = -1
+    BAN = 0
+    WARN = 1
+
 # Read values from config file
 with open('private/config.json') as config_file:
     cfg = json.load(config_file)

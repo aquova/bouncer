@@ -1,15 +1,7 @@
 # Utility functions for bouncer
 
 import discord, time, sqlite3
-from config import DATABASE_PATH
-
-# This is basically a makeshift enum
-class LogTypes:
-    UNBAN = -3
-    KICK = -2
-    NOTE = -1
-    BAN = 0
-    WARN = 1
+from config import DATABASE_PATH, LogTypes
 
 # Removes the first word of a string
 def strip(m):

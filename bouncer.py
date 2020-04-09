@@ -2,35 +2,16 @@
 # Written by aquova, 2018-2020
 # https://github.com/aquova/bouncer
 
-import discord, json, sqlite3, datetime, asyncio, os, subprocess, sys
+import discord, sqlite3, datetime, asyncio, os, subprocess, sys
 import Utils
+import config
 from User import User
-from Utils import DATABASE_PATH, LogTypes
-
-# Reading values from config file
-with open('private/config.json') as config_file:
-    cfg = json.load(config_file)
-
-# Configuring preferences
-discordKey = cfg['discord']
-# The first entry in validInputChannels is the one DMs and censor warnings are sent
-validInputChannels = cfg['channels']['listening']
-# Channel to save notes/warns/etc
-logChannel = cfg['channels']['log']
-# Channel to save system logs - leaves, bans, joins, etc
-systemLog = cfg['channels']['syslog']
-validRoles = cfg['roles']
-
-sendBanDM = (cfg['DM']['ban'].upper() == "TRUE")
-sendWarnDM = (cfg['DM']['warn'].upper() == "TRUE")
-
-# Determine if this is a debugging instance
-debugBot = (cfg['debug'].upper() == "TRUE")
-debugging = False
+from Utils import LogTypes
 
 client = discord.Client()
 # Used to determine uptime
 startTime = 0
+debugging = False
 
 # Notes on database structure:
 # Most of the columns are self explanitory
@@ -42,7 +23,7 @@ startTime = 0
 # -3: Unban
 
 # Create database and tables, if not created already
-sqlconn = sqlite3.connect(DATABASE_PATH)
+sqlconn = sqlite3.connect(config.DATABASE_PATH)
 sqlconn.execute("CREATE TABLE IF NOT EXISTS badeggs (dbid INT PRIMARY KEY, id INT, username TEXT, num INT, date DATE, message TEXT, staff TEXT, post INT);")
 sqlconn.execute("CREATE TABLE IF NOT EXISTS blocks (id TEXT);")
 sqlconn.execute("CREATE TABLE IF NOT EXISTS staffLogs (staff TEXT PRIMARY KEY, bans INT, warns INT);")
@@ -132,7 +113,7 @@ async def logUser(m, state):
             await m.channel.send("I wasn't able to understand that message: `$log USER`")
         return
 
-    sqlconn = sqlite3.connect(DATABASE_PATH)
+    sqlconn = sqlite3.connect(config.DATABASE_PATH)
     # Calculate value for 'num' category in database
     # For warns, it's the newest number of warns, otherwise it's a special value
     if state == LogTypes.WARN:
@@ -211,7 +192,7 @@ async def logUser(m, state):
     if state != LogTypes.NOTE:
         # Post to channel, keep track of message ID
         try:
-            chan = client.get_channel(logChannel)
+            chan = client.get_channel(config.LOG_CHAN)
             logMes = await chan.send(logMessage)
             logMesID = logMes.id
         except discord.errors.InvalidArgument:
@@ -228,11 +209,11 @@ async def logUser(m, state):
                     DMchan = await u.create_dm()
 
                 # Only send DM when specified in configs
-                if state == LogTypes.BAN and sendBanDM:
+                if state == LogTypes.BAN and config.DM_BAN:
                     await DMchan.send("Hi there! You've been banned from the Stardew Valley Discord for violating the rules: `{}`. If you have any questions, you can send a message to the moderators via the sidebar at <https://www.reddit.com/r/StardewValley>, and they'll forward it to us.".format(mes))
-                elif state == LogTypes.WARN and sendWarnDM:
+                elif state == LogTypes.WARN and config.DM_WARN:
                     await DMchan.send("Hi there! You received warning #{} in the Stardew Valley Discord for violating the rules: `{}`. Please review <#445729591533764620> and <#445729663885639680> for more info. If you have any questions, you can reply directly to this message to contact the staff.".format(count, mes))
-                elif state == LogTypes.KICK and sendBanDM:
+                elif state == LogTypes.KICK and config.DM_BAN:
                     await DMchan.send("Hi there! You've been kicked from the Stardew Valley Discord for violating the following reason: `{}`. If you have any questions, you can send a message to the moderators via the sidebar at <https://www.reddit.com/r/StardewValley>, and they'll forward it to us.".format(mes))
 
         # Exception handling
@@ -290,7 +271,7 @@ async def removeError(m, edit):
         index = -1
 
     # Find most recent entry in database for specified user
-    sqlconn = sqlite3.connect(DATABASE_PATH)
+    sqlconn = sqlite3.connect(config.DATABASE_PATH)
     searchResults = sqlconn.execute("SELECT dbid, id, username, num, date, message, staff, post FROM badeggs WHERE id=?", [user.id]).fetchall()
 
     # If no results in database found, can't modify
@@ -338,7 +319,7 @@ async def removeError(m, edit):
         # Search logging channel for matching post, and remove it
         try:
             if item[7] != 0:
-                chan = client.get_channel(logChannel)
+                chan = client.get_channel(config.LOG_CHAN)
                 m = await chan.fetch_message(item[7])
                 await m.delete()
         # Print message if unable to find message to delete, but don't stop
@@ -367,7 +348,7 @@ async def blockUser(m, block):
 
     # Store in the database that the given user is un/blocked
     # Also update current block list to match
-    sqlconn = sqlite3.connect(DATABASE_PATH)
+    sqlconn = sqlite3.connect(config.DATABASE_PATH)
     if block:
         if user.id in blockList:
             await m.channel.send("Um... That user was already blocked...")
@@ -465,7 +446,7 @@ Input:
     m: Discord message object
 """
 async def notebook(m):
-    sqlconn = sqlite3.connect(DATABASE_PATH)
+    sqlconn = sqlite3.connect(config.DATABASE_PATH)
     # Retreive all items in database that are notes
     allNotes = sqlconn.execute("SELECT * FROM badeggs WHERE num=-1").fetchall()
     sqlconn.commit()
@@ -497,7 +478,7 @@ async def userReview(channel):
     # Keep track both of users we want to review and those we don't, so we can skip over them
     tooOld = []
     tooNew = []
-    sqlconn = sqlite3.connect(DATABASE_PATH)
+    sqlconn = sqlite3.connect(config.DATABASE_PATH)
     # Reverse order so newest logs are checked/eliminated first
     allLogs = sqlconn.execute("SELECT id, username, date, num FROM badeggs WHERE num > -1").fetchall()[::-1]
 
@@ -598,7 +579,7 @@ async def on_ready():
     startTime = datetime.datetime.now()
 
     # Load any users who were banned into memory
-    sqlconn = sqlite3.connect(DATABASE_PATH)
+    sqlconn = sqlite3.connect(config.DATABASE_PATH)
     blockDB = sqlconn.execute("SELECT * FROM blocks").fetchall()
     blockList = [str(x[0]) for x in blockDB]
     sqlconn.close()
@@ -615,7 +596,7 @@ Occurs when a user updates an attribute (nickname, roles)
 @client.event
 async def on_member_update(before, after):
     # If debugging, don't process
-    if debugBot:
+    if config.DEBUG_BOT:
         return
     # If nickname has changed
     if before.nick != after.nick:
@@ -625,7 +606,7 @@ async def on_member_update(before, after):
         else:
             new = after.nick
             mes = "**{}#{}** is now known as `{}`".format(after.name, after.discriminator, after.nick)
-        chan = client.get_channel(systemLog)
+        chan = client.get_channel(config.SYS_LOG)
         await chan.send(mes)
     # If role quantity has changed
     elif before.roles != after.roles:
@@ -636,7 +617,7 @@ async def on_member_update(before, after):
         else:
             newRoles = [r for r in after.roles if r not in before.roles]
             mes = "**{}#{}** had the role `{}` added.".format(after.name, after.discriminator, newRoles[0])
-        chan = client.get_channel(systemLog)
+        chan = client.get_channel(config.SYS_LOG)
         await chan.send(mes)
 
 """
@@ -649,7 +630,7 @@ async def on_member_ban(server, member):
     global recentBans
     global answeringMachine
     # If debugging, don't process
-    if debugBot:
+    if config.DEBUG_BOT:
         return
 
     # We can remove banned user from our answering machine now
@@ -659,7 +640,7 @@ async def on_member_ban(server, member):
     # Keep a record of their banning, in case the log is made after they're no longer here
     recentBans[member.id] = "{}#{}".format(member.name, member.discriminator)
     mes = "**{}#{} ({})** has been banned.".format(member.name, member.discriminator, member.id)
-    chan = client.get_channel(systemLog)
+    chan = client.get_channel(config.SYS_LOG)
     await chan.send(mes)
 
 """
@@ -672,7 +653,7 @@ async def on_member_remove(member):
     global recentBans
     global answeringMachine
     # If debugging, don't process
-    if debugBot:
+    if config.DEBUG_BOT:
         return
 
     # We can remove left users from our answering machine
@@ -682,7 +663,7 @@ async def on_member_remove(member):
     # Remember that the user has left, in case we want to log after they're gone
     recentBans[str(member.id)] = "{}#{}".format(member.name, member.discriminator)
     mes = "**{}#{} ({})** has left".format(member.name, member.discriminator, member.id)
-    chan = client.get_channel(systemLog)
+    chan = client.get_channel(config.SYS_LOG)
     await chan.send(mes)
 
 """
@@ -694,15 +675,15 @@ Needs to be raw reaction so it can still get reactions after reboot
 @client.event
 async def on_raw_reaction_add(payload):
     # If debugging, don't process
-    if debugBot:
+    if config.DEBUG_BOT:
         return
-    if payload.message_id == cfg["gatekeeper"]["message"] and payload.emoji.name == cfg["gatekeeper"]["emoji"]:
+    if payload.message_id == config.GATE_MES and payload.emoji.name == config.GATE_EMOJI:
         # Raw payload just returns IDs, so need to iterate through connected servers to get server object
         # Since each bouncer instance will only be in one server, it should be quick.
         # If bouncer becomes general purpose (god forbid), may need to rethink this
         try:
             server = [x for x in client.guilds if x.id == payload.guild_id][0]
-            new_role = discord.utils.get(server.roles, id=cfg["gatekeeper"]["role"])
+            new_role = discord.utils.get(server.roles, id=config.GATE_ROLE)
             target_user = discord.utils.get(server.members, id=payload.user_id)
             await target_user.add_roles(new_role)
         except IndexError as e:
@@ -717,7 +698,7 @@ Occurs when a user's message is deleted
 @client.event
 async def on_message_delete(message):
     # If debugging, don't process
-    if debugBot:
+    if config.DEBUG_BOT:
         return
     # Don't process bot accounts
     if message.author.bot:
@@ -733,7 +714,7 @@ async def on_message_delete(message):
                 mes = item.url
             else:
                 mes += '\n' + item.url
-    chan = client.get_channel(systemLog)
+    chan = client.get_channel(config.SYS_LOG)
     await chan.send(mes)
 
 """
@@ -744,7 +725,7 @@ Occurs when a user edits a message
 @client.event
 async def on_message_edit(before, after):
     # If debugging, don't process
-    if debugBot:
+    if config.DEBUG_BOT:
         return
 
     # Don't process bot accounts
@@ -755,7 +736,7 @@ async def on_message_edit(before, after):
     if before.content == after.content:
         return
     try:
-        chan = client.get_channel(systemLog)
+        chan = client.get_channel(config.SYS_LOG)
         mes = "**{}#{}** modified in <#{}>: `{}`".format(before.author.name, before.author.discriminator, before.channel.id, before.content)
 
         # Break into seperate parts if we're going to cross character limit
@@ -776,10 +757,10 @@ Occurs when a user joins the server
 @client.event
 async def on_member_join(member):
     # If debugging, don't process
-    if debugBot:
+    if config.DEBUG_BOT:
         return
     mes = "**{}#{} ({})** has joined".format(member.name, member.discriminator, member.id)
-    chan = client.get_channel(systemLog)
+    chan = client.get_channel(config.SYS_LOG)
     await chan.send(mes)
 
 """
@@ -790,7 +771,7 @@ Occurs when a user joins/leaves an audio channel
 @client.event
 async def on_voice_state_update(member, before, after):
     # If debugging, don't process
-    if debugBot:
+    if config.DEBUG_BOT:
         return
 
     # Don't process bot accounts
@@ -799,11 +780,11 @@ async def on_voice_state_update(member, before, after):
 
     if after.channel == None:
         mes = "**{}#{}** has left voice channel {}".format(member.name, member.discriminator, before.channel.name)
-        chan = client.get_channel(systemLog)
+        chan = client.get_channel(config.SYS_LOG)
         await chan.send(mes)
     elif before.channel == None:
         mes = "**{}#{}** has joined voice channel {}".format(member.name, member.discriminator, after.channel.name)
-        chan = client.get_channel(systemLog)
+        chan = client.get_channel(config.SYS_LOG)
         await chan.send(mes)
 
 """
@@ -824,18 +805,18 @@ async def on_message(message):
 
     try:
         # Allows the owner to enable debug mode
-        if message.content.startswith("$debug") and message.author.id == cfg['owner']:
-            if not debugBot:
+        if message.content.startswith("$debug") and message.author.id == config.OWNER:
+            if not config.DEBUG_BOT:
                 debugging = not debugging
                 await message.channel.send("Debugging {}".format("enabled" if debugging else "disabled"))
                 return
 
         # If debugging, the real bot should ignore the owner
-        if debugging and message.author.id == cfg['owner']:
+        if debugging and message.author.id == config.OWNER:
             return
         # The debug bot should only ever obey the owner
         # Debug bot doesn't care about debug status. If it's running, it assumes it's debugging
-        elif debugBot and message.author.id != cfg['owner']:
+        elif config.DEBUG_BOT and message.author.id != config.OWNER:
             return
 
         # If bouncer detects a private DM sent to it
@@ -854,7 +835,7 @@ async def on_message(message):
 
             # If not blocked, send message along to specified mod channel
             if str(message.author.id) not in blockList:
-                chan = client.get_channel(validInputChannels[0])
+                chan = client.get_channel(config.VALID_INPUT_CHANS[0])
                 logMes = await chan.send(mes)
 
                 # Lets also add/update them in answering machine
@@ -862,9 +843,9 @@ async def on_message(message):
                 answeringMachine[message.author.id] = ("{}#{}".format(message.author.name, message.author.discriminator), message.created_at, content, mes_link)
 
         # Temporary - notify if UB3R-BOT has removed something on its word censor
-        elif (message.author.id == 85614143951892480 and message.channel.id == 233039273207529472) and ("Word Censor Triggered" in message.content) and not debugBot:
+        elif (message.author.id == 85614143951892480 and message.channel.id == 233039273207529472) and ("Word Censor Triggered" in message.content) and not config.DEBUG_BOT:
             mes = "Uh oh, looks like the censor might've been tripped.\n{}".format(Utils.get_mes_link(message))
-            chan = client.get_channel(validInputChannels[0])
+            chan = client.get_channel(config.VALID_INPUT_CHANS[0])
             await chan.send(mes)
 
         # If a user pings bouncer, log into mod channel
@@ -872,18 +853,18 @@ async def on_message(message):
             content = Utils.combineMessage(message)
             mes = "**{}#{}** (ID: {}) pinged me in <#{}>: {}".format(message.author.name, message.author.discriminator, message.author.id, message.channel.id, content)
             mes += "\n{}".format(Utils.get_mes_link(message))
-            chan = client.get_channel(validInputChannels[0])
+            chan = client.get_channel(config.VALID_INPUT_CHANS[0])
             await chan.send(mes)
 
         # Functions in this category are those where we care that the user has the correct roles, but don't care about which channel they're invoked in
-        elif Utils.checkRoles(message.author, validRoles):
+        elif Utils.checkRoles(message.author, config.VALID_ROLES):
             # Functions in this category must have both the correct roles, and also be invoked in specified channels
-            if message.channel.id in validInputChannels:
+            if message.channel.id in config.VALID_INPUT_CHANS:
                 # This if/elif thing isn't ideal, but it's by far the simpliest way to mimic a switch case
                 # Print help message
                 if message.content.upper() == "$HELP":
-                    dmWarns = "On" if sendWarnDM else "Off"
-                    dmBans = "On" if sendBanDM else "Off"
+                    dmWarns = "On" if config.DM_WARN else "Off"
+                    dmBans = "On" if config.DM_BAN else "Off"
                     helpMes = (
                         "Issue a warning: `$warn USER message`\n"
                         "Log a ban: `$ban USER reason`\n"
@@ -907,7 +888,7 @@ async def on_message(message):
                     await notebook(message)
                 elif message.content.upper() == "$UPDATE":
                     # Update will call `git pull`, then kill the program so it automatically restarts
-                    if message.author.id == cfg["owner"]:
+                    if message.author.id == config.OWNER:
                         await message.channel.send("Updating and restarting...")
                         subprocess.call(["git", "pull"])
                         sys.exit()
@@ -960,7 +941,7 @@ async def on_message(message):
                     await message.channel.send("Waiting queue has been cleared")
 
                 # Debug functions only to be executed by the owner
-                elif message.content.upper() == "$DUMPBANS" and message.author.id == cfg["owner"]:
+                elif message.content.upper() == "$DUMPBANS" and message.author.id == config.OWNER:
                     output = await Utils.dumpBans(recentBans)
                     if output != "":
                         await message.channel.send(output)
@@ -971,4 +952,4 @@ async def on_message(message):
         print("HTTPException: {}", e)
         pass
 
-client.run(discordKey)
+client.run(config.DISCORD_KEY)

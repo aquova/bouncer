@@ -1,8 +1,7 @@
 # Utility functions for bouncer
 
 import discord, time, sqlite3
-
-DATABASE_PATH = "private/sdv.db"
+from config import DATABASE_PATH
 
 # This is basically a makeshift enum
 class LogTypes:

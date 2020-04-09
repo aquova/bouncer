@@ -1,6 +1,6 @@
 import discord, sqlite3, re
-import Utils
-from Utils import DATABASE_PATH
+from config import DATABASE_PATH
+from Utils import parseUsername
 
 """
 User Class
@@ -49,7 +49,7 @@ class User:
                 return possibleID
 
         # Check if the username was provided
-        checkUsername = Utils.parseUsername(self.message, banList)
+        checkUsername = parseUsername(self.message, banList)
         if checkUsername != None:
             return checkUsername
 

@@ -27,3 +27,13 @@ def search(user_id):
     sqlconn.close()
 
     return searchResults
+
+def fetch_id_by_username(username):
+    sqlconn = sqlite3.connect(DATABASE_PATH)
+    searchResults = sqlconn.execute("SELECT id FROM badeggs WHERE username=?", [username]).fetchall()
+    sqlconn.close()
+
+    if searchResults != []:
+        return searchResults[0][0]
+    else:
+        return None

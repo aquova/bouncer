@@ -3,7 +3,7 @@ import db
 from Utils import parseUsername
 
 # Attempts to return a user ID
-def parse_mention(message):
+def parse_mention(message, banList):
     # Users can be mentioned one of three ways:
     # - By pinging them
     # - By their username
@@ -13,7 +13,7 @@ def parse_mention(message):
     user_id = check_mention(message)
 
     if user_id == None:
-        user_id = check_username(message)
+        user_id = check_username(message, banList)
 
     if user_id == None:
         user_id = check_id(message)
@@ -26,10 +26,12 @@ def check_mention(message):
     except IndexError:
         return None
 
-def check_username(message):
+def check_username(message, banList):
     # Usernames can have spaces, so need to throw away the first word (the command),
     # and then everything after the discriminator
-    testUsername = remove_command(message.content)
+    # testUsername = remove_command(message.content)
+    testUsername = message.content.split()[1:]
+    testUsername = " ".join(testUsername)
 
     try:
         # Some people *coughs* like to put a '@' at beginning of the username.
@@ -43,6 +45,15 @@ def check_username(message):
         userFound = discord.utils.get(message.guild.members, name=user[0], discriminator=discriminator)
         if userFound != None:
             return userFound.id
+
+        # If not found in server, check if they're in the recently banned dict
+        fullname = "{}#{}".format(user[0], discriminator)
+        if fullname in list(banList.values()):
+            revBans = {v: k for k, v in banList.items()}
+            return revBans[user]
+
+        # If they still haven't been found, check database
+        return db.fetch_id_by_username(fullname)
     except IndexError:
         return None
 

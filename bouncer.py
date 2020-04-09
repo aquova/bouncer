@@ -3,8 +3,9 @@
 # https://github.com/aquova/bouncer
 
 import discord, sqlite3, datetime, asyncio, os, subprocess, sys
+from dataclasses import dataclass
 import Utils
-import config, db
+import config, db, waiting
 from User import User
 from config import LogTypes
 
@@ -29,7 +30,7 @@ db.initialize()
 recentBans = {}
 blockList = []
 recentReply = None
-answeringMachine = {}
+am = waiting.AnsweringMachine()
 
 # Constants
 # Discord has a 2000 message character limit
@@ -369,8 +370,6 @@ Input:
     m: Discord message object
 """
 async def reply(m):
-    global answeringMachine
-
     # If given '^' instead of user, message the last person to DM bouncer
     # Uses whoever DMed last since last startup, don't bother keeping in database or anything like that
     if m.content.split()[1] == "^":
@@ -417,8 +416,7 @@ async def reply(m):
         await m.channel.send("Message sent to {}.".format(uname))
 
         # If they were in our answering machine, they have been replied to, and can be removed
-        if u.id in answeringMachine:
-            del answeringMachine[u.id]
+        am.remove_entry(u.id)
 
     # Exception handling
     except discord.errors.HTTPException as e:
@@ -507,7 +505,6 @@ async def userReview(channel):
 
     await channel.send(mes)
 
-
 """
 List Answering Machine
 
@@ -516,27 +513,24 @@ Also purges the list while we're at it
 """
 @client.event
 async def listAnsweringMachine(message):
-    global answeringMachine
-
     currTime = datetime.datetime.utcnow()
     first = True
     # Assume there are no messages in the queue
     out = "There are no users awaiting replies."
 
-    # Make a copy so that we aren't editing the original while iterating through it
-    origAnsMachine = answeringMachine.copy()
-    for key, item in origAnsMachine.items():
-        days, hours, minutes = Utils.getTimeDelta(currTime, item[1])
+    waiting_list = am.get_entries().items()
+    for key, item in waiting_list:
+        days, hours, minutes = Utils.getTimeDelta(currTime, item.timestamp)
         # Purge items that are older than one day
         if days > 0:
-            del answeringMachine[key]
+            am.remove_entry(key)
         else:
             # If we find a message, change the printout message
             if first:
                 out = "Users who are still awaiting replies:\n"
                 first = False
 
-            out += "{} ({}) said `{}` | {}h{}m ago\n{}\n".format(item[0], key, item[2], hours, minutes, item[3])
+            out += "{} ({}) said `{}` | {}h{}m ago\n{}\n".format(item.name, key, item.last_message, hours, minutes, item.message_url)
 
     # We probably won't get enough messages for this to go over the 2000 char limit, but it is a possibility, so watch out.
     await message.channel.send(out)
@@ -622,14 +616,12 @@ Occurs when a user is banned
 @client.event
 async def on_member_ban(server, member):
     global recentBans
-    global answeringMachine
     # If debugging, don't process
     if config.DEBUG_BOT:
         return
 
     # We can remove banned user from our answering machine now
-    if member.id in answeringMachine:
-        del answeringMachine[member.id]
+    am.remove_entry(member.id)
 
     # Keep a record of their banning, in case the log is made after they're no longer here
     recentBans[member.id] = "{}#{}".format(member.name, member.discriminator)
@@ -645,14 +637,12 @@ Occurs when a user leaves the server
 @client.event
 async def on_member_remove(member):
     global recentBans
-    global answeringMachine
     # If debugging, don't process
     if config.DEBUG_BOT:
         return
 
     # We can remove left users from our answering machine
-    if member.id in answeringMachine:
-        del answeringMachine[member.id]
+    am.remove_entry(member.id)
 
     # Remember that the user has left, in case we want to log after they're gone
     recentBans[str(member.id)] = "{}#{}".format(member.name, member.discriminator)
@@ -791,7 +781,6 @@ More or less the main function
 async def on_message(message):
     global recentReply
     global debugging
-    global answeringMachine
 
     # Bouncer should not react to its own messages
     if message.author.id == client.user.id:
@@ -834,7 +823,10 @@ async def on_message(message):
 
                 # Lets also add/update them in answering machine
                 mes_link = Utils.get_mes_link(logMes)
-                answeringMachine[message.author.id] = ("{}#{}".format(message.author.name, message.author.discriminator), message.created_at, content, mes_link)
+                username = "{}#{}".format(message.author.name, message.author.discriminator)
+
+                mes_entry = waiting.AnsweringMachineEntry(username, message.created_at, content, mes_link)
+                am.update_entry(message.author.id, mes_entry)
 
         # Temporary - notify if UB3R-BOT has removed something on its word censor
         elif (message.author.id == 85614143951892480 and message.channel.id == 233039273207529472) and ("Word Censor Triggered" in message.content) and not config.DEBUG_BOT:
@@ -931,7 +923,7 @@ async def on_message(message):
                 elif message.content.startswith("$waiting"):
                     await listAnsweringMachine(message)
                 elif message.content.startswith("$clear"):
-                    answeringMachine.clear()
+                    am.clear_entries()
                     await message.channel.send("Waiting queue has been cleared")
 
                 # Debug functions only to be executed by the owner

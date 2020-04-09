@@ -37,8 +37,6 @@ am = waiting.AnsweringMachine()
 CHAR_LIMIT = 2000
 # Add extra message if more than threshold number of warns
 WARN_THRESHOLD = 3
-# If older than threshold, add to review list, in months
-REVIEW_THRESHOLD = 6
 
 """
 User Search
@@ -424,82 +422,6 @@ async def reply(m):
         await m.channel.send("ERROR: I was unable to find the user to DM. I'm unsure how this can be the case, unless their account was deleted")
 
 """
-Notebook
-
-Generate .txt file containing all notes from all users
-
-Input:
-    m: Discord message object
-"""
-async def notebook(m):
-    sqlconn = sqlite3.connect(config.DATABASE_PATH)
-    # Retreive all items in database that are notes
-    allNotes = sqlconn.execute("SELECT * FROM badeggs WHERE num=-1").fetchall()
-    sqlconn.commit()
-    sqlconn.close()
-
-
-    # Write to file kept in git ignored directory
-    with open("private/notes.txt", "w") as f:
-        for item in allNotes:
-            # Very similar to formatting in Utils function, but with different array indexes
-            note = "[{}] **{}** - Note by {} - {}\n".format(Utils.formatTime(item[4]), item[2], item[6], item[5])
-            f.write(note)
-
-    # Attach .txt file once compiled
-    await m.channel.send("Your notes, as requested.")
-    with open("./private/notes.txt", "r") as f:
-        await m.channel.send(file=discord.File(f))
-
-
-"""
-User Review
-
-Posts the usernames of all users whose oldest logs are older than REVIEW_THRESHOLD
-
-Input:
-    channel: Discord channel object request was made from
-"""
-async def userReview(channel):
-    # Keep track both of users we want to review and those we don't, so we can skip over them
-    tooOld = []
-    tooNew = []
-    sqlconn = sqlite3.connect(config.DATABASE_PATH)
-    # Reverse order so newest logs are checked/eliminated first
-    allLogs = sqlconn.execute("SELECT id, username, date, num FROM badeggs WHERE num > -1").fetchall()[::-1]
-
-    now = datetime.datetime.now()
-    for log in allLogs:
-        # Store username and ID in tuple
-        logTuple = (log[0], log[1])
-        # Don't want to list users who have been banned
-        if log[3] == 0:
-            tooNew.append(log[0])
-        # Only check users if they haven't been included/eliminated
-        if logTuple not in tooOld and log[0] not in tooNew:
-            day = log[2].split()[0]
-            dateval = datetime.datetime.strptime(day, "%Y-%m-%d")
-            testDate = dateval + datetime.timedelta(days=30*REVIEW_THRESHOLD)
-            if testDate < now:
-                tooOld.append(logTuple)
-            else:
-                tooNew.append(log[0])
-
-    sqlconn.close()
-
-    mes = "These users had their most recent log greater than {} months ago.\n".format(REVIEW_THRESHOLD)
-    # Reverse order so oldest are first
-    for user in tooOld[::-1]:
-        # If we hit Discord's character limit, post what we have and start a new message
-        if len(mes) + len(user) + 2 < CHAR_LIMIT:
-            mes += "`{}`, ".format(user[0])
-        else:
-            await channel.send(mes)
-            mes = "`{}`, ".format(user[0])
-
-    await channel.send(mes)
-
-"""
 Uptime
 
 Posts the current uptime for the bot
@@ -822,20 +744,17 @@ async def on_message(message):
                         "Log a kick: `$kick USER reason`\n"
                         "Search for a user: `$search USER`\n"
                         "Create a note about a user: `$note USER message`\n"
-                        "Show all notes: `$notebook`\n"
                         "Remove a user's log: `$remove USER index(optional)`\n"
                         "Edit a user's note: `$edit USER index(optional) new_message`\n"
                         "View users waiting for a reply: `$waiting`. Clear the list with `$clear`\n"
                         "Stop a user from sending DMs to us: `$block/$unblock USERID`\n"
                         "Reply to a user in DMs: `$reply USERID` - To reply to the most recent DM: `$reply ^`\n"
-                        "Plot warn/ban stats: `$graph`\nReview which users have old logs: `$review`\n"
+                        "Plot warn/ban stats: `$graph`\n"
                         "View bot uptime: `$uptime`\n"
                         "DMing users when they are banned is `{}`\n"
                         "DMing users when they are warned is `{}`".format(dmBans, dmWarns)
                     )
                     await message.channel.send(helpMes)
-                elif message.content.upper() == "$NOTEBOOK":
-                    await notebook(message)
                 elif message.content.upper() == "$UPDATE":
                     # Update will call `git pull`, then kill the program so it automatically restarts
                     if message.author.id == config.OWNER:
@@ -855,8 +774,6 @@ async def on_message(message):
 
                     with open("./private/month_plot.png", 'rb') as f:
                         await message.channel.send(file=discord.File(f))
-                elif message.content.upper() == "$REVIEW":
-                    await userReview(message.channel)
                 elif message.content.upper() == "$UPTIME":
                     await uptime(message.channel)
                 elif message.content.upper() == "$GETROLES":
@@ -890,14 +807,6 @@ async def on_message(message):
                 elif message.content.startswith("$clear"):
                     am.clear_entries()
                     await message.channel.send("Waiting queue has been cleared")
-
-                # Debug functions only to be executed by the owner
-                elif message.content.upper() == "$DUMPBANS" and message.author.id == config.OWNER:
-                    output = await Utils.dumpBans(recentBans)
-                    if output != "":
-                        await message.channel.send(output)
-                    else:
-                        await message.channel.send("There has been no bans since I was rebooted.")
 
     except discord.errors.HTTPException as e:
         print("HTTPException: {}", e)

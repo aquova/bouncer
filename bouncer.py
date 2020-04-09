@@ -506,36 +506,6 @@ async def userReview(channel):
     await channel.send(mes)
 
 """
-List Answering Machine
-
-Provides a list of users who are awaiting replies
-Also purges the list while we're at it
-"""
-@client.event
-async def listAnsweringMachine(message):
-    currTime = datetime.datetime.utcnow()
-    first = True
-    # Assume there are no messages in the queue
-    out = "There are no users awaiting replies."
-
-    waiting_list = am.get_entries().items()
-    for key, item in waiting_list:
-        days, hours, minutes = Utils.getTimeDelta(currTime, item.timestamp)
-        # Purge items that are older than one day
-        if days > 0:
-            am.remove_entry(key)
-        else:
-            # If we find a message, change the printout message
-            if first:
-                out = "Users who are still awaiting replies:\n"
-                first = False
-
-            out += "{} ({}) said `{}` | {}h{}m ago\n{}\n".format(item.name, key, item.last_message, hours, minutes, item.message_url)
-
-    # We probably won't get enough messages for this to go over the 2000 char limit, but it is a possibility, so watch out.
-    await message.channel.send(out)
-
-"""
 Uptime
 
 Posts the current uptime for the bot
@@ -921,7 +891,8 @@ async def on_message(message):
                 elif message.content.startswith("$edit"):
                     await removeError(message, True)
                 elif message.content.startswith("$waiting"):
-                    await listAnsweringMachine(message)
+                    output = am.gen_waiting_list()
+                    await message.channel.send(output)
                 elif message.content.startswith("$clear"):
                     am.clear_entries()
                     await message.channel.send("Waiting queue has been cleared")

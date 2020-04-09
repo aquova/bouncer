@@ -1,5 +1,5 @@
 import discord, sqlite3, re
-from config import DATABASE_PATH
+import db
 from Utils import parseUsername
 
 """
@@ -107,20 +107,7 @@ class User:
 
         # Otherwise, they aren't in the server, and haven't left since startup.
         # Check the database to see if we can get their name from a previous infraction
-        checkDatabase = self.search()
+        checkDatabase = db.search(self.id)
         if checkDatabase == []:
             raise self.MessageError("User not found")
         return checkDatabase[-1][2]
-
-    """
-    Search
-
-    Attempt to search the database for a user with ID of self.id
-    """
-    def search(self):
-        sqlconn = sqlite3.connect(DATABASE_PATH)
-        searchResults = sqlconn.execute("SELECT dbid, id, username, num, date, message, staff, post FROM badeggs WHERE id=?", [self.id]).fetchall()
-        sqlconn.commit()
-        sqlconn.close()
-
-        return searchResults

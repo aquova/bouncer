@@ -57,7 +57,7 @@ async def userSearch(m):
         return
 
     # Get database values for given user
-    searchResults = user.search()
+    searchResults = db.search(user.id)
     try:
         username = user.getName(recentBans)
         if searchResults == []:
@@ -161,7 +161,7 @@ async def logUser(m, state):
         if check.content.upper() == 'Y':
             # B. If so, clear out all previous logs
             await m.channel.send("Very well, removing all old logs to unban")
-            logs = user.search()
+            logs = db.search(user.id)
             for log in logs:
                 sqlconn.execute("REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, NULL, NULL, NULL, NULL, NULL, NULL, NULL)", [log[0]])
 

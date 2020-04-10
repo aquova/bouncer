@@ -284,7 +284,7 @@ async def on_message(message):
                 mes_link = utils.get_mes_link(logMes)
                 username = "{}#{}".format(message.author.name, message.author.discriminator)
 
-                mes_entry = waiting.AnsweringMachineEntry(username, message.created_at, content, mes_link)
+                mes_entry = AnsweringMachineEntry(username, message.created_at, content, mes_link)
                 commands.am.update_entry(message.author.id, mes_entry)
 
         # Temporary - notify if UB3R-BOT has removed something on its word censor

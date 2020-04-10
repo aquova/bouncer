@@ -160,7 +160,7 @@ async def logUser(m, state):
     if state != LogTypes.NOTE:
         # Post to channel, keep track of message ID
         try:
-            chan = client.get_channel(config.LOG_CHAN)
+            chan = discord.utils.get(message.guild.channels, id=config.LOG_CHAN)
             logMes = await chan.send(logMessage)
             logMesID = logMes.id
         except discord.errors.InvalidArgument:
@@ -270,11 +270,11 @@ async def removeError(m, edit):
         # Search logging channel for matching post, and remove it
         try:
             if item.message_url != 0:
-                chan = client.get_channel(config.LOG_CHAN)
+                chan = discord.utils.get(message.guild.channels, id=config.LOG_CHAN)
                 m = await chan.fetch_message(item.message_url)
                 await m.delete()
         # Print message if unable to find message to delete, but don't stop
-        except HTTPException as e:
+        except discord.errors.HTTPException as e:
             print("Unable to find message to delete: {}", str(e))
 
 """
@@ -363,11 +363,13 @@ async def reply(m, _):
         await m.channel.send("Message sent to {}.".format(uname))
 
         # If they were in our answering machine, they have been replied to, and can be removed
-        am.remove_entry(userid)
+        am.remove_entry(u.id)
 
     # Exception handling
-    except Exception as e:
+    except discord.errors.HTTPException as e:
         if e.status == 403:
             await m.channel.send("I cannot send messages to this user -- they may have closed DMs, left the server, or blocked me. Or something.")
         else:
             await m.channel.send("ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {}".format(e))
+    except Exception as e:
+        await m.channel.send("ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {}".format(e))

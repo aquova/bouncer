@@ -1,5 +1,5 @@
 import datetime
-from Utils import getTimeDelta
+from utils import getTimeDelta
 
 class Timekeeper:
     def __init__(self):

@@ -1,7 +1,7 @@
 import datetime, sqlite3
 from dataclasses import dataclass
 from config import DATABASE_PATH, LogTypes
-from Utils import formatTime
+from utils import formatTime
 
 @dataclass
 class UserLogEntry:

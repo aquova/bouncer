@@ -4,7 +4,7 @@
 
 import discord, asyncio, os, subprocess, sys
 from dataclasses import dataclass
-import Utils
+import utils
 import commands, config, db
 from timekeep import Timekeeper
 from waiting import AnsweringMachineEntry
@@ -272,7 +272,7 @@ async def on_message(message):
             # Store who the most recent user was, for $reply ^
             commands.am.set_recent_reply(message.author)
 
-            content = Utils.combineMessage(message)
+            content = utils.combineMessage(message)
             mes = "**{}#{}** (ID: {}): {}".format(message.author.name, message.author.discriminator, message.author.id, content)
 
             # If not blocked, send message along to specified mod channel
@@ -281,7 +281,7 @@ async def on_message(message):
                 logMes = await chan.send(mes)
 
                 # Lets also add/update them in answering machine
-                mes_link = Utils.get_mes_link(logMes)
+                mes_link = utils.get_mes_link(logMes)
                 username = "{}#{}".format(message.author.name, message.author.discriminator)
 
                 mes_entry = waiting.AnsweringMachineEntry(username, message.created_at, content, mes_link)
@@ -289,23 +289,23 @@ async def on_message(message):
 
         # Temporary - notify if UB3R-BOT has removed something on its word censor
         elif (message.author.id == 85614143951892480 and message.channel.id == 233039273207529472) and ("Word Censor Triggered" in message.content) and not config.DEBUG_BOT:
-            mes = "Uh oh, looks like the censor might've been tripped.\n{}".format(Utils.get_mes_link(message))
+            mes = "Uh oh, looks like the censor might've been tripped.\n{}".format(utils.get_mes_link(message))
             chan = client.get_channel(config.VALID_INPUT_CHANS[0])
             await chan.send(mes)
 
         # If a user pings bouncer, log into mod channel
         elif client.user in message.mentions:
-            content = Utils.combineMessage(message)
+            content = utils.combineMessage(message)
             mes = "**{}#{}** (ID: {}) pinged me in <#{}>: {}".format(message.author.name, message.author.discriminator, message.author.id, message.channel.id, content)
-            mes += "\n{}".format(Utils.get_mes_link(message))
+            mes += "\n{}".format(utils.get_mes_link(message))
             chan = client.get_channel(config.VALID_INPUT_CHANS[0])
             await chan.send(mes)
 
         # Functions in this category are those where we care that the user has the correct roles, but don't care about which channel they're invoked in
-        elif Utils.checkRoles(message.author, config.VALID_ROLES):
+        elif utils.checkRoles(message.author, config.VALID_ROLES):
             # Functions in this category must have both the correct roles, and also be invoked in specified channels
             if message.channel.id in config.VALID_INPUT_CHANS:
-                cmd = Utils.get_command(message.content)
+                cmd = utils.get_command(message.content)
                 if cmd in FUNC_DICT:
                     func = FUNC_DICT[cmd][0]
                     arg = FUNC_DICT[cmd][1]
@@ -321,9 +321,9 @@ async def on_message(message):
                         return
                 elif cmd == "$graph":
                     # Generates two plots to visualize moderation activity trends
-                    import Visualize # Import here to avoid debugger crashing from matplotlib issue
-                    Visualize.genUserPlot()
-                    Visualize.genMonthlyPlot()
+                    import visualize # Import here to avoid debugger crashing from matplotlib issue
+                    visualize.genUserPlot()
+                    visualize.genMonthlyPlot()
                     with open("../private/user_plot.png", 'rb') as f:
                         await message.channel.send(file=discord.File(f))
 

@@ -1,5 +1,5 @@
 import discord, datetime
-import config, db, Utils
+import config, db, utils
 from blocks import BlockedUsers
 from config import LogTypes
 from waiting import AnsweringMachine
@@ -107,8 +107,8 @@ async def logUser(m, state):
         await m.channel.send("I wasn't able to find a username for that user, but whatever, I'll do it anyway.")
 
     # Generate log message, adding URLs of any attachments
-    content = Utils.combineMessage(m)
-    mes = Utils.parseMessage(content, username)
+    content = utils.combineMessage(m)
+    mes = utils.parseMessage(content, username)
 
     # If they didn't give a message, abort
     if mes == "":
@@ -116,11 +116,11 @@ async def logUser(m, state):
         return
 
     # Update records for graphing
-    import Visualize
+    import visualize
     if state == LogTypes.BAN:
-        Visualize.updateCache(m.author.name, (1, 0), Utils.formatTime(currentTime))
+        visualize.updateCache(m.author.name, (1, 0), utils.formatTime(currentTime))
     elif state == LogTypes.WARN:
-        Visualize.updateCache(m.author.name, (0, 1), Utils.formatTime(currentTime))
+        visualize.updateCache(m.author.name, (0, 1), utils.formatTime(currentTime))
     elif state == LogTypes.UNBAN:
         # Verify that the user really did mean to unban
         def unban_check(check_mes):
@@ -216,7 +216,7 @@ async def removeError(m, edit):
         username = str(userid)
 
     # If editing, and no message specified, abort.
-    mes = Utils.parseMessage(m.content, username)
+    mes = utils.parseMessage(m.content, username)
     if mes == "":
         if edit:
             await m.channel.send("You need to specify an edit message")
@@ -226,7 +226,7 @@ async def removeError(m, edit):
 
     try:
         index = int(mes.split()[0]) - 1
-        mes = Utils.strip(mes)
+        mes = utils.strip(mes)
     except (IndexError, ValueError):
         index = -1
 
@@ -240,7 +240,7 @@ async def removeError(m, edit):
         await m.channel.send("I can't modify item number {}, there aren't that many for this user".format(index + 1))
     else:
         item = search_results[index]
-        import Visualize
+        import visualize
         if edit:
             if item.log_type == LogTypes.NOTE.value:
                 currentTime = datetime.datetime.utcnow()
@@ -262,9 +262,9 @@ async def removeError(m, edit):
         out += str(item)
 
         if item.log_type == LogTypes.BAN:
-            Visualize.updateCache(item.staff, (-1, 0), Utils.formatTime(item.timestamp))
+            visualize.updateCache(item.staff, (-1, 0), utils.formatTime(item.timestamp))
         elif item.log_type == LogTypes.WARN:
-            Visualize.updateCache(item.staff, (0, -1), Utils.formatTime(item.timestamp))
+            visualize.updateCache(item.staff, (0, -1), utils.formatTime(item.timestamp))
         await m.channel.send(out)
 
         # Search logging channel for matching post, and remove it
@@ -344,8 +344,8 @@ async def reply(m, _):
         await m.channel.send("Sorry, but they need to be in the server for me to message them")
         return
     try:
-        content = Utils.combineMessage(m)
-        mes = Utils.removeCommand(content)
+        content = utils.combineMessage(m)
+        mes = utils.removeCommand(content)
 
         # Don't allow blank messages
         if len(mes) == 0 or mes.isspace():

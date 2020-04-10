@@ -22,7 +22,7 @@ def parse_mention(message, banList):
     if user_id == None:
         user_id = check_id(message)
 
-    return user_id
+    return int(user_id)
 
 def check_mention(message):
     try:
@@ -62,17 +62,18 @@ def check_username(message, banList):
         return None
 
 def check_id(message):
-    checkID = remove_command(message.content)
+    content = remove_command(message.content)
 
     try:
         # If ping is typed out by user using their ID, it doesn't count as a mention
         # Thus, try and match with regex
-        checkPing = re.search(r"<@!?(\d+)>", checkID)
+        checkPing = re.search(r"<@!?(\d+)>", content)
         if checkPing != None:
             return checkPing.group(1)
 
         # Simply verify by attempting to cast to an int. If it doesn't raise an error, return it
-        # Lengths of Discord IDs seem to be no longer a constant length, so difficult to verify that way
+        # NOTE: This requires the ID to be first word, after the command
+        checkID = content.split()[0]
         int(checkID)
         return checkID
     except (IndexError, ValueError):
@@ -81,7 +82,7 @@ def check_id(message):
 def fetch_username(server, userid, banList):
     username = None
 
-    member = discord.utils.get(server.members, id=userid)
+    member = fetch_user(server, userid)
     if member != None:
         # If we found a member in the server, simply format the username
         username = "{}#{}".format(member.name, member.discriminator)
@@ -98,6 +99,9 @@ def fetch_username(server, userid, banList):
             username = checkDatabase[-1][2]
 
     return username
+
+def fetch_user(server, userid):
+    return discord.utils.get(server.members, id=userid)
 
 #####
 

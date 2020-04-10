@@ -6,7 +6,7 @@ import discord, sqlite3, datetime, asyncio, os, subprocess, sys
 from dataclasses import dataclass
 import Utils
 import config, db, waiting
-from User import User, parse_mention, fetch_username
+from User import User, parse_mention, fetch_username, fetch_user
 from config import LogTypes
 
 client = discord.Client()
@@ -91,30 +91,26 @@ Inputs:
 """
 async def logUser(m, state):
     # Attempt to generate user object
-    try:
-        user = User(m, recentBans)
-    except User.MessageError:
+    userid = parse_mention(m, recentBans)
+    if userid == None:
         if state == LogTypes.NOTE:
             await m.channel.send("I wasn't able to understand that message: `$note USER`")
         else:
             await m.channel.send("I wasn't able to understand that message: `$log USER`")
         return
 
-    sqlconn = sqlite3.connect(config.DATABASE_PATH)
     # Calculate value for 'num' category in database
     # For warns, it's the newest number of warns, otherwise it's a special value
     if state == LogTypes.WARN:
-        count = sqlconn.execute("SELECT COUNT(*) FROM badeggs WHERE id=? AND num > 0", [user.id]).fetchone()[0] + 1
+        count = db.get_warn_count(userid)
     else:
         count = state
-    globalcount = sqlconn.execute("SELECT COUNT(*) FROM badeggs").fetchone()[0]
     currentTime = datetime.datetime.utcnow()
 
     # Attempt to fetch the username for the user
-    try:
-        username = user.getName(recentBans)
-    except User.MessageError:
-        username = "ID: " + str(user.id)
+    username = fetch_username(m.guild, userid, recentBans)
+    if username == None:
+        username = "ID: " + str(userid)
         await m.channel.send("I wasn't able to find a username for that user, but whatever, I'll do it anyway.")
 
     # Generate log message, adding URLs of any attachments
@@ -129,11 +125,11 @@ async def logUser(m, state):
     # Update records for graphing
     import Visualize
     if state == LogTypes.BAN:
-        Visualize.updateCache(sqlconn, m.author.name, (1, 0), Utils.formatTime(currentTime))
+        Visualize.updateCache(m.author.name, (1, 0), Utils.formatTime(currentTime))
     elif state == LogTypes.WARN:
-        Visualize.updateCache(sqlconn, m.author.name, (0, 1), Utils.formatTime(currentTime))
+        Visualize.updateCache(m.author.name, (0, 1), Utils.formatTime(currentTime))
     elif state == LogTypes.NOTE:
-        noteCount = sqlconn.execute("SELECT COUNT(*) FROM badeggs WHERE id=? AND num = -1", [user.id]).fetchone()[0] + 1
+        noteCount = db.get_note_count(userid)
         logMessage = "Note #{} made for {}".format(noteCount, username)
     elif state == LogTypes.UNBAN:
         # Verify that the user really did mean to unban
@@ -153,16 +149,13 @@ async def logUser(m, state):
         if check.content.upper() == 'Y':
             # B. If so, clear out all previous logs
             await m.channel.send("Very well, removing all old logs to unban")
-            logs = db.search(user.id)
-            for log in logs:
-                sqlconn.execute("REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, NULL, NULL, NULL, NULL, NULL, NULL, NULL)", [log[0]])
+            db.clear_user_logs(userid)
 
             # C. Proceed with the unbanning
             logMessage = "[{}] **{}** - Unbanned by {} - {}\n".format(Utils.formatTime(currentTime), username, m.author.name, mes)
         else:
             # Abort if they responded negatively
             await m.channel.send("Unban aborted.")
-            sqlconn.close()
             return
 
     # Generate message for log channel
@@ -188,7 +181,7 @@ async def logUser(m, state):
 
         try:
             # Send a DM to the user
-            u = user.getMember()
+            u = fetch_user(m.guild, userid)
             if u != None:
                 DMchan = u.dm_channel
                 # If first time DMing, need to create channel
@@ -206,13 +199,13 @@ async def logUser(m, state):
         # Exception handling
         except discord.errors.HTTPException as e:
             await m.channel.send("ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {}".format(e))
-        except discord.errors.Forbidden:
-            await m.channel.send( "ERROR: I am not allowed to DM the user. It is likely that they are not accepting DM's from me.")
-        except discord.errors.NotFound:
-            await m.channel.send("ERROR: I was unable to find the user to DM. I'm unsure how this can be the case, unless their account was deleted")
+        except Exception as e:
+            await m.channel.send( "ERROR: An unexpected error has occurred. Tell aquova this: {}".format(e))
 
     # Update database
-    params = [globalcount + 1, user.id, username, count, currentTime, mes, m.author.name, logMesID]
+    sqlconn = sqlite3.connect(config.DATABASE_PATH)
+    globalcount = sqlconn.execute("SELECT COUNT(*) FROM badeggs").fetchone()[0]
+    params = [globalcount + 1, userid, username, count, currentTime, mes, m.author.name, logMesID]
     sqlconn.execute("INSERT INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", params)
     sqlconn.commit()
     sqlconn.close()

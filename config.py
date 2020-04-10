@@ -1,13 +1,27 @@
 import json
+from enum import Enum, unique
 
 DATABASE_PATH = "private/sdv.db"
 
-class LogTypes:
+@unique
+class LogTypes(Enum):
     UNBAN = -3
     KICK = -2
     NOTE = -1
     BAN = 0
     WARN = 1
+
+    def __str__(self, cls):
+        if self == cls.UNBAN:
+            return "Unbanned"
+        elif self == cls.KICK:
+            return "Kicked"
+        elif self == cls.NOTE:
+            return "Note"
+        elif self == cls.BAN:
+            return "Banned"
+        else:
+            return "Warning"
 
 # Read values from config file
 with open('private/config.json') as config_file:

@@ -22,7 +22,8 @@ def getMax(a):
 
 # Val is a tuple which determines what to modify
 # (ban # change, warn # change)
-def updateCache(sqlconn, staff, val, date):
+def updateCache(staff, val, date):
+    sqlconn = sqlite3.connect(DATABASE_PATH)
     formatDate = "{}-{}".format(date.split('-')[0], date.split('-')[1])
 
     checkStaff = sqlconn.execute("SELECT * FROM staffLogs WHERE staff=?", [staff]).fetchall()
@@ -49,6 +50,7 @@ def updateCache(sqlconn, staff, val, date):
         sqlconn.execute("REPLACE INTO monthLogs (month, bans, warns) VALUES (?, ?, ?)", [formatDate, bans+val[0], warns+val[1]])
 
     sqlconn.commit()
+    sqlconn.close()
 
 def genUserPlot():
     plt.clf()

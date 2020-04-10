@@ -7,28 +7,17 @@ from dataclasses import dataclass
 import Utils
 import config, db, waiting
 from blocks import BlockedUsers
-from User import User, parse_mention, fetch_username, fetch_user
+from User import UserLookup
 from config import LogTypes
 
-client = discord.Client()
 # Used to determine uptime
 startTime = 0
 debugging = False
 
-# Notes on database structure:
-# Most of the columns are self explanitory
-# num column is the category of the infraction
-# 0: Ban
-# >0: The number of the warning
-# -1: Note
-# -2: Kick
-# -3: Unban
-
-# Create database and tables, if not created already
+# Initialize client and helper classes
+client = discord.Client()
 db.initialize()
-
-# Containers to store needed information in memory
-recentBans = {}
+ul = UserLookup()
 bu = BlockedUsers()
 am = waiting.AnsweringMachine()
 
@@ -47,14 +36,14 @@ Input:
     m: Discord message object
 """
 async def userSearch(m):
-    userid = parse_mention(m, recentBans)
+    userid = ul.parse_mention(m)
     if userid == None:
         await m.channel.send("I wasn't able to find a user anywhere based on that message. `$search USER`")
         return
 
     # Get database values for given user
     searchResults = db.search(userid)
-    username = fetch_username(m.guild, userid, recentBans)
+    username = ul.fetch_username(m.guild, userid)
 
     if searchResults == []:
         if username != None:
@@ -91,7 +80,7 @@ Inputs:
 """
 async def logUser(m, state):
     # Attempt to generate user object
-    userid = parse_mention(m, recentBans)
+    userid = ul.parse_mention(m)
     if userid == None:
         if state == LogTypes.NOTE:
             await m.channel.send("I wasn't able to understand that message: `$note USER`")
@@ -108,7 +97,7 @@ async def logUser(m, state):
     currentTime = datetime.datetime.utcnow()
 
     # Attempt to fetch the username for the user
-    username = fetch_username(m.guild, userid, recentBans)
+    username = ul.fetch_username(m.guild, userid)
     if username == None:
         username = "ID: " + str(userid)
         await m.channel.send("I wasn't able to find a username for that user, but whatever, I'll do it anyway.")
@@ -181,7 +170,7 @@ async def logUser(m, state):
 
         try:
             # Send a DM to the user
-            u = fetch_user(m.guild, userid)
+            u = ul.fetch_user(m.guild, userid)
             if u != None:
                 DMchan = u.dm_channel
                 # If first time DMing, need to create channel
@@ -220,7 +209,7 @@ Input:
     edit: Boolean, signifies if this is a deletion (false) or an edit (true)
 """
 async def removeError(m, edit):
-    userid = parse_mention(m, recentBans)
+    userid = ul.parse_mention(m)
     if userid == None:
         if edit:
             await m.channel.send("I wasn't able to understand that message: `$remove USER [num] new_message`")
@@ -228,7 +217,7 @@ async def removeError(m, edit):
             await m.channel.send("I wasn't able to understand that message: `$remove USER [num]`")
         return
 
-    username = fetch_username(m.guild, userid, recentBans)
+    username = ul.fetch_username(m.guild, userid)
     if username == None:
         username = str(userid)
 
@@ -310,7 +299,7 @@ Input:
     block: Boolean, true for block, false for unblock
 """
 async def blockUser(m, block):
-    userid = parse_mention(m, recentBans)
+    userid = ul.parse_mention(m)
     if userid == None:
         if block:
             await m.channel.send("I wasn't able to understand that message: `$block USER`")
@@ -318,7 +307,7 @@ async def blockUser(m, block):
             await m.channel.send("I wasn't able to understand that message: `$unblock USER`")
         return
 
-    username = fetch_username(m.guild, userid, recentBans)
+    username = ul.fetch_username(m.guild, userid)
     if username == None:
         username = str(userid)
 
@@ -356,12 +345,12 @@ async def reply(m):
             return
     else:
         # Otherwise, attempt to get object for the specified user
-        userid = parse_mention(m, recentBans)
+        userid = ul.parse_mention(m)
         if userid == None:
             await m.channel.send("I wasn't able to understand that message: `$reply USER`")
             return
 
-        u = fetch_user(m.guild, userid)
+        u = ul.fetch_user(m.guild, userid)
     # If we couldn't find anyone, then they aren't in the server, and can't be DMed
     if u == None:
         await m.channel.send("Sorry, but they need to be in the server for me to message them")
@@ -471,7 +460,6 @@ Occurs when a user is banned
 """
 @client.event
 async def on_member_ban(server, member):
-    global recentBans
     # If debugging, don't process
     if config.DEBUG_BOT:
         return
@@ -480,8 +468,9 @@ async def on_member_ban(server, member):
     am.remove_entry(member.id)
 
     # Keep a record of their banning, in case the log is made after they're no longer here
-    recentBans[member.id] = "{}#{}".format(member.name, member.discriminator)
-    mes = "**{}#{} ({})** has been banned.".format(member.name, member.discriminator, member.id)
+    username = "{}#{}".format(member.name, member.discriminator)
+    ul.add_ban(member.id, username)
+    mes = "**{} ({})** has been banned.".format(username, member.id)
     chan = client.get_channel(config.SYS_LOG)
     await chan.send(mes)
 
@@ -492,7 +481,6 @@ Occurs when a user leaves the server
 """
 @client.event
 async def on_member_remove(member):
-    global recentBans
     # If debugging, don't process
     if config.DEBUG_BOT:
         return
@@ -501,8 +489,9 @@ async def on_member_remove(member):
     am.remove_entry(member.id)
 
     # Remember that the user has left, in case we want to log after they're gone
-    recentBans[str(member.id)] = "{}#{}".format(member.name, member.discriminator)
-    mes = "**{}#{} ({})** has left".format(member.name, member.discriminator, member.id)
+    username = "{}#{}".format(member.name, member.discriminator)
+    ul.add_ban(member.id, username)
+    mes = "**{}#{} ({})** has left".format(username, member.id)
     chan = client.get_channel(config.SYS_LOG)
     await chan.send(mes)
 

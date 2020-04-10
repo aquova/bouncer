@@ -30,7 +30,6 @@ db.initialize()
 # Containers to store needed information in memory
 recentBans = {}
 bu = BlockedUsers()
-recentReply = None
 am = waiting.AnsweringMachine()
 
 # Constants
@@ -350,20 +349,19 @@ async def reply(m):
     # If given '^' instead of user, message the last person to DM bouncer
     # Uses whoever DMed last since last startup, don't bother keeping in database or anything like that
     if m.content.split()[1] == "^":
-        if recentReply != None:
-            u = recentReply
+        if am.recent_reply_exists():
+            u = am.get_recent_reply()
         else:
             await m.channel.send("Sorry, I have no previous user stored. Gotta do it the old fashioned way.")
             return
     else:
         # Otherwise, attempt to get object for the specified user
-        try:
-            user = User(m, recentBans)
-        except User.MessageError:
+        userid = parse_mention(m, recentBans)
+        if userid == None:
             await m.channel.send("I wasn't able to understand that message: `$reply USER`")
             return
 
-        u = user.getMember()
+        u = fetch_user(m.guild, userid)
     # If we couldn't find anyone, then they aren't in the server, and can't be DMed
     if u == None:
         await m.channel.send("Sorry, but they need to be in the server for me to message them")
@@ -377,12 +375,7 @@ async def reply(m):
             await m.channel.send("...That message was blank. Please send an actual message")
             return
 
-        # Keep local log of all DMs
-        ts = m.created_at.strftime('%Y-%m-%d %H:%M:%S')
         uname = "{}#{}".format(u.name, u.discriminator)
-        with open("../private/DMs.txt", 'a', encoding='utf-8') as openFile:
-            openFile.write("{} - {} sent a DM to {}: {}\n".format(ts, m.author.name, uname, mes))
-
         DMchan = u.dm_channel
         # If first DMing, need to create DM channel
         if DMchan == None:
@@ -393,18 +386,14 @@ async def reply(m):
         await m.channel.send("Message sent to {}.".format(uname))
 
         # If they were in our answering machine, they have been replied to, and can be removed
-        am.remove_entry(u.id)
+        am.remove_entry(userid)
 
     # Exception handling
-    except discord.errors.HTTPException as e:
+    except Exception as e:
         if e.status == 403:
             await m.channel.send("I cannot send messages to this user -- they may have closed DMs, left the server, or blocked me. Or something.")
         else:
             await m.channel.send("ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {}".format(e))
-    except discord.errors.Forbidden:
-        await m.channel.send("ERROR: I am not allowed to DM the user. It is likely that they are not accepting DM's from me.")
-    except discord.errors.NotFound:
-        await m.channel.send("ERROR: I was unable to find the user to DM. I'm unsure how this can be the case, unless their account was deleted")
 
 """
 Uptime
@@ -646,7 +635,6 @@ More or less the main function
 """
 @client.event
 async def on_message(message):
-    global recentReply
     global debugging
 
     # Bouncer should not react to its own messages
@@ -674,14 +662,10 @@ async def on_message(message):
             ts = message.created_at.strftime('%Y-%m-%d %H:%M:%S')
 
             # Store who the most recent user was, for $reply ^
-            recentReply = message.author
+            am.set_recent_reply(message.author)
 
             content = Utils.combineMessage(message)
             mes = "**{}#{}** (ID: {}): {}".format(message.author.name, message.author.discriminator, message.author.id, content)
-
-            # Regardless of blocklist or not, log their messages
-            with open("../private/DMs.txt", 'a', encoding='utf-8') as openFile:
-                openFile.write("{} - {}\n".format(ts, mes))
 
             # If not blocked, send message along to specified mod channel
             if not bu.is_in_blocklist(message.author.id):

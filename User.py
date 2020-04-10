@@ -22,7 +22,7 @@ def parse_mention(message, banList):
     if user_id == None:
         user_id = check_id(message)
 
-    return int(user_id)
+    return user_id
 
 def check_mention(message):
     try:
@@ -69,13 +69,12 @@ def check_id(message):
         # Thus, try and match with regex
         checkPing = re.search(r"<@!?(\d+)>", content)
         if checkPing != None:
-            return checkPing.group(1)
+            return int(checkPing.group(1))
 
         # Simply verify by attempting to cast to an int. If it doesn't raise an error, return it
         # NOTE: This requires the ID to be first word, after the command
         checkID = content.split()[0]
-        int(checkID)
-        return checkID
+        return int(checkID)
     except (IndexError, ValueError):
         return None
 

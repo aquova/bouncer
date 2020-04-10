@@ -6,6 +6,7 @@ import discord, sqlite3, datetime, asyncio, os, subprocess, sys
 from dataclasses import dataclass
 import Utils
 import config, db, waiting
+from blocks import BlockedUsers
 from User import User, parse_mention, fetch_username, fetch_user
 from config import LogTypes
 
@@ -28,7 +29,7 @@ db.initialize()
 
 # Containers to store needed information in memory
 recentBans = {}
-blockList = []
+bu = BlockedUsers()
 recentReply = None
 am = waiting.AnsweringMachine()
 
@@ -310,33 +311,32 @@ Input:
     block: Boolean, true for block, false for unblock
 """
 async def blockUser(m, block):
-    global blockList
-    # Attempt to find user in database
-    try:
-        user = User(m, recentBans)
-    except User.MessageError:
-        await m.channel.send("I wasn't able to understand that message: `$block USER`")
+    userid = parse_mention(m, recentBans)
+    if userid == None:
+        if block:
+            await m.channel.send("I wasn't able to understand that message: `$block USER`")
+        else:
+            await m.channel.send("I wasn't able to understand that message: `$unblock USER`")
         return
+
+    username = fetch_username(m.guild, userid, recentBans)
+    if username == None:
+        username = str(userid)
 
     # Store in the database that the given user is un/blocked
     # Also update current block list to match
-    sqlconn = sqlite3.connect(config.DATABASE_PATH)
     if block:
-        if user.id in blockList:
+        if bu.is_in_blocklist(userid):
             await m.channel.send("Um... That user was already blocked...")
         else:
-            sqlconn.execute("INSERT INTO blocks (id) VALUES (?)", [user.id])
-            blockList.append(user.id)
-            await m.channel.send("I have now blocked {}. Their messages will no longer display in chat, but they will be logged for later review.".format(user.id))
+            bu.block_user(userid)
+            await m.channel.send("I have now blocked {}. Their messages will no longer display in chat, but they will be logged for later review.".format(username))
     else:
-        if user.id not in blockList:
+        if not bu.is_in_blocklist(userid):
             await m.channel.send("That user hasn't been blocked...")
         else:
-            sqlconn.execute("DELETE FROM blocks WHERE id=?", [user.id])
-            blockList.remove(user.id)
-            await m.channel.send("I have now unblocked {}. You will once again be able to hear their dumb bullshit in chat.".format(user.id))
-    sqlconn.commit()
-    sqlconn.close()
+            bu.unblock_user(userid)
+            await m.channel.send("I have now unblocked {}. You will once again be able to hear their dumb bullshit in chat.".format(username))
 
 """
 Reply
@@ -428,7 +428,6 @@ Occurs when Discord bot is first brought online
 """
 @client.event
 async def on_ready():
-    global blockList
     global startTime
     print('Logged in as')
     print(client.user.name)
@@ -438,10 +437,7 @@ async def on_ready():
     startTime = datetime.datetime.now()
 
     # Load any users who were banned into memory
-    sqlconn = sqlite3.connect(config.DATABASE_PATH)
-    blockDB = sqlconn.execute("SELECT * FROM blocks").fetchall()
-    blockList = [str(x[0]) for x in blockDB]
-    sqlconn.close()
+    bu.populate_blocklist()
 
     # Text Bouncer's activity status
     activity_object = discord.Activity(name="for your reports!", type=discord.ActivityType.watching)
@@ -688,7 +684,7 @@ async def on_message(message):
                 openFile.write("{} - {}\n".format(ts, mes))
 
             # If not blocked, send message along to specified mod channel
-            if str(message.author.id) not in blockList:
+            if not bu.is_in_blocklist(message.author.id):
                 chan = client.get_channel(config.VALID_INPUT_CHANS[0])
                 logMes = await chan.send(mes)
 

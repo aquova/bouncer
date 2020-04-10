@@ -3,7 +3,7 @@ from config import DATABASE_PATH
 
 class BlockedUsers:
     def __init__(self):
-        self.blocklist = []
+        self.populate_blocklist()
 
     def populate_blocklist(self):
         sqlconn = sqlite3.connect(DATABASE_PATH)

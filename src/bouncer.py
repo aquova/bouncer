@@ -7,11 +7,10 @@ from dataclasses import dataclass
 import Utils
 import config, db, waiting
 from blocks import BlockedUsers
+from timekeep import Timekeeper
 from user import UserLookup
 from config import LogTypes
 
-# Used to determine uptime
-startTime = 0
 debugging = False
 
 # Initialize client and helper classes
@@ -20,6 +19,7 @@ db.initialize()
 ul = UserLookup()
 bu = BlockedUsers()
 am = waiting.AnsweringMachine()
+tk = Timekeeper()
 
 # Constants
 # Discord has a 2000 message character limit
@@ -385,34 +385,15 @@ async def reply(m):
             await m.channel.send("ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {}".format(e))
 
 """
-Uptime
-
-Posts the current uptime for the bot
-
-Input:
-    channel: Discord channel object from which the request was made
-"""
-async def uptime(channel):
-    currTime = datetime.datetime.now()
-    days, hours, minutes = Utils.getTimeDelta(currTime, startTime)
-    mes = "I have been running for {} days, {} hours, and {} minutes".format(days, hours, minutes)
-
-    await channel.send(mes)
-
-"""
 On Ready
 
 Occurs when Discord bot is first brought online
 """
 @client.event
 async def on_ready():
-    global startTime
     print('Logged in as')
     print(client.user.name)
     print(client.user.id)
-
-    # Note the time for the uptime function
-    startTime = datetime.datetime.now()
 
     # Load any users who were banned into memory
     bu.populate_blocklist()
@@ -729,7 +710,8 @@ async def on_message(message):
                     with open("../private/month_plot.png", 'rb') as f:
                         await message.channel.send(file=discord.File(f))
                 elif message.content.upper() == "$UPTIME":
-                    await uptime(message.channel)
+                    out = tk.uptime()
+                    await message.channel.send(out)
                 elif message.content.startswith("$search"):
                     await userSearch(message)
                 elif message.content.startswith("$warn"):

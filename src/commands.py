@@ -160,7 +160,7 @@ async def logUser(m, state):
     if state != LogTypes.NOTE:
         # Post to channel, keep track of message ID
         try:
-            chan = discord.utils.get(message.guild.channels, id=config.LOG_CHAN)
+            chan = discord.utils.get(m.guild.channels, id=config.LOG_CHAN)
             logMes = await chan.send(logMessage)
             logMesID = logMes.id
         except discord.errors.InvalidArgument:
@@ -270,7 +270,7 @@ async def removeError(m, edit):
         # Search logging channel for matching post, and remove it
         try:
             if item.message_url != 0:
-                chan = discord.utils.get(message.guild.channels, id=config.LOG_CHAN)
+                chan = discord.utils.get(m.guild.channels, id=config.LOG_CHAN)
                 m = await chan.fetch_message(item.message_url)
                 await m.delete()
         # Print message if unable to find message to delete, but don't stop

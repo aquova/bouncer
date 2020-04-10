@@ -5,8 +5,8 @@ source bin/activate
 
 while :
 do
-    if ! pgrep -x "bouncer.py" > /dev/null
+    if ! pgrep -x "src/bouncer.py" > /dev/null
     then
-        python3 bouncer.py
+        python3 src/bouncer.py
     fi
 done

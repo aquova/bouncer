@@ -79,7 +79,7 @@ def genUserPlot():
     plt.tight_layout()
     plt.grid(True, axis="y")
 
-    plt.savefig("private/user_plot.png")
+    plt.savefig("../private/user_plot.png")
 
 # A lot of code could be reused if I wanted to combine these functions
 def genMonthlyPlot():
@@ -109,4 +109,4 @@ def genMonthlyPlot():
     plt.tight_layout()
     plt.grid(True, axis="y")
 
-    plt.savefig("private/month_plot.png")
+    plt.savefig("../private/month_plot.png")

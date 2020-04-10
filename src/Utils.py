@@ -125,7 +125,7 @@ def get_mes_link(mes):
 
 # Exports the user list to a .txt file
 async def fetchUserList(message):
-    with open("private/users.txt", 'w') as f:
+    with open("../private/users.txt", 'w') as f:
         mems = message.guild.members
         for u in mems:
             f.write("{}\n".format(u.name))

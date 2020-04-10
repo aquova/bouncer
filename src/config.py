@@ -1,7 +1,7 @@
 import json
 from enum import Enum, unique
 
-DATABASE_PATH = "private/sdv.db"
+DATABASE_PATH = "../private/sdv.db"
 
 @unique
 class LogTypes(Enum):
@@ -24,7 +24,7 @@ class LogTypes(Enum):
             return "Warning"
 
 # Read values from config file
-with open('private/config.json') as config_file:
+with open('../private/config.json') as config_file:
     cfg = json.load(config_file)
 
 # Set values from config file as constants

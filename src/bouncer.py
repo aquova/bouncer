@@ -380,7 +380,7 @@ async def reply(m):
         # Keep local log of all DMs
         ts = m.created_at.strftime('%Y-%m-%d %H:%M:%S')
         uname = "{}#{}".format(u.name, u.discriminator)
-        with open("private/DMs.txt", 'a', encoding='utf-8') as openFile:
+        with open("../private/DMs.txt", 'a', encoding='utf-8') as openFile:
             openFile.write("{} - {} sent a DM to {}: {}\n".format(ts, m.author.name, uname, mes))
 
         DMchan = u.dm_channel
@@ -680,7 +680,7 @@ async def on_message(message):
             mes = "**{}#{}** (ID: {}): {}".format(message.author.name, message.author.discriminator, message.author.id, content)
 
             # Regardless of blocklist or not, log their messages
-            with open("private/DMs.txt", 'a', encoding='utf-8') as openFile:
+            with open("../private/DMs.txt", 'a', encoding='utf-8') as openFile:
                 openFile.write("{} - {}\n".format(ts, mes))
 
             # If not blocked, send message along to specified mod channel
@@ -750,10 +750,10 @@ async def on_message(message):
                     import Visualize # Import here to avoid debugger crashing from matplotlib issue
                     Visualize.genUserPlot()
                     Visualize.genMonthlyPlot()
-                    with open("./private/user_plot.png", 'rb') as f:
+                    with open("../private/user_plot.png", 'rb') as f:
                         await message.channel.send(file=discord.File(f))
 
-                    with open("./private/month_plot.png", 'rb') as f:
+                    with open("../private/month_plot.png", 'rb') as f:
                         await message.channel.send(file=discord.File(f))
                 elif message.content.upper() == "$UPTIME":
                     await uptime(message.channel)

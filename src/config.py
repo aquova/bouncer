@@ -11,18 +11,6 @@ class LogTypes(Enum):
     BAN = 0
     WARN = 1
 
-    def __str__(self, cls):
-        if self == cls.UNBAN:
-            return "Unbanned"
-        elif self == cls.KICK:
-            return "Kicked"
-        elif self == cls.NOTE:
-            return "Note"
-        elif self == cls.BAN:
-            return "Banned"
-        else:
-            return "Warning"
-
 # Read values from config file
 with open('../private/config.json') as config_file:
     cfg = json.load(config_file)

@@ -1,6 +1,5 @@
 import discord, re
 import db
-from Utils import parseUsername
 
 def remove_command(mes):
     request = mes.split()[1:]
@@ -102,7 +101,7 @@ class UserLookup:
             # Check the database to see if we can get their name from their most recent infraction (if any)
             checkDatabase = db.search(userid)
             if checkDatabase != []:
-                username = checkDatabase[-1][2]
+                username = checkDatabase[-1].name
 
         return username
 

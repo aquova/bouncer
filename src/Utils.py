@@ -32,42 +32,6 @@ def checkRoles(user, validRoles):
     except AttributeError as e:
         print("The user {}#{} had this issue {}".format(user.name, user.discriminator, e))
 
-# Parses the message to check if there's a valid username, then attempts to find their ID
-def parseUsername(message, recentBans):
-    # Usernames can have spaces, so need to throw away the first word (the command),
-    # and then everything after the discriminator
-
-    # Remove command
-    testUsername = message.content.split()[1:]
-    testUsername = " ".join(testUsername)
-    # Remove a "@" if it exists at the front of the message
-    if testUsername[0] == "@":
-        testUsername = testUsername[1:]
-
-    try:
-        # Parse out the actual username
-        user = testUsername.split("#")
-        discriminator = user[1].split()
-        user = "{}#{}".format(user[0], discriminator[0])
-
-        userFound = discord.utils.get(message.guild.members, name=user.split("#")[0], discriminator=user.split("#")[1])
-        if userFound != None:
-            return str(userFound.id)
-
-        if user in list(recentBans.values()):
-            revBans = {v: k for k, v in recentBans.items()}
-            return revBans[user]
-
-        sqlconn = sqlite3.connect(DATABASE_PATH)
-        searchResults = sqlconn.execute("SELECT id FROM badeggs WHERE username=?", [user]).fetchall()
-        sqlconn.close()
-        if searchResults != []:
-            return searchResults[0][0]
-        else:
-            return None
-    except IndexError:
-        return None
-
 # Since usernames can have spaces, first check if it's a username, otherwise just cut off first word as normal
 # 'user' will either be the correct username, or an ID.
 def parseMessage(message, username):
@@ -75,30 +39,6 @@ def parseMessage(message, username):
     if m.startswith(username):
         return m[len(username)+1:]
     return removeCommand(message)
-
-def formatMessage(info):
-    logType = info[3]
-    logWord = ""
-    if logType == LogTypes.BAN.value:
-        logWord = "Banned"
-    elif logType == LogTypes.NOTE.value:
-        logWord = "Note"
-    elif logType == LogTypes.KICK.value:
-        logWord = "Kicked"
-    elif logType == LogTypes.UNBAN.value:
-        logWord = "Unbanned"
-    else: # LogTypes.WARN
-        logWord = "Warning #{}".format(logType)
-
-    output = "[{date}] **{name}** - {word} by {staff} - {message}\n".format(
-        date = formatTime(info[4]),
-        name = info[2],
-        word = logWord,
-        staff = info[6],
-        message = info[5]
-    )
-
-    return output
 
 def getTimeDelta(t1, t2):
     # t1 should be larger than t2

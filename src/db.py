@@ -5,6 +5,7 @@ from Utils import formatTime
 
 @dataclass
 class UserLogEntry:
+    dbid: int
     user_id: int
     name: str
     log_type: int
@@ -15,13 +16,13 @@ class UserLogEntry:
 
     def __str__(self):
         logWord = ""
-        if self.log_type == LogTypes.BAN:
+        if self.log_type == LogTypes.BAN.value:
             logWord = "Banned"
-        elif self.log_type == LogTypes.NOTE:
+        elif self.log_type == LogTypes.NOTE.value:
             logWord = "Note"
-        elif self.log_type == LogTypes.KICK:
+        elif self.log_type == LogTypes.KICK.value:
             logWord = "Kicked"
-        elif self.log_type == LogTypes.UNBAN:
+        elif self.log_type == LogTypes.UNBAN.value:
             logWord = "Unbanned"
         else: # LogTypes.WARN
             logWord = "Warning #{}".format(self.log_type)
@@ -34,6 +35,18 @@ class UserLogEntry:
             message = self.log_message
         )
 
+    def as_list(self):
+        return [
+            self.dbid,
+            self.user_id,
+            self.name,
+            self.log_type,
+            self.timestamp,
+            self.log_message,
+            self.staff,
+            self.message_url
+        ]
+
 def initialize():
     sqlconn = sqlite3.connect(DATABASE_PATH)
     sqlconn.execute("CREATE TABLE IF NOT EXISTS badeggs (dbid INT PRIMARY KEY, id INT, username TEXT, num INT, date DATE, message TEXT, staff TEXT, post INT);")
@@ -45,10 +58,15 @@ def initialize():
 
 def search(user_id):
     sqlconn = sqlite3.connect(DATABASE_PATH)
-    searchResults = sqlconn.execute("SELECT dbid, id, username, num, date, message, staff, post FROM badeggs WHERE id=?", [user_id]).fetchall()
+    search_results = sqlconn.execute("SELECT dbid, id, username, num, date, message, staff, post FROM badeggs WHERE id=?", [user_id]).fetchall()
     sqlconn.close()
 
-    return searchResults
+    entries = []
+    for result in search_results:
+        entry = UserLogEntry(result[0], result[1], result[2], result[3], result[4], result[5], result[6], result[7])
+        entries.append(entry)
+
+    return entries
 
 def fetch_id_by_username(username):
     sqlconn = sqlite3.connect(DATABASE_PATH)
@@ -74,6 +92,12 @@ def get_note_count(userid):
 
     return searchResults[0] + 1
 
+def add_log(log_entry):
+    sqlconn = sqlite3.connect(DATABASE_PATH)
+    sqlconn.execute("INSERT OR REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", log_entry.as_list())
+    sqlconn.commit()
+    sqlconn.close()
+
 def remove_log(dbid):
     sqlconn = sqlite3.connect(DATABASE_PATH)
     sqlconn.execute("REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, NULL, NULL, NULL, NULL, NULL, NULL, NULL)", [dbid])
@@ -83,4 +107,11 @@ def remove_log(dbid):
 def clear_user_logs(userid):
     logs = search(userid)
     for log in logs:
-        remove_log(log[0])
+        remove_log(log.dbid)
+
+def get_dbid():
+    sqlconn = sqlite3.connect(DATABASE_PATH)
+    globalcount = sqlconn.execute("SELECT COUNT(*) FROM badeggs").fetchone()
+    sqlconn.close()
+
+    return globalcount[0]

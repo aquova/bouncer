@@ -2,7 +2,7 @@
 # Written by aquova, 2018-2020
 # https://github.com/aquova/bouncer
 
-import discord, sqlite3, datetime, asyncio, os, subprocess, sys
+import discord, datetime, asyncio, os, subprocess, sys
 from dataclasses import dataclass
 import Utils
 import config, db, waiting
@@ -42,10 +42,10 @@ async def userSearch(m):
         return
 
     # Get database values for given user
-    searchResults = db.search(userid)
+    search_results = db.search(userid)
     username = ul.fetch_username(m.guild, userid)
 
-    if searchResults == []:
+    if search_results == []:
         if username != None:
             await m.channel.send("User {} was not found in the database\n".format(username))
         else:
@@ -54,11 +54,10 @@ async def userSearch(m):
 
     # Format output message
     out = "User {} was found with the following infractions\n".format(username)
-    for index, item in enumerate(searchResults):
+    for index, item in enumerate(search_results):
         # Enumerate each item
         n = "{}. ".format(index + 1)
-
-        n += Utils.formatMessage(item)
+        n += str(item)
 
         # If message becomes too long, send what we have and start a new post
         if len(out) + len(n) < CHAR_LIMIT:
@@ -117,9 +116,6 @@ async def logUser(m, state):
         Visualize.updateCache(m.author.name, (1, 0), Utils.formatTime(currentTime))
     elif state == LogTypes.WARN:
         Visualize.updateCache(m.author.name, (0, 1), Utils.formatTime(currentTime))
-    elif state == LogTypes.NOTE:
-        noteCount = db.get_note_count(userid)
-        logMessage = "Note #{} made for {}".format(noteCount, username)
     elif state == LogTypes.UNBAN:
         # Verify that the user really did mean to unban
         def unban_check(check_mes):
@@ -139,17 +135,15 @@ async def logUser(m, state):
             # B. If so, clear out all previous logs
             await m.channel.send("Very well, removing all old logs to unban")
             db.clear_user_logs(userid)
-
-            # C. Proceed with the unbanning
-            logMessage = "[{}] **{}** - Unbanned by {} - {}\n".format(Utils.formatTime(currentTime), username, m.author.name, mes)
         else:
             # Abort if they responded negatively
             await m.channel.send("Unban aborted.")
             return
 
     # Generate message for log channel
-    formatArray = [None, m.author.id, username, count, currentTime, mes, m.author.name, None]
-    logMessage = Utils.formatMessage(formatArray)
+    globalcount = db.get_dbid()
+    new_log = db.UserLogEntry(globalcount + 1, userid, username, count, currentTime, mes, m.author.name, None)
+    logMessage = str(new_log)
     await m.channel.send(logMessage)
 
     # Send ban recommendation, if needed
@@ -165,7 +159,6 @@ async def logUser(m, state):
             logMes = await chan.send(logMessage)
             logMesID = logMes.id
         except discord.errors.InvalidArgument:
-            # TODO: Someday make this optional?
             await m.channel.send("The logging channel has not been set up in `config.json`. In order to have a visual record, please specify a channel ID.")
 
         try:
@@ -192,12 +185,8 @@ async def logUser(m, state):
             await m.channel.send( "ERROR: An unexpected error has occurred. Tell aquova this: {}".format(e))
 
     # Update database
-    sqlconn = sqlite3.connect(config.DATABASE_PATH)
-    globalcount = sqlconn.execute("SELECT COUNT(*) FROM badeggs").fetchone()[0]
-    params = [globalcount + 1, userid, username, count, currentTime, mes, m.author.name, logMesID]
-    sqlconn.execute("INSERT INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", params)
-    sqlconn.commit()
-    sqlconn.close()
+    new_log.message_url = logMesID
+    db.add_log(new_log)
 
 """
 Remove Error
@@ -237,53 +226,47 @@ async def removeError(m, edit):
         index = -1
 
     # Find most recent entry in database for specified user
-    searchResults = db.search(userid)
+    search_results = db.search(userid)
     # If no results in database found, can't modify
-    if searchResults == []:
+    if search_results == []:
         await m.channel.send("I couldn't find that user in the database")
     # If invalid index given, yell
-    elif (index > len(searchResults) - 1) or index < -1:
+    elif (index > len(search_results) - 1) or index < -1:
         await m.channel.send("I can't modify item number {}, there aren't that many for this user".format(index + 1))
     else:
-        item = searchResults[index]
+        item = search_results[index]
         import Visualize
         if edit:
-            if item[3] == LogTypes.NOTE:
+            if item.log_type == LogTypes.NOTE.value:
                 currentTime = datetime.datetime.utcnow()
-                # Make a copy of the original log, then modify a few fields
-                params = list(item)
-                params[4] = currentTime
-                params[5] = mes
-                params[6] = m.author.name
-                sqlconn = sqlite3.connect(config.DATABASE_PATH)
-                sqlconn.execute("REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", params)
-                out = "The following log was edited:\n[{}] **{}** - Note by {} - {}\n".format(Utils.formatTime(item[4]), item[2], item[6], item[5])
-                out = "The log now reads as follows:\n[{}] **{}** - Note by {} - {}\n".format(Utils.formatTime(params[4]), params[2], params[6], params[5])
+                item.timestamp = currentTime
+                item.log_message = mes
+                item.staff = m.author.name
+                db.add_log(item)
+                out = "The log now reads as follows:\n{}\n".format(str(item))
                 await m.channel.send(out)
 
-                sqlconn.commit()
-                sqlconn.close()
                 return
             else:
                 await m.channel.send("You can only edit notes for now")
                 return
 
         # Everything after here is deletion
-        db.remove_log(item[0])
+        db.remove_log(item.dbid)
         out = "The following log was deleted:\n"
-        out += Utils.formatMessage(item)
+        out += str(item)
 
-        if item[3] == LogTypes.BAN:
-            Visualize.updateCache(item[6], (-1, 0), Utils.formatTime(item[4]))
-        elif item[3] == LogTypes.WARN:
-            Visualize.updateCache(item[6], (0, -1), Utils.formatTime(item[4]))
+        if item.log_type == LogTypes.BAN:
+            Visualize.updateCache(item.staff, (-1, 0), Utils.formatTime(item.timestamp))
+        elif item.log_type == LogTypes.WARN:
+            Visualize.updateCache(item.staff, (0, -1), Utils.formatTime(item.timestamp))
         await m.channel.send(out)
 
         # Search logging channel for matching post, and remove it
         try:
-            if item[7] != 0:
+            if item.message_url != 0:
                 chan = client.get_channel(config.LOG_CHAN)
-                m = await chan.fetch_message(item[7])
+                m = await chan.fetch_message(item.message_url)
                 await m.delete()
         # Print message if unable to find message to delete, but don't stop
         except HTTPException as e:

@@ -730,9 +730,6 @@ async def on_message(message):
                         await message.channel.send(file=discord.File(f))
                 elif message.content.upper() == "$UPTIME":
                     await uptime(message.channel)
-                elif message.content.upper() == "$GETROLES":
-                    output = await Utils.fetchRoleList(message.guild)
-                    await message.channel.send(output)
                 elif message.content.startswith("$search"):
                     await userSearch(message)
                 elif message.content.startswith("$warn"):

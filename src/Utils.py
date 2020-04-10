@@ -118,30 +118,3 @@ def combineMessage(mes):
 
 def get_mes_link(mes):
     return "https://discordapp.com/channels/{}/{}/{}".format(mes.guild.id, mes.channel.id, mes.id)
-
-#########################################################
-# Functions that only need to be called once in a while #
-#########################################################
-
-# Exports the user list to a .txt file
-async def fetchUserList(message):
-    with open("../private/users.txt", 'w') as f:
-        mems = message.guild.members
-        for u in mems:
-            f.write("{}\n".format(u.name))
-
-# Fetches a dict of the role names to ID values for the given server
-# serverID needs to be a string
-async def fetchRoleList(server):
-    roles = {role.name: role.id for role in server.roles}
-    out = "```\n"
-    for r in roles:
-        out += "{} : {}\n".format(r, roles[r])
-    out += "```"
-    return out
-
-async def dumpBans(banList):
-    output = ""
-    for user in list(banList.items()):
-        output += "{}: {}\n".format(user, banList[user])
-    return output

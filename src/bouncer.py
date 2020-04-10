@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import Utils
 import config, db, waiting
 from blocks import BlockedUsers
-from User import UserLookup
+from user import UserLookup
 from config import LogTypes
 
 # Used to determine uptime

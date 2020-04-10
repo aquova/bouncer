@@ -118,7 +118,7 @@ async def on_member_remove(member):
     # Remember that the user has left, in case we want to log after they're gone
     username = "{}#{}".format(member.name, member.discriminator)
     commands.ul.add_ban(member.id, username)
-    mes = "**{}#{} ({})** has left".format(username, member.id)
+    mes = "**{} ({})** has left".format(username, member.id)
     chan = client.get_channel(config.SYS_LOG)
     await chan.send(mes)
 

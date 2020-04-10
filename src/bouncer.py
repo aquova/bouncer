@@ -20,7 +20,7 @@ tk = Timekeeper()
 FUNC_DICT = {
     "$ban":     [commands.logUser,      LogTypes.BAN],
     "$block":   [commands.blockUser,    True],
-    "$edit":    [commands.removeError,  True]
+    "$edit":    [commands.removeError,  True],
     "$help":    [commands.send_help_mes,None],
     "$kick":    [commands.logUser,      LogTypes.KICK],
     "$note":    [commands.logUser,      LogTypes.NOTE],

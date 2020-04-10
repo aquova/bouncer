@@ -35,7 +35,7 @@ Searches the database for the specified user, given a message
 Input:
     m: Discord message object
 """
-async def userSearch(m):
+async def userSearch(m, _):
     userid = ul.parse_mention(m)
     if userid == None:
         await m.channel.send("I wasn't able to find a user anywhere based on that message. `$search USER`")
@@ -317,7 +317,7 @@ Sends a private message to the specified user
 Input:
     m: Discord message object
 """
-async def reply(m):
+async def reply(m, _):
     # If given '^' instead of user, message the last person to DM bouncer
     # Uses whoever DMed last since last startup, don't bother keeping in database or anything like that
     if m.content.split()[1] == "^":
@@ -580,6 +580,20 @@ async def on_voice_state_update(member, before, after):
         chan = client.get_channel(config.SYS_LOG)
         await chan.send(mes)
 
+FUNC_DICT = {
+    "$warn": [logUser, LogTypes.WARN],
+    "$ban": [logUser, LogTypes.BAN],
+    "$kick": [logUser, LogTypes.KICK],
+    "$unban": [logUser, LogTypes.UNBAN],
+    "$note": [logUser, LogTypes.NOTE],
+    "$search": [userSearch, None],
+    "$remove": [removeError, False],
+    "$block": [blockUser, True],
+    "$unblock": [blockUser, False],
+    "$reply": [reply, None],
+    "$edit": [removeError, True]
+}
+
 """
 On Message
 
@@ -650,9 +664,9 @@ async def on_message(message):
         elif Utils.checkRoles(message.author, config.VALID_ROLES):
             # Functions in this category must have both the correct roles, and also be invoked in specified channels
             if message.channel.id in config.VALID_INPUT_CHANS:
-                # This if/elif thing isn't ideal, but it's by far the simpliest way to mimic a switch case
+                cmd = Utils.get_command(message.content)
                 # Print help message
-                if message.content.upper() == "$HELP":
+                if cmd == "$help":
                     dmWarns = "On" if config.DM_WARN else "Off"
                     dmBans = "On" if config.DM_BAN else "Off"
                     helpMes = (
@@ -673,7 +687,11 @@ async def on_message(message):
                         "DMing users when they are warned is `{}`".format(dmBans, dmWarns)
                     )
                     await message.channel.send(helpMes)
-                elif message.content.upper() == "$UPDATE":
+                elif cmd in FUNC_DICT:
+                    func = FUNC_DICT[cmd][0]
+                    arg = FUNC_DICT[cmd][1]
+                    await func(message, arg)
+                elif cmd == "$update":
                     # Update will call `git pull`, then kill the program so it automatically restarts
                     if message.author.id == config.OWNER:
                         await message.channel.send("Updating and restarting...")
@@ -682,7 +700,7 @@ async def on_message(message):
                     else:
                         await message.channel.send("Who do you think you are.")
                         return
-                elif message.content.upper() == "$GRAPH":
+                elif cmd == "$graph":
                     # Generates two plots to visualize moderation activity trends
                     import Visualize # Import here to avoid debugger crashing from matplotlib issue
                     Visualize.genUserPlot()
@@ -692,31 +710,9 @@ async def on_message(message):
 
                     with open("../private/month_plot.png", 'rb') as f:
                         await message.channel.send(file=discord.File(f))
-                elif message.content.upper() == "$UPTIME":
+                elif cmd == "$uptime":
                     out = tk.uptime()
                     await message.channel.send(out)
-                elif message.content.startswith("$search"):
-                    await userSearch(message)
-                elif message.content.startswith("$warn"):
-                    await logUser(message, LogTypes.WARN)
-                elif message.content.startswith("$ban"):
-                    await logUser(message, LogTypes.BAN)
-                elif message.content.startswith("$kick"):
-                    await logUser(message, LogTypes.KICK)
-                elif message.content.startswith("$unban"):
-                    await logUser(message, LogTypes.UNBAN)
-                elif message.content.startswith("$remove"):
-                    await removeError(message, False)
-                elif message.content.startswith("$block"):
-                    await blockUser(message, True)
-                elif message.content.startswith("$unblock"):
-                    await blockUser(message, False)
-                elif message.content.startswith("$reply"):
-                    await reply(message)
-                elif message.content.startswith("$note"):
-                    await logUser(message, LogTypes.NOTE)
-                elif message.content.startswith("$edit"):
-                    await removeError(message, True)
                 elif message.content.startswith("$waiting"):
                     output = am.gen_waiting_list()
                     await message.channel.send(output)

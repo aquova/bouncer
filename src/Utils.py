@@ -8,6 +8,12 @@ def strip(m):
     tmp = m.split()[1:]
     return " ".join(tmp)
 
+def get_command(m):
+    try:
+        return m.split()[0]
+    except IndexError:
+        return ""
+
 # Removes the '$command' to get just the request
 def removeCommand(m):
     tmp = m.split()[2:]

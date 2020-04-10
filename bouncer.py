@@ -104,7 +104,7 @@ async def logUser(m, state):
     if state == LogTypes.WARN:
         count = db.get_warn_count(userid)
     else:
-        count = state
+        count = state.value
     currentTime = datetime.datetime.utcnow()
 
     # Attempt to fetch the username for the user
@@ -220,20 +220,17 @@ Input:
     edit: Boolean, signifies if this is a deletion (false) or an edit (true)
 """
 async def removeError(m, edit):
-    try:
-        user = User(m, recentBans)
-    except User.MessageError:
+    userid = parse_mention(m, recentBans)
+    if userid == None:
         if edit:
             await m.channel.send("I wasn't able to understand that message: `$remove USER [num] new_message`")
         else:
             await m.channel.send("I wasn't able to understand that message: `$remove USER [num]`")
         return
 
-    # Special handling for multi-word usernames
-    try:
-        username = user.getName(recentBans)
-    except User.MessageError:
-        username = str(user.id)
+    username = fetch_username(m.guild, userid, recentBans)
+    if username == None:
+        username = str(userid)
 
     # If editing, and no message specified, abort.
     mes = Utils.parseMessage(m.content, username)
@@ -251,9 +248,7 @@ async def removeError(m, edit):
         index = -1
 
     # Find most recent entry in database for specified user
-    sqlconn = sqlite3.connect(config.DATABASE_PATH)
-    searchResults = sqlconn.execute("SELECT dbid, id, username, num, date, message, staff, post FROM badeggs WHERE id=?", [user.id]).fetchall()
-
+    searchResults = db.search(userid)
     # If no results in database found, can't modify
     if searchResults == []:
         await m.channel.send("I couldn't find that user in the database")
@@ -271,6 +266,7 @@ async def removeError(m, edit):
                 params[4] = currentTime
                 params[5] = mes
                 params[6] = m.author.name
+                sqlconn = sqlite3.connect(config.DATABASE_PATH)
                 sqlconn.execute("REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", params)
                 out = "The following log was edited:\n[{}] **{}** - Note by {} - {}\n".format(Utils.formatTime(item[4]), item[2], item[6], item[5])
                 out = "The log now reads as follows:\n[{}] **{}** - Note by {} - {}\n".format(Utils.formatTime(params[4]), params[2], params[6], params[5])
@@ -281,19 +277,17 @@ async def removeError(m, edit):
                 return
             else:
                 await m.channel.send("You can only edit notes for now")
-                sqlconn.close()
                 return
 
         # Everything after here is deletion
-        sqlconn.execute("REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, NULL, NULL, NULL, NULL, NULL, NULL, NULL)", [item[0]])
+        db.remove_log(item[0])
         out = "The following log was deleted:\n"
-
         out += Utils.formatMessage(item)
 
         if item[3] == LogTypes.BAN:
-            Visualize.updateCache(sqlconn, item[6], (-1, 0), Utils.formatTime(item[4]))
+            Visualize.updateCache(item[6], (-1, 0), Utils.formatTime(item[4]))
         elif item[3] == LogTypes.WARN:
-            Visualize.updateCache(sqlconn, item[6], (0, -1), Utils.formatTime(item[4]))
+            Visualize.updateCache(item[6], (0, -1), Utils.formatTime(item[4]))
         await m.channel.send(out)
 
         # Search logging channel for matching post, and remove it
@@ -305,8 +299,6 @@ async def removeError(m, edit):
         # Print message if unable to find message to delete, but don't stop
         except HTTPException as e:
             print("Unable to find message to delete: {}", str(e))
-    sqlconn.commit()
-    sqlconn.close()
 
 """
 Block User

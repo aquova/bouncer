@@ -79,13 +79,13 @@ def parseMessage(message, username):
 def formatMessage(info):
     logType = info[3]
     logWord = ""
-    if logType == LogTypes.BAN:
+    if logType == LogTypes.BAN.value:
         logWord = "Banned"
-    elif logType == LogTypes.NOTE:
+    elif logType == LogTypes.NOTE.value:
         logWord = "Note"
-    elif logType == LogTypes.KICK:
+    elif logType == LogTypes.KICK.value:
         logWord = "Kicked"
-    elif logType == LogTypes.UNBAN:
+    elif logType == LogTypes.UNBAN.value:
         logWord = "Unbanned"
     else: # LogTypes.WARN
         logWord = "Warning #{}".format(logType)

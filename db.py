@@ -74,10 +74,13 @@ def get_note_count(userid):
 
     return searchResults[0] + 1
 
-def clear_user_logs(userid):
-    logs = search(userid)
+def remove_log(dbid):
     sqlconn = sqlite3.connect(DATABASE_PATH)
-    for log in logs:
-        sqlconn.execute("REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, NULL, NULL, NULL, NULL, NULL, NULL, NULL)", [log[0]])
+    sqlconn.execute("REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, NULL, NULL, NULL, NULL, NULL, NULL, NULL)", [dbid])
     sqlconn.commit()
     sqlconn.close()
+
+def clear_user_logs(userid):
+    logs = search(userid)
+    for log in logs:
+        remove_log(log[0])

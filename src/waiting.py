@@ -42,8 +42,8 @@ class AnsweringMachine:
         # Assume there are no messages in the queue
         out = "There are no users awaiting replies."
 
-        waiting_list = self.get_entries().items()
-        for key, item in waiting_list:
+        waiting_list = self.get_entries().copy()
+        for key, item in waiting_list.items():
             days, hours, minutes = getTimeDelta(curr_time, item.timestamp)
             # Purge items that are older than one day
             if days > 0:

@@ -20,7 +20,7 @@ The bot has several moderation features:
 
 - Logging of user warnings
     - Moderators can log user warnings alongside an explanitory message.
-    - Warnings are saved both in a channel specified in `config.json`, as well as saved to a local database.
+    - Warnings are saved both in a Discord channel specified in `config.json`, as well as saved to a local database.
     - In addition to warnings; bans, kicks, and unbannings can all be noted.
 - Storing moderation notes
     - Notes about users are stored privately, for moderators to review later
@@ -40,8 +40,6 @@ The bot has several moderation features:
     - Upon being banned, there is the option to DM a user with the ban message. This can be disabled by setting the "DM" field in `config.json` to false.
 - Statistics visualization
     - Statistics about moderator activity can be generated, namely how many warns/bans occurred each month, and how many total warns/bans have been created by each moderator.
-- Sorted review
-    - All users with logs over a specified timespan can be posted, for moderation review.
 - System logs
     - The bot will also monitor all channels and post server-wide changes in users.
     - These include nickname changes, joining, leaving, kicked, banned, joining/leaving VC, and logging of all deleted and modified messages.
@@ -50,9 +48,12 @@ The bot has several moderation features:
 - Debugging
     - A bot instance can be specified as a debugging instance.
     - Non-debugging instances will ignore owner commands when debugging enabled, allowing development work while other instances remain live in the server.
+- Censor
+    - A regex-based blacklist of banned words can be specified in `config.json`.
+    - When a user makes a post with a match, the offending message is deleted and moderators are notified of the infraction.
 
 There is also a `$help` command, which will give the syntax for all of the previously listed commands
 
 For better security, the bot only listens in specific channels for commands, and only accepts commands for users with specific roles. These can be specified, along with other parameters, in the `config.json` file, which is not included for obvious security reasons.
 
-If you wish to run the bot yourself, a rough guide on how to do so is located in `setup.md`.
+If you wish to run the bot yourself, a rough guide on how to do so is located in `setup.md`, and if you are wanting to run the bot on a Debian-based server (or any with apt-get), there is an easy `setup.sh` installation script.

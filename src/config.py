@@ -36,3 +36,6 @@ DEBUG_BOT = (cfg['debug'].upper() == "TRUE")
 GATE_MES = cfg['gatekeeper']['message']
 GATE_EMOJI = cfg['gatekeeper']['emoji']
 GATE_ROLE = cfg['gatekeeper']['role']
+
+CENSOR_LIST = cfg['censor']['regex']
+CENSOR_CHAN = cfg['censor']['notify_chan']

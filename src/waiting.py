@@ -1,4 +1,4 @@
-import datetime
+import datetime, discord
 from dataclasses import dataclass
 from utils import getTimeDelta
 
@@ -33,10 +33,11 @@ class AnsweringMachine:
     def update_entry(self, user_id, user_entry):
         self.waiting_list[user_id] = user_entry
 
-    def clear_entries(self):
+    async def clear_entries(self, message, _):
         self.waiting_list.clear()
+        await message.channel.send("Waiting queue has been cleared")
 
-    def gen_waiting_list(self):
+    async def gen_waiting_list(self, message, _):
         curr_time = datetime.datetime.utcnow()
         first = True
         # Assume there are no messages in the queue
@@ -56,6 +57,4 @@ class AnsweringMachine:
 
                 out += "{} ({}) said `{}` | {}h{}m ago\n{}\n".format(item.name, key, item.last_message, hours, minutes, item.message_url)
 
-        # We probably won't get enough messages for this to go over the 2000 char limit, but it is a possibility, so watch out.
-        return out
-
+        await message.channel.send(out)

@@ -6,9 +6,10 @@ import discord, asyncio, os, subprocess, sys
 from dataclasses import dataclass
 import utils
 import commands, config, db
+from censor import check_censor, censor_message
+from config import LogTypes
 from timekeep import Timekeeper
 from waiting import AnsweringMachineEntry
-from config import LogTypes
 
 debugging = False
 
@@ -18,18 +19,21 @@ db.initialize()
 tk = Timekeeper()
 
 FUNC_DICT = {
-    "$ban":     [commands.logUser,      LogTypes.BAN],
-    "$block":   [commands.blockUser,    True],
-    "$edit":    [commands.removeError,  True],
-    "$help":    [commands.send_help_mes,None],
-    "$kick":    [commands.logUser,      LogTypes.KICK],
-    "$note":    [commands.logUser,      LogTypes.NOTE],
-    "$remove":  [commands.removeError,  False],
-    "$reply":   [commands.reply,        None],
-    "$search":  [commands.userSearch,   None],
-    "$unban":   [commands.logUser,      LogTypes.UNBAN],
-    "$warn":    [commands.logUser,      LogTypes.WARN],
-    "$unblock": [commands.blockUser,    False],
+    "$ban":     [commands.logUser,              LogTypes.BAN],
+    "$block":   [commands.blockUser,            True],
+    "$clear":   [commands.am.clear_entries,     None],
+    "$edit":    [commands.removeError,          True],
+    "$help":    [commands.send_help_mes,        None],
+    "$kick":    [commands.logUser,              LogTypes.KICK],
+    "$note":    [commands.logUser,              LogTypes.NOTE],
+    "$remove":  [commands.removeError,          False],
+    "$reply":   [commands.reply,                None],
+    "$search":  [commands.userSearch,           None],
+    "$unban":   [commands.logUser,              LogTypes.UNBAN],
+    "$uptime":  [tk.uptime,                     None],
+    "$waiting": [commands.am.gen_waiting_list,  None],
+    "$warn":    [commands.logUser,              LogTypes.WARN],
+    "$unblock": [commands.blockUser,            False],
 }
 
 """
@@ -195,7 +199,7 @@ async def on_message_edit(before, after):
             await chan.send(mes)
             mes = ""
 
-        mes += "to `{}`".format(after.content)
+        mes += " to `{}`".format(after.content)
         await chan.send(mes)
     except discord.errors.HTTPException as e:
         print("Unknown error with editing message. This message was unable to post for this reason: {}\n".format(e))
@@ -286,15 +290,16 @@ async def on_message(message):
 
                 mes_entry = AnsweringMachineEntry(username, message.created_at, content, mes_link)
                 commands.am.update_entry(message.author.id, mes_entry)
+            return
 
-        # Temporary - notify if UB3R-BOT has removed something on its word censor
-        elif (message.author.id == 85614143951892480 and message.channel.id == 233039273207529472) and ("Word Censor Triggered" in message.content) and not config.DEBUG_BOT:
-            mes = "Uh oh, looks like the censor might've been tripped.\n{}".format(utils.get_mes_link(message))
-            chan = client.get_channel(config.VALID_INPUT_CHANS[0])
-            await chan.send(mes)
+        # Run message against censor
+        bad_message = check_censor(message)
+        if bad_message:
+            await censor_message(message)
+            return
 
         # If a user pings bouncer, log into mod channel
-        elif client.user in message.mentions:
+        if client.user in message.mentions:
             content = utils.combineMessage(message)
             mes = "**{}#{}** (ID: {}) pinged me in <#{}>: {}".format(message.author.name, message.author.discriminator, message.author.id, message.channel.id, content)
             mes += "\n{}".format(utils.get_mes_link(message))
@@ -302,42 +307,22 @@ async def on_message(message):
             await chan.send(mes)
 
         # Functions in this category are those where we care that the user has the correct roles, but don't care about which channel they're invoked in
-        elif utils.checkRoles(message.author, config.VALID_ROLES):
-            # Functions in this category must have both the correct roles, and also be invoked in specified channels
-            if message.channel.id in config.VALID_INPUT_CHANS:
-                cmd = utils.get_command(message.content)
-                if cmd in FUNC_DICT:
-                    func = FUNC_DICT[cmd][0]
-                    arg = FUNC_DICT[cmd][1]
-                    await func(message, arg)
-                elif cmd == "$update":
-                    # Update will call `git pull`, then kill the program so it automatically restarts
-                    if message.author.id == config.OWNER:
-                        await message.channel.send("Updating and restarting...")
-                        subprocess.call(["git", "pull"])
-                        sys.exit()
-                    else:
-                        await message.channel.send("Who do you think you are.")
-                        return
-                elif cmd == "$graph":
-                    # Generates two plots to visualize moderation activity trends
-                    import visualize # Import here to avoid debugger crashing from matplotlib issue
-                    visualize.genUserPlot()
-                    visualize.genMonthlyPlot()
-                    with open("../private/user_plot.png", 'rb') as f:
-                        await message.channel.send(file=discord.File(f))
+        elif utils.checkRoles(message.author, config.VALID_ROLES) and message.channel.id in config.VALID_INPUT_CHANS:
+            cmd = utils.get_command(message.content)
+            if cmd in FUNC_DICT:
+                func = FUNC_DICT[cmd][0]
+                arg = FUNC_DICT[cmd][1]
+                await func(message, arg)
+            elif cmd == "$graph":
+                # Generates two plots to visualize moderation activity trends
+                import visualize # Import here to avoid debugger crashing from matplotlib issue
+                visualize.genUserPlot()
+                visualize.genMonthlyPlot()
+                with open("../private/user_plot.png", 'rb') as f:
+                    await message.channel.send(file=discord.File(f))
 
-                    with open("../private/month_plot.png", 'rb') as f:
-                        await message.channel.send(file=discord.File(f))
-                elif cmd == "$uptime":
-                    out = tk.uptime()
-                    await message.channel.send(out)
-                elif message.content.startswith("$waiting"):
-                    output = commands.am.gen_waiting_list()
-                    await message.channel.send(output)
-                elif message.content.startswith("$clear"):
-                    commands.am.clear_entries()
-                    await message.channel.send("Waiting queue has been cleared")
+                with open("../private/month_plot.png", 'rb') as f:
+                    await message.channel.send(file=discord.File(f))
 
     except discord.errors.HTTPException as e:
         print("HTTPException: {}", e)

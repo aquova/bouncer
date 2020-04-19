@@ -8,7 +8,7 @@
             "name": "Bouncer",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/src/bouncer.py",
+            "program": "${workspaceFolder}/src/main.py",
             "cwd": "${workspaceFolder}/src"
         },
     ]

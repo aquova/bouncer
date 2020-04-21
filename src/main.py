@@ -30,10 +30,10 @@ FUNC_DICT = {
     "$reply":   [commands.reply,                None],
     "$search":  [commands.userSearch,           None],
     "$unban":   [commands.logUser,              LogTypes.UNBAN],
+    "$unblock": [commands.blockUser,            False],
     "$uptime":  [tk.uptime,                     None],
     "$waiting": [commands.am.gen_waiting_list,  None],
     "$warn":    [commands.logUser,              LogTypes.WARN],
-    "$unblock": [commands.blockUser,            False],
 }
 
 """

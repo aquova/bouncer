@@ -122,28 +122,8 @@ async def logUser(m, state):
     elif state == LogTypes.WARN:
         visualize.updateCache(m.author.name, (0, 1), utils.formatTime(currentTime))
     elif state == LogTypes.UNBAN:
-        # Verify that the user really did mean to unban
-        def unban_check(check_mes):
-            if check_mes.author == m.author and check_mes.channel == m.channel:
-                # The API is stupid, returning a boolean will keep the check open, you have to return something non-false
-                if check_mes.content.upper() == 'YES' or check_mes.content.upper() == 'Y':
-                    return 'Y'
-                else:
-                    return 'N'
-
-        # In the event of an unban, we need to first
-        # A. Ask if they are sure they meant to do this
-        await m.channel.send("In order to log an unban, all old logs will be removed. Are you sure? Y/[N]")
-        check = await client.wait_for('message', check=unban_check, timeout=10.0)
-        # I have no idea why this returns a message and not just 'Y'
-        if check.content.upper() == 'Y':
-            # B. If so, clear out all previous logs
-            await m.channel.send("Very well, removing all old logs to unban")
-            db.clear_user_logs(userid)
-        else:
-            # Abort if they responded negatively
-            await m.channel.send("Unban aborted.")
-            return
+        await m.channel.send("Removing all old logs for unbanning")
+        db.clear_user_logs(userid)
 
     # Generate message for log channel
     globalcount = db.get_dbid()

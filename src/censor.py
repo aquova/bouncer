@@ -1,7 +1,7 @@
 import discord
 from config import CENSOR_LIST, CENSOR_CHAN, SYS_LOG, VALID_INPUT_CHANS
 from utils import get_mes_link
-from re import search
+from re import search, IGNORECASE
 
 def check_censor(message):
     # If you're posting in an admin channel, you can swear all you like
@@ -9,7 +9,7 @@ def check_censor(message):
         return False
 
     for item in CENSOR_LIST:
-        if bool(search(item, message.content)):
+        if bool(search(item, message.content, IGNORECASE)):
             return True
 
     return False

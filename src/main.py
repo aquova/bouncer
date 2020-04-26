@@ -166,7 +166,8 @@ async def on_reaction_add(reaction, user):
 
     # Only give roles if giver is an admin, and correct emoji was used
     if utils.checkRoles(user, config.VALID_ROLES):
-        if reaction.emoji.name == "SDVpufferspring":
+        emoji_name = reaction.emoji if type(reaction.emoji) == str else reaction.emoji.name
+        if emoji_name == "SDVpufferspring":
             user_roles = author.roles
             for role in ROLE_IDS:
                 new_role = discord.utils.get(author.guild.roles, id=role)

@@ -15,6 +15,7 @@ local/*
 share/*
 .Python
 pip-selfcheck.json
+pyvenv.cfg
 
 # Other junk
 .DS_Store

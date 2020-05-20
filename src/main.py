@@ -152,31 +152,6 @@ async def on_raw_reaction_add(payload):
             print("Error: {}".format(e))
 
 """
-On Reaction Add
-
-Temporary function to give event roles to users
-Must be a staff member using a specific role
-"""
-@client.event
-async def on_reaction_add(reaction, user):
-    # NOTE: These should be in config.json, but I can't be bothered, and this
-    # is currently planned to be a temporary function anyway
-    ROLE_IDS = [281902740785856513, 703675309656113252]
-    author = reaction.message.author
-
-    # Only give roles if giver is an admin, and correct emoji was used
-    if utils.checkRoles(user, config.VALID_ROLES):
-        emoji_name = reaction.emoji if type(reaction.emoji) == str else reaction.emoji.name
-        if emoji_name == "SDVpufferspring":
-            user_roles = author.roles
-            for role in ROLE_IDS:
-                new_role = discord.utils.get(author.guild.roles, id=role)
-                if new_role != None and new_role not in user_roles:
-                    user_roles.append(new_role)
-
-            await author.edit(roles=user_roles)
-
-"""
 On Message Delete
 
 Occurs when a user's message is deleted

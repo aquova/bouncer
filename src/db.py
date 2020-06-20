@@ -94,13 +94,13 @@ def get_warn_count(userid):
     query = ("SELECT COUNT(*) FROM badeggs WHERE id=? AND num > 0", [userid])
     searchResults = _db_read(query)
 
-    return searchResults[0] + 1
+    return searchResults[0][0] + 1
 
 def get_note_count(userid):
     query = ("SELECT COUNT(*) FROM badeggs WHERE id=? AND num = -1", [userid])
     searchResults = _db_read(query)
 
-    return searchResults[0] + 1
+    return searchResults[0][0] + 1
 
 def add_log(log_entry):
     query = ("INSERT OR REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", log_entry.as_list())
@@ -119,7 +119,7 @@ def get_dbid():
     query = ("SELECT COUNT(*) FROM badeggs",)
     globalcount = _db_read(query)
 
-    return globalcount[0]
+    return globalcount[0][0]
 
 def get_watch_list():
     query = ("SELECT * FROM watching",)

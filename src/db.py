@@ -41,6 +41,11 @@ class UserLogEntry:
             self.message_url
         ]
 
+"""
+Initialize database
+
+Generates database with needed tables if it doesn't exist
+"""
 def initialize():
     sqlconn = sqlite3.connect(DATABASE_PATH)
     sqlconn.execute("CREATE TABLE IF NOT EXISTS badeggs (dbid INT PRIMARY KEY, id INT, username TEXT, num INT, date DATE, message TEXT, staff TEXT, post INT);")
@@ -51,10 +56,23 @@ def initialize():
     sqlconn.commit()
     sqlconn.close()
 
-def search(user_id):
+def _db_read(query):
     sqlconn = sqlite3.connect(DATABASE_PATH)
-    search_results = sqlconn.execute("SELECT dbid, id, username, num, date, message, staff, post FROM badeggs WHERE id=?", [user_id]).fetchall()
+    # The * operator in Python expands a tuple into function params
+    results = sqlconn.execute(*query).fetchall()
     sqlconn.close()
+
+    return results
+
+def _db_write(query):
+    sqlconn = sqlite3.connect(DATABASE_PATH)
+    sqlconn.execute(*query)
+    sqlconn.commit()
+    sqlconn.close()
+
+def search(user_id):
+    query = ("SELECT dbid, id, username, num, date, message, staff, post FROM badeggs WHERE id=?", [user_id])
+    search_results = _db_read(query)
 
     entries = []
     for result in search_results:
@@ -64,9 +82,8 @@ def search(user_id):
     return entries
 
 def fetch_id_by_username(username):
-    sqlconn = sqlite3.connect(DATABASE_PATH)
-    searchResults = sqlconn.execute("SELECT id FROM badeggs WHERE username=?", [username]).fetchall()
-    sqlconn.close()
+    query = ("SELECT id FROM badeggs WHERE username=?", [username])
+    searchResults = _db_read(query)
 
     if searchResults != []:
         return searchResults[0][0]
@@ -74,30 +91,24 @@ def fetch_id_by_username(username):
         return None
 
 def get_warn_count(userid):
-    sqlconn = sqlite3.connect(DATABASE_PATH)
-    searchResults = sqlconn.execute("SELECT COUNT(*) FROM badeggs WHERE id=? AND num > 0", [userid]).fetchone()
-    sqlconn.close()
+    query = ("SELECT COUNT(*) FROM badeggs WHERE id=? AND num > 0", [userid])
+    searchResults = _db_read(query)
 
     return searchResults[0] + 1
 
 def get_note_count(userid):
-    sqlconn = sqlite3.connect(DATABASE_PATH)
-    searchResults = sqlconn.execute("SELECT COUNT(*) FROM badeggs WHERE id=? AND num = -1", [userid]).fetchone()
-    sqlconn.close()
+    query = ("SELECT COUNT(*) FROM badeggs WHERE id=? AND num = -1", [userid])
+    searchResults = _db_read(query)
 
     return searchResults[0] + 1
 
 def add_log(log_entry):
-    sqlconn = sqlite3.connect(DATABASE_PATH)
-    sqlconn.execute("INSERT OR REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", log_entry.as_list())
-    sqlconn.commit()
-    sqlconn.close()
+    query = ("INSERT OR REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", log_entry.as_list())
+    _db_write(query)
 
 def remove_log(dbid):
-    sqlconn = sqlite3.connect(DATABASE_PATH)
-    sqlconn.execute("REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, NULL, NULL, NULL, NULL, NULL, NULL, NULL)", [dbid])
-    sqlconn.commit()
-    sqlconn.close()
+    query = ("REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, NULL, NULL, NULL, NULL, NULL, NULL, NULL)", [dbid])
+    _db_write(query)
 
 def clear_user_logs(userid):
     logs = search(userid)
@@ -105,27 +116,21 @@ def clear_user_logs(userid):
         remove_log(log.dbid)
 
 def get_dbid():
-    sqlconn = sqlite3.connect(DATABASE_PATH)
-    globalcount = sqlconn.execute("SELECT COUNT(*) FROM badeggs").fetchone()
-    sqlconn.close()
+    query = ("SELECT COUNT(*) FROM badeggs",)
+    globalcount = _db_read(query)
 
     return globalcount[0]
 
 def get_watch_list():
-    sqlconn = sqlite3.connect(DATABASE_PATH)
-    results = sqlconn.execute("SELECT * FROM watching").fetchall()
-    sqlconn.close()
+    query = ("SELECT * FROM watching",)
+    results = _db_read(query)
 
     return results
 
 def add_watch(userid):
-    sqlconn = sqlite3.connect(DATABASE_PATH)
-    sqlconn.execute("INSERT OR REPLACE INTO watching (id) VALUES (?)", [userid])
-    sqlconn.commit()
-    sqlconn.close()
+    query = ("INSERT OR REPLACE INTO watching (id) VALUES (?)", [userid])
+    _db_write(query)
 
 def del_watch(userid):
-    sqlconn = sqlite3.connect(DATABASE_PATH)
-    sqlconn.execute("DELETE FROM watching WHERE id=?", [userid])
-    sqlconn.commit()
-    sqlconn.close()
+    query = ("DELETE FROM watching WHERE id=?", [userid])
+    _db_write(query)

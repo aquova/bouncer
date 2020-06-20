@@ -57,7 +57,7 @@ class UserLookup:
                 return userFound.id
 
             # If not found in server, check if they're in the recently banned dict
-            fullname = "{}#{}".format(user[0], discriminator)
+            fullname = f"{user[0]}#{discriminator}"
             if fullname in list(self.recent_bans.values()):
                 revBans = {v: k for k, v in self.recent_bans.items()}
                 return revBans[user]
@@ -90,7 +90,7 @@ class UserLookup:
         member = self.fetch_user(server, userid)
         if member != None:
             # If we found a member in the server, simply format the username
-            username = "{}#{}".format(member.name, member.discriminator)
+            username = f"{member.name}#{member.discriminator}"
 
         if username == None:
             # If user has recently left, use that username

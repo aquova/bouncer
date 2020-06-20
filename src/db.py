@@ -25,15 +25,9 @@ class UserLogEntry:
         elif self.log_type == LogTypes.UNBAN.value:
             logWord = "Unbanned"
         else: # LogTypes.WARN
-            logWord = "Warning #{}".format(self.log_type)
+            logWord = f"Warning #{self.log_type}"
 
-        return "[{date}] **{name}** - {word} by {staff} - {message}\n".format(
-            date = formatTime(self.timestamp),
-            name = self.name,
-            word = logWord,
-            staff = self.staff,
-            message = self.log_message
-        )
+        return f"[{formatTime(self.timestamp)}] **{self.name}** - {logWord} by {self.staff} - {self.log_message}\n"
 
     def as_list(self):
         return [

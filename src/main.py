@@ -66,10 +66,10 @@ async def on_member_update(before, after):
     if before.nick != after.nick:
         # If they don't have an ending nickname, they reset to their actual username
         if after.nick == None:
-            mes = "**{}#{}** has reset their username".format(after.name, after.discriminator)
+            mes = f"**{after.name}#{after.discriminator}** has reset their username"
         else:
             new = after.nick
-            mes = "**{}#{}** is now known as `{}`".format(after.name, after.discriminator, after.nick)
+            mes = f"**{after.name}#{after.discriminator}** is now known as `{after.nick}`"
         chan = client.get_channel(config.SYS_LOG)
         await chan.send(mes)
     # If role quantity has changed
@@ -77,10 +77,10 @@ async def on_member_update(before, after):
         # Determine role difference, post about it
         if len(before.roles) > len(after.roles):
             missing = [r for r in before.roles if r not in after.roles]
-            mes = "**{}#{}** had the role `{}` removed.".format(after.name, after.discriminator, missing[0])
+            mes = f"**{after.name}#{after.discriminator}** had the role `{missing[0]}` removed."
         else:
             newRoles = [r for r in after.roles if r not in before.roles]
-            mes = "**{}#{}** had the role `{}` added.".format(after.name, after.discriminator, newRoles[0])
+            mes = f"**{after.name}#{after.discriminator}** had the role `{newRoles[0]}` added."
         chan = client.get_channel(config.SYS_LOG)
         await chan.send(mes)
 
@@ -99,9 +99,9 @@ async def on_member_ban(server, member):
     commands.am.remove_entry(member.id)
 
     # Keep a record of their banning, in case the log is made after they're no longer here
-    username = "{}#{}".format(member.name, member.discriminator)
+    username = f"{member.name}#{member.discriminator}"
     commands.ul.add_ban(member.id, username)
-    mes = "**{} ({})** has been banned.".format(username, member.id)
+    mes = f"**{username} ({member.id})** has been banned."
     chan = client.get_channel(config.SYS_LOG)
     await chan.send(mes)
 
@@ -120,9 +120,9 @@ async def on_member_remove(member):
     commands.am.remove_entry(member.id)
 
     # Remember that the user has left, in case we want to log after they're gone
-    username = "{}#{}".format(member.name, member.discriminator)
+    username = f"{member.name}#{member.discriminator}"
     commands.ul.add_ban(member.id, username)
-    mes = "**{} ({})** has left".format(username, member.id)
+    mes = f"**{username} ({member.id})** has left"
     chan = client.get_channel(config.SYS_LOG)
     await chan.send(mes)
 
@@ -149,7 +149,7 @@ async def on_raw_reaction_add(payload):
             await target_user.add_roles(new_role)
         except IndexError as e:
             print("Something has seriously gone wrong.")
-            print("Error: {}".format(e))
+            print(f"Error: {e}")
 
 """
 On Message Delete
@@ -162,7 +162,7 @@ async def on_message_delete(message):
     if config.DEBUG_BOT or message.author.bot:
         return
 
-    mes = "**{}#{}** deleted in <#{}>: `{}`".format(message.author.name, message.author.discriminator, message.channel.id, message.content)
+    mes = f"**{message.author.name}#{message.author.discriminator}** deleted in <#{message.channel.id}>: `{message.content}`"
     # Adds URLs for any attachments that were included in deleted message
     # These will likely become invalid, but it's nice to note them anyway
     if message.attachments != []:
@@ -192,17 +192,17 @@ async def on_message_edit(before, after):
         return
     try:
         chan = client.get_channel(config.SYS_LOG)
-        mes = "**{}#{}** modified in <#{}>: `{}`".format(before.author.name, before.author.discriminator, before.channel.id, before.content)
+        mes = f"**{before.author.name}#{before.author.discriminator}** modified in <#{before.channel.id}>: `{before.content}`"
 
         # Break into seperate parts if we're going to cross character limit
         if len(mes) + len(after.content) > (config.CHAR_LIMIT + 5):
             await chan.send(mes)
             mes = ""
 
-        mes += " to `{}`".format(after.content)
+        mes += f" to `{after.content}`"
         await chan.send(mes)
     except discord.errors.HTTPException as e:
-        print("Unknown error with editing message. This message was unable to post for this reason: {}\n".format(e))
+        print(f"Unknown error with editing message. This message was unable to post for this reason: {e}\n")
 
 """
 On Member Join
@@ -215,7 +215,7 @@ async def on_member_join(member):
     if config.DEBUG_BOT:
         return
 
-    mes = "**{}#{} ({})** has joined".format(member.name, member.discriminator, member.id)
+    mes = f"**{member.name}#{member.discriminator} ({member.id})** has joined"
     chan = client.get_channel(config.SYS_LOG)
     await chan.send(mes)
 
@@ -231,11 +231,11 @@ async def on_voice_state_update(member, before, after):
         return
 
     if after.channel == None:
-        mes = "**{}#{}** has left voice channel {}".format(member.name, member.discriminator, before.channel.name)
+        mes = f"**{member.name}#{member.discriminator}** has left voice channel {before.channel.name}"
         chan = client.get_channel(config.SYS_LOG)
         await chan.send(mes)
     elif before.channel == None:
-        mes = "**{}#{}** has joined voice channel {}".format(member.name, member.discriminator, after.channel.name)
+        mes = f"**{member.name}#{member.discriminator}** has joined voice channel {after.channel.name}"
         chan = client.get_channel(config.SYS_LOG)
         await chan.send(mes)
 
@@ -258,7 +258,8 @@ async def on_message(message):
         if message.content.startswith("$debug") and message.author.id == config.OWNER:
             if not config.DEBUG_BOT:
                 debugging = not debugging
-                await message.channel.send("Debugging {}".format("enabled" if debugging else "disabled"))
+                txt = "enabled" if debugging else "disabled"
+                await message.channel.send(f"Debugging {txt}")
                 return
 
         # If debugging, the real bot should ignore the owner
@@ -277,7 +278,7 @@ async def on_message(message):
             commands.am.set_recent_reply(message.author)
 
             content = utils.combineMessage(message)
-            mes = "**{}#{}** (ID: {}): {}".format(message.author.name, message.author.discriminator, message.author.id, content)
+            mes = f"**{message.author.name}#{message.author.discriminator}** (ID: {message.author.id}): {content}"
 
             # If not blocked, send message along to specified mod channel
             if not commands.bu.is_in_blocklist(message.author.id):
@@ -286,7 +287,7 @@ async def on_message(message):
 
                 # Lets also add/update them in answering machine
                 mes_link = utils.get_mes_link(logMes)
-                username = "{}#{}".format(message.author.name, message.author.discriminator)
+                username = f"{message.author.name}#{message.author.discriminator}"
 
                 mes_entry = AnsweringMachineEntry(username, message.created_at, content, mes_link)
                 commands.am.update_entry(message.author.id, mes_entry)
@@ -301,8 +302,8 @@ async def on_message(message):
         # If a user pings bouncer, log into mod channel
         if client.user in message.mentions:
             content = utils.combineMessage(message)
-            mes = "**{}#{}** (ID: {}) pinged me in <#{}>: {}".format(message.author.name, message.author.discriminator, message.author.id, message.channel.id, content)
-            mes += "\n{}".format(utils.get_mes_link(message))
+            mes = f"**{message.author.name}#{message.author.discriminator}** (ID: {message.author.id}) pinged me in <#{message.channel.id}>: {content}"
+            mes += f"\n{utils.get_mes_link(message)}"
             chan = client.get_channel(config.VALID_INPUT_CHANS[0])
             await chan.send(mes)
 

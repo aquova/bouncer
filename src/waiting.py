@@ -55,6 +55,6 @@ class AnsweringMachine:
                     out = "Users who are still awaiting replies:\n"
                     first = False
 
-                out += "{} ({}) said `{}` | {}h{}m ago\n{}\n".format(item.name, key, item.last_message, hours, minutes, item.message_url)
+                out += f"{item.name} ({key}) said `{item.last_message}` | {hours}h{minutes}m ago\n{item.message_url}\n"
 
         await message.channel.send(out)

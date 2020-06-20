@@ -8,6 +8,6 @@ class Timekeeper:
     async def uptime(self, message, _):
         curr_time = datetime.datetime.now()
         days, hours, minutes = getTimeDelta(curr_time, self.start_time)
-        mes = "I have been running for {} days, {} hours, and {} minutes".format(days, hours, minutes)
+        mes = f"I have been running for {days} days, {hours} hours, and {minutes} minutes"
 
         await message.channel.send(mes)

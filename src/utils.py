@@ -36,7 +36,7 @@ def checkRoles(user, validRoles):
                     return True
         return False
     except AttributeError as e:
-        print("The user {}#{} had this issue {}".format(user.name, user.discriminator, e))
+        print(f"The user {user.name}#{user.discriminator} had this issue {e}")
 
 # Since usernames can have spaces, first check if it's a username, otherwise just cut off first word as normal
 # 'user' will either be the correct username, or an ID.
@@ -63,4 +63,4 @@ def combineMessage(mes):
     return out
 
 def get_mes_link(mes):
-    return "https://discordapp.com/channels/{}/{}/{}".format(mes.guild.id, mes.channel.id, mes.id)
+    return f"https://discordapp.com/channels/{mes.guild.id}/{mes.channel.id}/{mes.id}"

@@ -23,11 +23,11 @@ async def censor_message(message):
 
     await message.delete()
 
-    censor_mes = "**{}#{}** had a message removed by the censor in <#{}>: `{}`".format(message.author.name, message.author.discriminator, message.channel.id, message.content)
+    censor_mes = f"**{message.author.name}#{message.author.discriminator}** had a message removed by the censor in <#{message.channel.id}>: `{message.content}`"
     syslog_chan = discord.utils.get(message.guild.channels, id=SYS_LOG)
     log_message = await syslog_chan.send(censor_mes)
 
-    mod_mes = "Uh oh, looks like the censor might've been tripped.\n{}".format(get_mes_link(log_message))
+    mod_mes = f"Uh oh, looks like the censor might've been tripped.\n{get_mes_link(log_message)}"
     chan = discord.utils.get(message.guild.channels, id=CENSOR_CHAN)
     await chan.send(mod_mes)
 
@@ -36,4 +36,4 @@ async def censor_message(message):
     if dm_chan == None:
         dm_chan = await message.author.create_dm()
 
-    await dm_chan.send("Hi there! This is an automated courtesy message informing you that your post was deleted for containing a censored word: `{}`. This is not a warning. The staff team will examine the context and situation of the censor trip and you will be contacted later only if any disciplinary action is taken.".format(message.content))
+    await dm_chan.send(f"Hi there! This is an automated courtesy message informing you that your post was deleted for containing a censored word: `{message.content}`. This is not a warning. The staff team will examine the context and situation of the censor trip and you will be contacted later only if any disciplinary action is taken.")

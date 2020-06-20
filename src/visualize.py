@@ -24,7 +24,7 @@ def getMax(a):
 # (ban # change, warn # change)
 def updateCache(staff, val, date):
     sqlconn = sqlite3.connect(DATABASE_PATH)
-    formatDate = "{}-{}".format(date.split('-')[0], date.split('-')[1])
+    formatDate = f"{data.split('-')[0]}-{date.split('-')[1]}"
 
     checkStaff = sqlconn.execute("SELECT * FROM staffLogs WHERE staff=?", [staff]).fetchall()
     checkDate = sqlconn.execute("SELECT * FROM monthLogs WHERE month=?", [formatDate]).fetchall()
@@ -92,7 +92,7 @@ def genMonthlyPlot():
 
     bans = [monthData[x][0] for x in monthData]
     warns = [monthData[x][1] for x in monthData]
-    labels = ["{} {}".format(months[int(x.split('-')[1])], x.split('-')[0]) for x in monthData.keys()]
+    labels = [f"{months[int[x.split('-')[1]]]} {x.split('-')[0]}" for x in monthData.keys()]
 
     width = 0.5
 

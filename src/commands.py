@@ -26,8 +26,8 @@ async def send_help_mes(m, _):
         "Reply to a user in DMs: `$reply USERID` - To reply to the most recent DM: `$reply ^`\n"
         "Plot warn/ban stats: `$graph`\n"
         "View bot uptime: `$uptime`\n"
-        "DMing users when they are banned is `{}`\n"
-        "DMing users when they are warned is `{}`".format(dmBans, dmWarns)
+        f"DMing users when they are banned is `{dmBans}`\n"
+        f"DMing users when they are warned is `{dmWarns}`"
     )
 
     await m.channel.send(helpMes)
@@ -52,16 +52,16 @@ async def userSearch(m, _):
 
     if search_results == []:
         if username != None:
-            await m.channel.send("User {} was not found in the database\n".format(username))
+            await m.channel.send(f"User {username} was not found in the database\n")
         else:
             await m.channel.send("That user was not found in the database or the server\n")
         return
 
     # Format output message
-    out = "User {} was found with the following infractions\n".format(username)
+    out = f"User {username} was found with the following infractions\n"
     for index, item in enumerate(search_results):
         # Enumerate each item
-        n = "{}. ".format(index + 1)
+        n = f"{index + 1}. "
         n += str(item)
 
         # If message becomes too long, send what we have and start a new post
@@ -133,7 +133,7 @@ async def logUser(m, state):
 
     # Send ban recommendation, if needed
     if (state == LogTypes.WARN and count >= config.WARN_THRESHOLD):
-        await m.channel.send("This user has received {} warnings or more. It is recommended that they be banned.".format(config.WARN_THRESHOLD))
+        await m.channel.send(f"This user has received {config.WARN_THRESHOLD} warnings or more. It is recommended that they be banned.")
 
     logMesID = 0
     # If we aren't noting, need to also write to log channel
@@ -157,17 +157,17 @@ async def logUser(m, state):
 
                 # Only send DM when specified in configs
                 if state == LogTypes.BAN and config.DM_BAN:
-                    await DMchan.send("Hi there! You've been banned from the Stardew Valley Discord for violating the rules: `{}`. If you have any questions, you can send a message to the moderators via the sidebar at <https://www.reddit.com/r/StardewValley>, and they'll forward it to us.".format(mes))
+                    await DMchan.send(f"Hi there! You've been banned from the Stardew Valley Discord for violating the rules: `{mes}`. If you have any questions, you can send a message to the moderators via the sidebar at <https://www.reddit.com/r/StardewValley>, and they'll forward it to us.")
                 elif state == LogTypes.WARN and config.DM_WARN:
-                    await DMchan.send("Hi there! You received warning #{} in the Stardew Valley Discord for violating the rules: `{}`. Please review <#707359005655171172> and <#445729663885639680> for more info. If you have any questions, you can reply directly to this message to contact the staff.".format(count, mes))
+                    await DMchan.send(f"Hi there! You received warning #{count} in the Stardew Valley Discord for violating the rules: `{mes}`. Please review <#707359005655171172> and <#445729663885639680> for more info. If you have any questions, you can reply directly to this message to contact the staff.")
                 elif state == LogTypes.KICK and config.DM_BAN:
-                    await DMchan.send("Hi there! You've been kicked from the Stardew Valley Discord for violating the following reason: `{}`. If you have any questions, you can send a message to the moderators via the sidebar at <https://www.reddit.com/r/StardewValley>, and they'll forward it to us.".format(mes))
+                    await DMchan.send(f"Hi there! You've been kicked from the Stardew Valley Discord for violating the following reason: `{mes}`. If you have any questions, you can send a message to the moderators via the sidebar at <https://www.reddit.com/r/StardewValley>, and they'll forward it to us.")
 
         # Exception handling
         except discord.errors.HTTPException as e:
-            await m.channel.send("ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {}".format(e))
+            await m.channel.send(f"ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {e}")
         except Exception as e:
-            await m.channel.send( "ERROR: An unexpected error has occurred. Tell aquova this: {}".format(e))
+            await m.channel.send(f"ERROR: An unexpected error has occurred. Tell aquova this: {e}")
 
     # Update database
     new_log.message_url = logMesID
@@ -217,7 +217,7 @@ async def removeError(m, edit):
         await m.channel.send("I couldn't find that user in the database")
     # If invalid index given, yell
     elif (index > len(search_results) - 1) or index < -1:
-        await m.channel.send("I can't modify item number {}, there aren't that many for this user".format(index + 1))
+        await m.channel.send(f"I can't modify item number {index + 1}, there aren't that many for this user")
     else:
         item = search_results[index]
         import visualize
@@ -228,7 +228,7 @@ async def removeError(m, edit):
                 item.log_message = mes
                 item.staff = m.author.name
                 db.add_log(item)
-                out = "The log now reads as follows:\n{}\n".format(str(item))
+                out = f"The log now reads as follows:\n{str(item)}\n"
                 await m.channel.send(out)
 
                 return
@@ -286,13 +286,13 @@ async def blockUser(m, block):
             await m.channel.send("Um... That user was already blocked...")
         else:
             bu.block_user(userid)
-            await m.channel.send("I have now blocked {}. Their messages will no longer display in chat, but they will be logged for later review.".format(username))
+            await m.channel.send(f"I have now blocked {username}. Their messages will no longer display in chat, but they will be logged for later review.")
     else:
         if not bu.is_in_blocklist(userid):
             await m.channel.send("That user hasn't been blocked...")
         else:
             bu.unblock_user(userid)
-            await m.channel.send("I have now unblocked {}. You will once again be able to hear their dumb bullshit in chat.".format(username))
+            await m.channel.send(f"I have now unblocked {username}. You will once again be able to hear their dumb bullshit in chat.")
 
 """
 Reply
@@ -332,15 +332,15 @@ async def reply(m, _):
             await m.channel.send("...That message was blank. Please send an actual message")
             return
 
-        uname = "{}#{}".format(u.name, u.discriminator)
+        uname = f"{u.name}#{u.discriminator}"
         DMchan = u.dm_channel
         # If first DMing, need to create DM channel
         if DMchan == None:
             DMchan = await u.create_dm()
         # Message sent to user
-        await DMchan.send("A message from the SDV staff: {}".format(mes))
+        await DMchan.send(f"A message from the SDV staff: {mes}")
         # Notification of sent message to the senders
-        await m.channel.send("Message sent to {}.".format(uname))
+        await m.channel.send(f"Message sent to {uname}.")
 
         # If they were in our answering machine, they have been replied to, and can be removed
         am.remove_entry(u.id)
@@ -350,6 +350,6 @@ async def reply(m, _):
         if e.status == 403:
             await m.channel.send("I cannot send messages to this user -- they may have closed DMs, left the server, or blocked me. Or something.")
         else:
-            await m.channel.send("ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {}".format(e))
+            await m.channel.send(f"ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {e}")
     except Exception as e:
-        await m.channel.send("ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {}".format(e))
+        await m.channel.send(f"ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {e}")

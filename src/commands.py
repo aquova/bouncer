@@ -162,7 +162,7 @@ async def logUser(m, state):
                 if state == LogTypes.BAN and config.DM_BAN:
                     await DMchan.send(f"Hi there! You've been banned from the Stardew Valley Discord for violating the rules: `{mes}`. If you have any questions, you can send a message to the moderators via the sidebar at <https://www.reddit.com/r/StardewValley>, and they'll forward it to us.")
                 elif state == LogTypes.WARN and config.DM_WARN:
-                    await DMchan.send(f"Hi there! You received warning #{count} in the Stardew Valley Discord for violating the rules: `{mes}`. Please review <#707359005655171172> and <#445729663885639680> for more info. If you have any questions, you can reply directly to this message to contact the staff.")
+                    await DMchan.send(f"Hi there! You received warning #{count} in the Stardew Valley Discord for violating the rules: `{mes}`. Please review <#707359005655171172> and <#718593494775496754> for more info. If you have any questions, you can reply directly to this message to contact the staff.")
                 elif state == LogTypes.KICK and config.DM_BAN:
                     await DMchan.send(f"Hi there! You've been kicked from the Stardew Valley Discord for violating the following reason: `{mes}`. If you have any questions, you can send a message to the moderators via the sidebar at <https://www.reddit.com/r/StardewValley>, and they'll forward it to us.")
 

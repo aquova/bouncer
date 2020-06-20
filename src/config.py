@@ -39,3 +39,5 @@ GATE_ROLE = cfg['gatekeeper']['role']
 
 CENSOR_LIST = cfg['censor']['regex']
 CENSOR_CHAN = cfg['censor']['notify_chan']
+
+WATCHER_CHANNEL = cfg['watcher']['report_channel']

@@ -47,6 +47,7 @@ def initialize():
     sqlconn.execute("CREATE TABLE IF NOT EXISTS blocks (id TEXT);")
     sqlconn.execute("CREATE TABLE IF NOT EXISTS staffLogs (staff TEXT PRIMARY KEY, bans INT, warns INT);")
     sqlconn.execute("CREATE TABLE IF NOT EXISTS monthLogs (month TEXT PRIMARY KEY, bans INT, warns INT);")
+    sqlconn.execute("CREATE TABLE IF NOT EXISTS watching (id INT PRIMARY KEY);")
     sqlconn.commit()
     sqlconn.close()
 
@@ -109,3 +110,22 @@ def get_dbid():
     sqlconn.close()
 
     return globalcount[0]
+
+def get_watch_list():
+    sqlconn = sqlite3.connect(DATABASE_PATH)
+    results = sqlconn.execute("SELECT * FROM watching").fetchall()
+    sqlconn.close()
+
+    return results
+
+def add_watch(userid):
+    sqlconn = sqlite3.connect(DATABASE_PATH)
+    sqlconn.execute("INSERT OR REPLACE INTO watching (id) VALUES (?)", [userid])
+    sqlconn.commit()
+    sqlconn.close()
+
+def del_watch(userid):
+    sqlconn = sqlite3.connect(DATABASE_PATH)
+    sqlconn.execute("DELETE FROM watching WHERE id=?", [userid])
+    sqlconn.commit()
+    sqlconn.close()

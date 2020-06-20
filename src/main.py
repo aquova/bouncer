@@ -10,6 +10,7 @@ from censor import check_censor, censor_message
 from config import LogTypes
 from timekeep import Timekeeper
 from waiting import AnsweringMachineEntry
+from watcher import Watcher
 
 debugging = False
 
@@ -17,23 +18,27 @@ debugging = False
 client = discord.Client()
 db.initialize()
 tk = Timekeeper()
+watch = Watcher()
 
 FUNC_DICT = {
-    "$ban":     [commands.logUser,              LogTypes.BAN],
-    "$block":   [commands.blockUser,            True],
-    "$clear":   [commands.am.clear_entries,     None],
-    "$edit":    [commands.removeError,          True],
-    "$help":    [commands.send_help_mes,        None],
-    "$kick":    [commands.logUser,              LogTypes.KICK],
-    "$note":    [commands.logUser,              LogTypes.NOTE],
-    "$remove":  [commands.removeError,          False],
-    "$reply":   [commands.reply,                None],
-    "$search":  [commands.userSearch,           None],
-    "$unban":   [commands.logUser,              LogTypes.UNBAN],
-    "$unblock": [commands.blockUser,            False],
-    "$uptime":  [tk.uptime,                     None],
-    "$waiting": [commands.am.gen_waiting_list,  None],
-    "$warn":    [commands.logUser,              LogTypes.WARN],
+    "$ban":         [commands.logUser,              LogTypes.BAN],
+    "$block":       [commands.blockUser,            True],
+    "$clear":       [commands.am.clear_entries,     None],
+    "$edit":        [commands.removeError,          True],
+    "$help":        [commands.send_help_mes,        None],
+    "$kick":        [commands.logUser,              LogTypes.KICK],
+    "$note":        [commands.logUser,              LogTypes.NOTE],
+    "$remove":      [commands.removeError,          False],
+    "$reply":       [commands.reply,                None],
+    "$search":      [commands.userSearch,           None],
+    "$unban":       [commands.logUser,              LogTypes.UNBAN],
+    "$unblock":     [commands.blockUser,            False],
+    "$uptime":      [tk.uptime,                     None],
+    "$waiting":     [commands.am.gen_waiting_list,  None],
+    "$warn":        [commands.logUser,              LogTypes.WARN],
+    "$watch":       [watch.watch_user,              None],
+    "$watchlist":   [watch.get_watchlist,           None],
+    "$unwatch":     [watch.unwatch_user,            None],
 }
 
 """
@@ -298,6 +303,14 @@ async def on_message(message):
         if bad_message:
             await censor_message(message)
             return
+
+        # Check if user is on watchlist, and should be tracked
+        watching = watch.should_note(message.author.id)
+        if watching:
+            chan = client.get_channel(config.WATCHER_CHANNEL)
+            content = utils.combineMessage(message)
+            mes = f"**{message.author.name}#{message.author.discriminator}** (ID: {message.author.id}) said in <#{message.channel.id}>: {content}"
+            await chan.send(mes)
 
         # If a user pings bouncer, log into mod channel
         if client.user in message.mentions:

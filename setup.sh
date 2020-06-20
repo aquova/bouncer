@@ -54,6 +54,9 @@ cat << EOF > src/private/config.json
     "censor": {
         "regex": ["LIST OF BLACKLISTED REGEX"],
         "notify_chan": <CHANNEL ID TO NOTIFY OF CENSOR BREACH"
+    },
+    "watcher": {
+        "report_channel": <CHANNEL ID>
     }
 }
 EOF

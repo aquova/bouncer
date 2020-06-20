@@ -24,7 +24,7 @@ def getMax(a):
 # (ban # change, warn # change)
 def updateCache(staff, val, date):
     sqlconn = sqlite3.connect(DATABASE_PATH)
-    formatDate = f"{data.split('-')[0]}-{date.split('-')[1]}"
+    formatDate = f"{date.split('-')[0]}-{date.split('-')[1]}"
 
     checkStaff = sqlconn.execute("SELECT * FROM staffLogs WHERE staff=?", [staff]).fetchall()
     checkDate = sqlconn.execute("SELECT * FROM monthLogs WHERE month=?", [formatDate]).fetchall()

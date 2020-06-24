@@ -92,7 +92,7 @@ def genMonthlyPlot():
 
     bans = [monthData[x][0] for x in monthData]
     warns = [monthData[x][1] for x in monthData]
-    labels = [f"{months[int[x.split('-')[1]]]} {x.split('-')[0]}" for x in monthData.keys()]
+    labels = [f"{months[int(x.split('-')[1])]} {x.split('-')[0]}" for x in monthData.keys()]
 
     width = 0.5
 

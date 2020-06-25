@@ -9,6 +9,11 @@ class Watcher:
     def should_note(self, id):
         return id in self.watchlist
 
+    def remove_user(self, id):
+        if id in self.watchlist:
+            db.del_watch(id)
+            self.watchlist.remove(id)
+
     async def watch_user(self, mes, _):
         userid = self.ul.parse_mention(mes)
         if userid == None:
@@ -30,8 +35,7 @@ class Watcher:
             await mes.channel.send("...That user is not being watched")
             return
 
-        db.del_watch(userid)
-        self.watchlist.remove(userid)
+        self.remove_user(userid)
 
         username = self.ul.fetch_username(mes.guild, userid)
         await mes.channel.send(f"{username} has been removed from the watch list.")

@@ -100,8 +100,9 @@ async def on_member_ban(server, member):
     if config.DEBUG_BOT:
         return
 
-    # We can remove banned user from our answering machine now
+    # We can remove banned user from our answering machine and watch list (if they exist)
     commands.am.remove_entry(member.id)
+    watch.remove_user(member.id)
 
     # Keep a record of their banning, in case the log is made after they're no longer here
     username = f"{member.name}#{member.discriminator}"

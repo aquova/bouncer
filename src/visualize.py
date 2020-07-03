@@ -84,6 +84,7 @@ def genUserPlot():
 # A lot of code could be reused if I wanted to combine these functions
 def genMonthlyPlot():
     plt.clf()
+    plt.figure(figsize=(10,6))
     sqlconn = sqlite3.connect(DATABASE_PATH)
     data = sqlconn.execute("SELECT * FROM monthLogs").fetchall()
     sortedData = sorted(data)

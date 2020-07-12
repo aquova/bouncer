@@ -42,6 +42,26 @@ FUNC_DICT = {
 }
 
 """
+Delete message
+
+A helper function that deletes and logs the given message
+"""
+async def delete_message_helper(message):
+    mes = f"**{message.author.name}#{message.author.discriminator}** deleted in <#{message.channel.id}>: `{message.content}`"
+    # Adds URLs for any attachments that were included in deleted message
+    # These will likely become invalid, but it's nice to note them anyway
+    if message.attachments != []:
+        for item in message.attachments:
+            # Break into seperate parts if we're going to cross character limit
+            if len(mes) + len(item.url) > config.CHAR_LIMIT:
+                await chan.send(mes)
+                mes = item.url
+            else:
+                mes += '\n' + item.url
+    chan = client.get_channel(config.SYS_LOG)
+    await chan.send(mes)
+
+"""
 On Ready
 
 Occurs when Discord bot is first brought online
@@ -168,19 +188,21 @@ async def on_message_delete(message):
     if config.DEBUG_BOT or message.author.bot:
         return
 
-    mes = f"**{message.author.name}#{message.author.discriminator}** deleted in <#{message.channel.id}>: `{message.content}`"
-    # Adds URLs for any attachments that were included in deleted message
-    # These will likely become invalid, but it's nice to note them anyway
-    if message.attachments != []:
-        for item in message.attachments:
-            # Break into seperate parts if we're going to cross character limit
-            if len(mes) + len(item.url) > config.CHAR_LIMIT:
-                await chan.send(mes)
-                mes = item.url
-            else:
-                mes += '\n' + item.url
-    chan = client.get_channel(config.SYS_LOG)
-    await chan.send(mes)
+    await delete_message_helper(message)
+
+"""
+On Bulk Message Delete
+
+Occurs when a user's messages are bulk deleted, such as ban or kick
+"""
+@client.event
+async def on_bulk_message_delete(messages):
+    # Ignore bots
+    if config.DEBUG_BOT or messages[0].author.bot:
+        return
+
+    for message in messages:
+        await delete_message_helper(message)
 
 """
 On Message Edit

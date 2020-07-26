@@ -60,7 +60,7 @@ class UserLookup:
             fullname = f"{user[0]}#{discriminator}"
             if fullname in list(self.recent_bans.values()):
                 revBans = {v: k for k, v in self.recent_bans.items()}
-                return revBans[user]
+                return revBans[fullname]
 
             # If they still haven't been found, check database
             return db.fetch_id_by_username(fullname)

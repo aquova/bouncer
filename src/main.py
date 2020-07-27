@@ -100,12 +100,17 @@ async def on_member_update(before, after):
     # If role quantity has changed
     elif before.roles != after.roles:
         # Determine role difference, post about it
-        if len(before.roles) > len(after.roles):
-            missing = [r for r in before.roles if r not in after.roles]
-            mes = f"**{after.name}#{after.discriminator}** had the role `{missing[0]}` removed."
-        else:
-            newRoles = [r for r in after.roles if r not in before.roles]
-            mes = f"**{after.name}#{after.discriminator}** had the role `{newRoles[0]}` added."
+        removed = [r for r in before.roles if r not in after.roles]
+        added = [r for r in after.roles if r not in before.roles]
+        mes = ""
+        if removed:
+            removed_str = ', '.join(removed)
+            mes += f"**{after.name}#{after.discriminator}** had the role(s) `{removed_str}` removed.\n"
+
+        if added:
+            added_str = ', '.join(added)
+            mes += f"**{after.name}#{after.discriminator}** had the role(s) `{added_str}` added."
+
         chan = client.get_channel(config.SYS_LOG)
         await chan.send(mes)
 

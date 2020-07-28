@@ -30,8 +30,8 @@ python3 -m pip install -r requirements.txt;
 
 # Make default configuration files
 echo -e "${BLUE}Generating default configuration files${NC}";
-mkdir -p src/private;
-cat << EOF > src/private/config.json
+mkdir -p private;
+cat << EOF > private/config.json
 {
     "discord": "YOUR DISCORD TOKEN HERE",
     "debug": "False",

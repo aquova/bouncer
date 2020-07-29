@@ -100,8 +100,8 @@ async def on_member_update(before, after):
     # If role quantity has changed
     elif before.roles != after.roles:
         # Determine role difference, post about it
-        removed = [r for r in before.roles if r not in after.roles]
-        added = [r for r in after.roles if r not in before.roles]
+        removed = [r.name for r in before.roles if r not in after.roles]
+        added = [r.name for r in after.roles if r not in before.roles]
         mes = ""
         if removed:
             removed_str = ', '.join(removed)

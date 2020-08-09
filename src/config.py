@@ -1,7 +1,8 @@
-import json
+import json, os
 from enum import Enum, unique
 
-DATABASE_PATH = "../private/sdv.db"
+dir_path = os.path.dirname(os.path.realpath(__file__))
+DATABASE_PATH = os.path.join(dir_path, "../private/sdv.db")
 # Discord has a 2000 message character limit
 CHAR_LIMIT = 2000
 # Add extra message if more than threshold number of warns
@@ -16,7 +17,8 @@ class LogTypes(Enum):
     WARN = 1
 
 # Read values from config file
-with open('../private/config.json') as config_file:
+config_path = os.path.join(dir_path, "../private/config.json")
+with open(config_path) as config_file:
     cfg = json.load(config_file)
 
 # Set values from config file as constants

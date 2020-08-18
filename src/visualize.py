@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from config import DATABASE_PATH
+import db
 
 months = ["", "Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"]
 
@@ -23,41 +23,35 @@ def getMax(a):
 # Val is a tuple which determines what to modify
 # (ban # change, warn # change)
 def updateCache(staff, val, date):
-    sqlconn = sqlite3.connect(DATABASE_PATH)
     formatDate = f"{date.split('-')[0]}-{date.split('-')[1]}"
 
-    checkStaff = sqlconn.execute("SELECT * FROM staffLogs WHERE staff=?", [staff]).fetchall()
-    checkDate = sqlconn.execute("SELECT * FROM monthLogs WHERE month=?", [formatDate]).fetchall()
+    checkStaff = db.get_staffdata(staff)
+    checkDate = db.get_monthdata(formatDate)
 
     # First time user has posted
     if checkStaff == []:
-        sqlconn.execute("INSERT INTO staffLogs (staff, bans, warns) VALUES (?, ?, ?)", [staff, val[0], val[1]])
+        db.add_staffdata(staff, val[0], val[1], False)
     else:
         bans = checkStaff[0][1]
         warns = checkStaff[0][2]
         if (bans + val[0] < 0) or (warns + val[1] < 0):
             print("Hey, a user is going to have a negative balance, that's no good.")
-        sqlconn.execute("REPLACE INTO staffLogs (staff, bans, warns) VALUES (?, ?, ?)", [staff, bans+val[0], warns+val[1]])
+        db.add_staffdata(staff, bans + val[0], warns + val[1], True)
 
     # First log this month
     if checkDate == []:
-        sqlconn.execute("INSERT INTO monthLogs (month, bans, warns) VALUES (?, ?, ?)", [formatDate, val[0], val[1]])
+        db.add_monthdata(formatDate, val[0], val[1], False)
     else:
         bans = checkDate[0][1]
         warns = checkDate[0][2]
         if (bans + val[0] < 0) or (warns + val[1] < 0):
             print("Hey, a user is going to have a negative balance, that's no good.")
-        sqlconn.execute("REPLACE INTO monthLogs (month, bans, warns) VALUES (?, ?, ?)", [formatDate, bans+val[0], warns+val[1]])
-
-    sqlconn.commit()
-    sqlconn.close()
+        db.add_monthdata(formatDate, bans + val[0], warns + val[1], True)
 
 def genUserPlot():
     plt.clf()
-    sqlconn = sqlite3.connect(DATABASE_PATH)
-    data = sqlconn.execute("SELECT * FROM staffLogs").fetchall()
+    data = db.get_staffdata(None)
     staffData = {x[0]: [x[1], x[2]] for x in data}
-    sqlconn.close()
 
     staffTotals = {k: v[0]+v[1] for k, v in staffData.items()}
     sortedTotals = sorted(staffTotals, key=staffTotals.get)[::-1]
@@ -81,15 +75,12 @@ def genUserPlot():
 
     plt.savefig("../private/user_plot.png")
 
-# A lot of code could be reused if I wanted to combine these functions
 def genMonthlyPlot():
     plt.clf()
     plt.figure(figsize=(10,6))
-    sqlconn = sqlite3.connect(DATABASE_PATH)
-    data = sqlconn.execute("SELECT * FROM monthLogs").fetchall()
+    data = db.get_monthdata(None)
     sortedData = sorted(data)
     monthData = {x[0]: [x[1], x[2]] for x in sortedData}
-    sqlconn.close()
 
     bans = [monthData[x][0] for x in monthData]
     warns = [monthData[x][1] for x in monthData]

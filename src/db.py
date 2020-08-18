@@ -134,3 +134,39 @@ def add_watch(userid):
 def del_watch(userid):
     query = ("DELETE FROM watching WHERE id=?", [userid])
     _db_write(query)
+
+def get_staffdata(staff):
+    if staff == None:
+        query = ("SELECT * FROM staffLogs",)
+    else:
+        query = ("SELECT * FROM staffLogs WHERE staff=?", [staff])
+
+    results = _db_read(query)
+
+    return results
+
+def add_staffdata(staff, bans, warns, is_replace):
+    if is_replace:
+        query = ("REPLACE INTO staffLogs (staff, bans, warns) VALUES (?, ?, ?)", [staff, bans, warns])
+    else:
+        query = ("INSERT INTO staffLogs (staff, bans, warns) VALUES (?, ?, ?)", [staff, bans, warns])
+
+    _db_write(query)
+
+def get_monthdata(month):
+    if month == None:
+        query = ("SELECT * FROM monthLogs",)
+    else:
+        query = ("SELECT * FROM monthLogs WHERE month=?", [month])
+
+    results = _db_read(query)
+
+    return results
+
+def add_monthdata(month, bans, warns, is_replace):
+    if is_replace:
+        query = ("REPLACE INTO monthLogs (month, bans, warns) VALUES (?, ?, ?)", [month, bans, warns])
+    else:
+        query = ("INSERT INTO monthLogs (month, bans, warns) VALUES (?, ?, ?)", [month, bans, warns])
+
+    _db_write(query)

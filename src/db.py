@@ -123,9 +123,7 @@ def get_dbid():
 
 def get_watch_list():
     query = ("SELECT * FROM watching",)
-    results = _db_read(query)
-
-    return results
+    return _db_read(query)
 
 def add_watch(userid):
     query = ("INSERT OR REPLACE INTO watching (id) VALUES (?)", [userid])
@@ -141,9 +139,7 @@ def get_staffdata(staff):
     else:
         query = ("SELECT * FROM staffLogs WHERE staff=?", [staff])
 
-    results = _db_read(query)
-
-    return results
+    return _db_read(query)
 
 def add_staffdata(staff, bans, warns, is_replace):
     if is_replace:
@@ -159,9 +155,7 @@ def get_monthdata(month):
     else:
         query = ("SELECT * FROM monthLogs WHERE month=?", [month])
 
-    results = _db_read(query)
-
-    return results
+    return _db_read(query)
 
 def add_monthdata(month, bans, warns, is_replace):
     if is_replace:

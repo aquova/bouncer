@@ -1,6 +1,6 @@
 # Calculates statistics and generates plots
 
-import sqlite3, math
+import math
 import numpy as np
 # Needed for OS X for some reason
 import matplotlib

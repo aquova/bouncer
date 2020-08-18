@@ -1,30 +1,19 @@
-import sqlite3
-from config import DATABASE_PATH
+import db
 
 class BlockedUsers:
     def __init__(self):
         self.populate_blocklist()
 
     def populate_blocklist(self):
-        sqlconn = sqlite3.connect(DATABASE_PATH)
-        blockDB = sqlconn.execute("SELECT * FROM blocks").fetchall()
+        blockDB = db.get_blocklist()
         self.blocklist = [x[0] for x in blockDB]
-        sqlconn.close()
 
     def block_user(self, userid):
-        sqlconn = sqlite3.connect(DATABASE_PATH)
-        sqlconn.execute("INSERT INTO blocks (id) VALUES (?)", [userid])
-        sqlconn.commit()
-        sqlconn.close()
-
+        db.add_block(userid)
         self.blocklist.append(userid)
 
     def unblock_user(self, userid):
-        sqlconn = sqlite3.connect(DATABASE_PATH)
-        sqlconn.execute("DELETE FROM blocks WHERE id=?", [userid])
-        sqlconn.commit()
-        sqlconn.close()
-
+        db.remove_block(userid)
         self.blocklist.remove(userid)
 
     def is_in_blocklist(self, userid):

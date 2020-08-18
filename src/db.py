@@ -170,3 +170,15 @@ def add_monthdata(month, bans, warns, is_replace):
         query = ("INSERT INTO monthLogs (month, bans, warns) VALUES (?, ?, ?)", [month, bans, warns])
 
     _db_write(query)
+
+def get_blocklist():
+    query = ("SELECT * FROM blocks",)
+    return _db_read(query)
+
+def add_block(userid):
+    query = ("INSERT INTO blocks (id) VALUES (?)", [userid])
+    _db_write(query)
+
+def remove_block(userid):
+    query = ("DELETE FROM blocks WHERE ID=?", [userid])
+    _db_write(query)

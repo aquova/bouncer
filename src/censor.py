@@ -5,8 +5,8 @@ from re import search, IGNORECASE
 
 async def check_censor(message):
     # If you're posting in an admin channel, you can swear all you like
-    # if message.channel.id in VALID_INPUT_CHANS:
-    #     return False
+    if message.channel.id in VALID_INPUT_CHANS:
+        return False
 
     for item in CENSOR_LIST:
         if bool(search(item, message.content, IGNORECASE)):

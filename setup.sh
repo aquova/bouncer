@@ -37,8 +37,10 @@ cat << EOF > private/config.json
     "debug": "False",
     "channels": {
         "listening": [<LIST OF ADMIN CHANNEL IDS>],
+        "mailbox" <CHANNEL ID TO SEND DMs>,
         "log": <CHANNEL ID TO LOG EVENTS>,
-        "syslog": <CHANNEL ID TO LOG WARNS>
+        "syslog": <CHANNEL ID TO LOG WARNS>,
+        "watchlist": <CHANNEL ID TO MONITOR USERS
     },
     "roles": [<LIST OF ROLE IDS THAT CAN CONTROL BOT>],
     "owner": <OWNER ID>,
@@ -54,9 +56,6 @@ cat << EOF > private/config.json
     "censor": {
         "regex": ["LIST OF BLACKLISTED REGEX"],
         "notify_chan": <CHANNEL ID TO NOTIFY OF CENSOR BREACH"
-    },
-    "watcher": {
-        "report_channel": <CHANNEL ID>
     }
 }
 EOF

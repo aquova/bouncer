@@ -25,9 +25,11 @@ with open(config_path) as config_file:
 DISCORD_KEY = cfg['discord']
 OWNER = cfg['owner']
 
+MAILBOX = cfg['channels']['mailbox']
 VALID_INPUT_CHANS = cfg['channels']['listening']
 LOG_CHAN = cfg['channels']['log']
 SYS_LOG = cfg['channels']['syslog']
+WATCHLIST_CHAN = cfg['channels']['watchlist']
 
 VALID_ROLES = cfg['roles']
 
@@ -40,6 +42,5 @@ GATE_EMOJI = cfg['gatekeeper']['emoji']
 GATE_ROLE = cfg['gatekeeper']['role']
 
 CENSOR_LIST = cfg['censor']['regex']
+CENSOR_WATCH = cfg['censor']['watch_regex']
 CENSOR_CHAN = cfg['censor']['notify_chan']
-
-WATCHER_CHANNEL = cfg['watcher']['report_channel']

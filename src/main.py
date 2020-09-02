@@ -6,7 +6,7 @@ import discord, asyncio, os, subprocess, sys
 from dataclasses import dataclass
 import utils
 import commands, config, db
-from censor import check_censor, censor_message
+from censor import check_censor
 from config import LogTypes
 from timekeep import Timekeeper
 from waiting import AnsweringMachineEntry
@@ -315,7 +315,7 @@ async def on_message(message):
 
             # If not blocked, send message along to specified mod channel
             if not commands.bu.is_in_blocklist(message.author.id):
-                chan = client.get_channel(config.VALID_INPUT_CHANS[0])
+                chan = client.get_channel(config.MAILBOX)
                 logMes = await chan.send(mes)
 
                 # Lets also add/update them in answering machine
@@ -327,15 +327,14 @@ async def on_message(message):
             return
 
         # Run message against censor
-        bad_message = check_censor(message)
+        bad_message = await check_censor(message)
         if bad_message:
-            await censor_message(message)
             return
 
         # Check if user is on watchlist, and should be tracked
         watching = watch.should_note(message.author.id)
         if watching:
-            chan = client.get_channel(config.WATCHER_CHANNEL)
+            chan = client.get_channel(config.WATCHLIST_CHAN)
             content = utils.combineMessage(message)
             mes = f"**{message.author.name}#{message.author.discriminator}** (ID: {message.author.id}) said in <#{message.channel.id}>: {content}"
             await chan.send(mes)
@@ -345,7 +344,7 @@ async def on_message(message):
             content = utils.combineMessage(message)
             mes = f"**{message.author.name}#{message.author.discriminator}** (ID: {message.author.id}) pinged me in <#{message.channel.id}>: {content}"
             mes += f"\n{utils.get_mes_link(message)}"
-            chan = client.get_channel(config.VALID_INPUT_CHANS[0])
+            chan = client.get_channel(config.MAILBOX)
             await chan.send(mes)
 
         # Functions in this category are those where we care that the user has the correct roles, but don't care about which channel they're invoked in

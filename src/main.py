@@ -112,7 +112,8 @@ async def on_member_update(before, after):
             mes += f"**{after.name}#{after.discriminator}** had the role(s) `{added_str}` added."
 
         chan = client.get_channel(config.SYS_LOG)
-        await chan.send(mes)
+        if mes != "":
+            await chan.send(mes)
 
 """
 On Member Ban

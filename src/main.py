@@ -4,8 +4,7 @@
 
 import discord, asyncio, os, subprocess, sys
 from dataclasses import dataclass
-import utils
-import commands, config, db
+import commands, config, db, visualize, utils
 from censor import check_censor
 from config import LogTypes
 from timekeep import Timekeeper
@@ -25,6 +24,7 @@ FUNC_DICT = {
     "$block":       [commands.blockUser,            True],
     "$clear":       [commands.am.clear_entries,     None],
     "$edit":        [commands.removeError,          True],
+    "$graph":       [visualize.post_plots,          None],
     "$help":        [commands.send_help_mes,        None],
     "$kick":        [commands.logUser,              LogTypes.KICK],
     "$note":        [commands.logUser,              LogTypes.NOTE],
@@ -355,16 +355,6 @@ async def on_message(message):
                 func = FUNC_DICT[cmd][0]
                 arg = FUNC_DICT[cmd][1]
                 await func(message, arg)
-            elif cmd == "$graph":
-                # Generates two plots to visualize moderation activity trends
-                import visualize # Import here to avoid debugger crashing from matplotlib issue
-                visualize.genUserPlot()
-                visualize.genMonthlyPlot()
-                with open("../private/user_plot.png", 'rb') as f:
-                    await message.channel.send(file=discord.File(f))
-
-                with open("../private/month_plot.png", 'rb') as f:
-                    await message.channel.send(file=discord.File(f))
 
     except discord.errors.HTTPException as e:
         print("HTTPException: {}", e)

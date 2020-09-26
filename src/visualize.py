@@ -1,12 +1,13 @@
 # Calculates statistics and generates plots
 
-import math
+import math, os, discord
 import numpy as np
 # Needed for OS X for some reason
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import db
+from config import USER_PLOT, MONTH_PLOT
 
 months = ["", "Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"]
 
@@ -48,7 +49,7 @@ def updateCache(staff, val, date):
             print("Hey, a user is going to have a negative balance, that's no good.")
         db.add_monthdata(formatDate, bans + val[0], warns + val[1], True)
 
-def genUserPlot():
+def gen_user_plot():
     plt.clf()
     data = db.get_staffdata(None)
     staffData = {x[0]: [x[1], x[2]] for x in data}
@@ -73,9 +74,9 @@ def genUserPlot():
     plt.tight_layout()
     plt.grid(True, axis="y")
 
-    plt.savefig("../private/user_plot.png")
+    plt.savefig(USER_PLOT)
 
-def genMonthlyPlot():
+def gen_monthly_plot():
     plt.clf()
     plt.figure(figsize=(10,6))
     data = db.get_monthdata(None)
@@ -101,4 +102,14 @@ def genMonthlyPlot():
     plt.tight_layout()
     plt.grid(True, axis="y")
 
-    plt.savefig("../private/month_plot.png")
+    plt.savefig(MONTH_PLOT)
+
+async def post_plots(message, _):
+    gen_user_plot()
+    gen_monthly_plot()
+
+    with open(USER_PLOT, 'rb') as f:
+        await message.channel.send(file=discord.File(f))
+
+    with open(MONTH_PLOT, 'rb') as f:
+        await message.channel.send(file=discord.File(f))

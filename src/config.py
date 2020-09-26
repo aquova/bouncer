@@ -44,3 +44,6 @@ GATE_ROLE = cfg['gatekeeper']['role']
 CENSOR_LIST = cfg['censor']['regex']
 CENSOR_WATCH = cfg['censor']['watch_regex']
 CENSOR_CHAN = cfg['censor']['notify_chan']
+
+USER_PLOT = os.path.join(dir_path, "../private/user_plot.png")
+MONTH_PLOT = os.path.join(dir_path, "../private/month_plot.png")

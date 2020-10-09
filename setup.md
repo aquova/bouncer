@@ -32,8 +32,8 @@ A number of private configuration settings are defined and imported in the `conf
     "roles": [1234567890], // List of role IDs that the bot will obey. Again, the '[]' are required.
     "owner": 1234567890, // Bot owner ID
     "DM": {
-        "ban": "False", // Whether to DM a user their ban log message
-        "warn": "False" // Whether to DM a user their warn log message
+        "ban": 0, // Whether to DM a user their ban log message
+        "warn": 0 // Whether to DM a user their warn log message
     },
     // Users will be given the specified role if they react with the given emoji on the specified message
     // This can be an extra level of security if without the given role, the user has no server read/write access

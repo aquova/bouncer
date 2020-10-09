@@ -45,8 +45,8 @@ cat << EOF > private/config.json
     "roles": [<LIST OF ROLE IDS THAT CAN CONTROL BOT>],
     "owner": <OWNER ID>,
     "DM": {
-        "ban": "False",
-        "warn": "True"
+        "ban": 0,
+        "warn": 0
     },
     "gatekeeper": {
         "role": <ROLE ID TO AWARD>,

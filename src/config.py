@@ -33,8 +33,8 @@ WATCHLIST_CHAN = cfg['channels']['watchlist']
 
 VALID_ROLES = cfg['roles']
 
-DM_BAN = (cfg['DM']['ban'].upper() == "TRUE")
-DM_WARN = (cfg['DM']['warn'].upper() == "TRUE")
+DM_BAN = cfg['DM']['ban']
+DM_WARN = cfg['DM']['warn']
 DEBUG_BOT = (cfg['debug'].upper() == "TRUE")
 
 GATE_MES = cfg['gatekeeper']['message']

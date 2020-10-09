@@ -1,7 +1,6 @@
-FROM python:alpine
+FROM aquova/discord.py:1.3.4
 
 RUN apk update && apk add \
-    build-base \
     freetype-dev
 
 ADD requirements.txt /bouncer/requirements.txt

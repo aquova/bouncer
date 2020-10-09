@@ -168,7 +168,10 @@ async def logUser(m, state):
 
         # Exception handling
         except discord.errors.HTTPException as e:
-            await m.channel.send(f"ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {e}")
+            if e.code == 50007:
+                await m.channel.send(f"Cannot send messages to this user. It is likely they have DM closed or I am blocked.")
+            else:
+                await m.channel.send(f"ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {e}")
         except Exception as e:
             await m.channel.send(f"ERROR: An unexpected error has occurred. Tell aquova this: {e}")
 
@@ -350,8 +353,8 @@ async def reply(m, _):
 
     # Exception handling
     except discord.errors.HTTPException as e:
-        if e.status == 403:
-            await m.channel.send("I cannot send messages to this user -- they may have closed DMs, left the server, or blocked me. Or something.")
+        if e.status == 50007:
+            await m.channel.send(f"Cannot send messages to this user. It is likely they have DM closed or I am blocked.")
         else:
             await m.channel.send(f"ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {e}")
     except Exception as e:

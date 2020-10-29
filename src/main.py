@@ -11,10 +11,13 @@ from timekeep import Timekeeper
 from waiting import AnsweringMachineEntry
 from watcher import Watcher
 
+intents = discord.Intents.default()
+intents.members = True
+
 debugging = False
 
 # Initialize client and helper classes
-client = discord.Client()
+client = discord.Client(intents=intents)
 db.initialize()
 tk = Timekeeper()
 watch = Watcher()
@@ -180,8 +183,9 @@ async def on_raw_reaction_add(payload):
             target_user = discord.utils.get(server.members, id=payload.user_id)
             await target_user.add_roles(new_role)
         except IndexError as e:
-            print("Something has seriously gone wrong.")
-            print(f"Error: {e}")
+            print("Error: The client could not find any servers: {e}")
+        except AttributeError as e:
+            print("Couldn't find member to add role to: {e}")
 
 """
 On Message Delete

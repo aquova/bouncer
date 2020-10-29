@@ -1,4 +1,4 @@
-FROM aquova/discord.py:1.3.4
+FROM aquova/discord.py:1.5.1
 
 RUN apk update && apk add \
     freetype-dev

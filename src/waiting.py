@@ -39,9 +39,8 @@ class AnsweringMachine:
 
     async def gen_waiting_list(self, message, _):
         curr_time = datetime.datetime.utcnow()
-        first = True
         # Assume there are no messages in the queue
-        out = "There are no users awaiting replies."
+        found = False
 
         waiting_list = self.get_entries().copy()
         for key, item in waiting_list.items():
@@ -50,11 +49,9 @@ class AnsweringMachine:
             if days > 0:
                 self.remove_entry(key)
             else:
-                # If we find a message, change the printout message
-                if first:
-                    out = "Users who are still awaiting replies:\n"
-                    first = False
+                found = True
+                out = f"{item.name} ({key}) said `{item.last_message}` | {hours}h{minutes}m ago\n{item.message_url}\n"
+                await message.channel.send(out)
 
-                out += f"{item.name} ({key}) said `{item.last_message}` | {hours}h{minutes}m ago\n{item.message_url}\n"
-
-        await message.channel.send(out)
+        if not found:
+            await message.channel.send("There are no users awaiting replies")

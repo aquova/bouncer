@@ -31,6 +31,7 @@ FUNC_DICT = {
     "$help":        [commands.send_help_mes,        None],
     "$kick":        [commands.logUser,              LogTypes.KICK],
     "$note":        [commands.logUser,              LogTypes.NOTE],
+    "$preview":     [commands.preview,              None],
     "$remove":      [commands.removeError,          False],
     "$reply":       [commands.reply,                None],
     "$search":      [commands.userSearch,           None],

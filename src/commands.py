@@ -9,26 +9,36 @@ ul = UserLookup()
 bu = BlockedUsers()
 am = AnsweringMachine()
 
+BAN_KICK_MES = "Hi there! You've been {type} from the Stardew Valley Discord for violating the rules: `{mes}`. If you have any questions, you can send a message to the moderators via the sidebar at <https://www.reddit.com/r/StardewValley>, and they'll forward it to us."
+
+WARN_MES = "Hi there! You've received warning #{count} in the Stardew Valley Discord for violating the rules: `{mes}`. Please review <#707359005655171172> and <#718593494775496754> for more info. If you have any questions, you can reply directly to this message to contact the staff."
+
 async def send_help_mes(m, _):
     dmWarns = "On" if config.DM_WARN else "Off"
     dmBans = "On" if config.DM_BAN else "Off"
     helpMes = (
-        "Issue a warning: `$warn USER message`\n"
-        "Log a ban: `$ban USER reason`\n"
-        "Log an unbanning: `$unban USER reason`\n"
-        "Log a kick: `$kick USER reason`\n"
-        "Search for a user: `$search USER`\n"
-        "Create a note about a user: `$note USER message`\n"
-        "Remove a user's log: `$remove USER index(optional)`\n"
-        "Edit a user's note: `$edit USER index(optional) new_message`\n"
-        "View users waiting for a reply: `$waiting`. Clear the list with `$clear`\n"
-        "Watch a user's every move: `$watch USER`\n"
-        "Remove user from watch list: `$unwatch USER`\n"
-        "List watched users: `$watchlist`\n"
-        "Stop a user from sending DMs to us: `$block/$unblock USERID`\n"
+        "Issue a warning: `$warn <user> <message>`\n"
+        "Log a ban: `$ban <user> <reason>`\n"
+        "Log an unbanning: `$unban <user> <reason>`\n"
+        "Log a kick: `$kick <user> <reason>`\n"
+        "Preview what will be sent to the user `$preview <warn/ban/kick> <reason>`\n"
+        "\n"
+        "Search for a user: `$search <user>`\n"
+        "Create a note about a user: `$note <user> <message>`\n"
+        "Remove a user's log: `$remove <user> <index(optional)>`\n"
+        "Edit a user's note: `$edit <user> <index(optional)> <new_message>`\n"
+        "\n"
         "Reply to a user in DMs: `$reply USERID` - To reply to the most recent DM: `$reply ^`\n"
+        "View users waiting for a reply: `$waiting`. Clear the list with `$clear`\n"
+        "Stop a user from sending DMs to us: `$block/$unblock <user>`\n"
+        "\n"
+        "Watch a user's every move: `$watch <user>`\n"
+        "Remove user from watch list: `$unwatch <user>`\n"
+        "List watched users: `$watchlist`\n"
+        "\n"
         "Plot warn/ban stats: `$graph`\n"
         "View bot uptime: `$uptime`\n"
+        "\n"
         f"DMing users when they are banned is `{dmBans}`\n"
         f"DMing users when they are warned is `{dmWarns}`"
     )
@@ -160,11 +170,11 @@ async def logUser(m, state):
 
                 # Only send DM when specified in configs
                 if state == LogTypes.BAN and config.DM_BAN:
-                    await DMchan.send(f"Hi there! You've been banned from the Stardew Valley Discord for violating the rules: `{mes}`. If you have any questions, you can send a message to the moderators via the sidebar at <https://www.reddit.com/r/StardewValley>, and they'll forward it to us.")
+                    await DMchan.send(BAN_KICK_MES.format(type="banned", mes=mes))
                 elif state == LogTypes.WARN and config.DM_WARN:
-                    await DMchan.send(f"Hi there! You received warning #{count} in the Stardew Valley Discord for violating the rules: `{mes}`. Please review <#707359005655171172> and <#718593494775496754> for more info. If you have any questions, you can reply directly to this message to contact the staff.")
+                    await DMchan.send(WARN_MES.format(count=count, mes=mes))
                 elif state == LogTypes.KICK and config.DM_BAN:
-                    await DMchan.send(f"Hi there! You've been kicked from the Stardew Valley Discord for violating the following reason: `{mes}`. If you have any questions, you can send a message to the moderators via the sidebar at <https://www.reddit.com/r/StardewValley>, and they'll forward it to us.")
+                    await DMchan.send(BAN_KICK_MES.format(type="kicked", mes=mes))
 
         # Exception handling
         except discord.errors.HTTPException as e:
@@ -178,6 +188,52 @@ async def logUser(m, state):
     # Update database
     new_log.message_url = logMesID
     db.add_log(new_log)
+
+"""
+Preview message
+
+Prints out Bouncer's DM message as the user will receive it
+
+Inputs:
+    m: Discord message object
+"""
+async def preview(m, _):
+    mes = utils.strip(m.content)
+    # This isn't a command, but we'll co-opt the function
+    state_raw = utils.get_command(mes)
+    mes = utils.strip(mes)
+
+    state = None
+    if state_raw == "ban":
+        state = LogTypes.BAN
+    elif state_raw == "kick":
+        state = LogTypes.KICK
+    elif state_raw == "warn":
+        state = LogTypes.WARN
+    else:
+        await m.channel.send(f"I have no idea what a {state_raw} is, but it's certainly not a `ban`, `warn`, or `kick`.")
+        return
+
+    # Might as well mimic logging behavior
+    if mes == "":
+        await m.channel.send("Please give a reason for why you want to log them.")
+        return
+
+    if state == LogTypes.BAN:
+        if config.DM_BAN:
+            await m.channel.send(BAN_KICK_MES.format(type="banned", mes=mes))
+        else:
+            await m.channel.send("DMing the user about their bans is currently off, they won't see any message")
+    elif state == LogTypes.WARN:
+        if config.DM_WARN:
+            await m.channel.send(WARN_MES.format(count="X",mes=mes))
+        else:
+            await m.channel.send("DMing the user about their warns is currently off, they won't see any message")
+    elif state == LogTypes.KICK:
+        if config.DM_BAN:
+            await m.channel.send(BAN_KICK_MES.format(type="kicked", mes=mes))
+        else:
+            await m.channel.send("DMing the user about their kicks is currently off, they won't see any message")
 
 """
 Remove Error

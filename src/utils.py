@@ -14,7 +14,8 @@ def get_command(m):
     except IndexError:
         return ""
 
-# Removes the '$command' to get just the request
+# Removes the '$command <user>' to get just the request
+# TODO: This is a bad name
 def removeCommand(m):
     tmp = m.split()[2:]
     return " ".join(tmp)

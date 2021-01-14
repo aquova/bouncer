@@ -226,9 +226,15 @@ async def on_message_edit(before, after):
     if config.DEBUG_BOT or before.author.bot:
         return
 
+    # Run edited message against censor.
+    bad_message = await check_censor(after)
+    if bad_message:
+        return
+
     # Prevent embedding of content from triggering the log
     if before.content == after.content:
         return
+
     try:
         chan = client.get_channel(config.SYS_LOG)
         mes = f"**{before.author.name}#{before.author.discriminator}** modified in <#{before.channel.id}>: `{before.content}`"
@@ -240,6 +246,13 @@ async def on_message_edit(before, after):
 
         mes += f" to `{after.content}`"
         await chan.send(mes)
+
+        # If user is on watchlist, then post it there as well
+        watching = watch.should_note(after.author.id)
+        if watching:
+            watchchan = client.get_channel(config.WATCHLIST_CHAN)
+            await watchchan.send(mes)
+
     except discord.errors.HTTPException as e:
         print(f"Unknown error with editing message. This message was unable to post for this reason: {e}\n")
 

@@ -6,6 +6,7 @@ private/*
 # Editor files
 *.swp
 *.code-workspace
+**/.devcontainer/*
 
 # Virtualenv stuff
 bin/*

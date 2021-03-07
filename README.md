@@ -2,7 +2,7 @@
 
 A Discord moderator bot, designed to be used with the Stardew Valley server
 
-Written by aquova, 2018-2020
+Written by aquova, 2018-2021
 
 https://github.com/aquova/bouncer
 
@@ -32,12 +32,11 @@ The bot has several moderation features:
     - Private messages sent to the bot will be automatically forwarded to the channel specified in `config.json`.
     - Moderators can also DM a user via the bot, allowing for collaborative viewing of direct messages.
     - DMs from unruly users can be blocked and unblocked as desired.
-    - All DMs are also saved to a local .txt file for easy review.
 - Answering Machine
     - A list of unreplied users users can be viewed, to avoid accidentally overlooking a message.
     - The list is automatically pruned after the message gets too old, or if they are replied to.
 - User DMing
-    - Upon being banned, there is the option to DM a user with the ban message. This can be disabled by setting the "DM" field in `config.json` to false.
+    - Upon being banned or warned, there is the option to DM a user with the message. This can be disabled in the `config.json` file.
 - Statistics visualization
     - Statistics about moderator activity can be generated, namely how many warns/bans occurred each month, and how many total warns/bans have been created by each moderator.
 - System logs
@@ -58,5 +57,3 @@ The bot has several moderation features:
 There is also a `$help` command, which will give the syntax for all of the previously listed commands
 
 For better security, the bot only listens in specific channels for commands, and only accepts commands for users with specific roles. These can be specified, along with other parameters, in the `config.json` file, which is not included for obvious security reasons.
-
-If you wish to run the bot yourself, a rough guide on how to do so is located in `setup.md`, and if you are wanting to run the bot on a Debian-based server (or any with apt-get), there is an easy `setup.sh` installation script.

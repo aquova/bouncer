@@ -409,7 +409,7 @@ async def reply(m, _):
 
     # Exception handling
     except discord.errors.HTTPException as e:
-        if e.status == 50007:
+        if e.code == 50007:
             await m.channel.send(f"Cannot send messages to this user. It is likely they have DM closed or I am blocked.")
         else:
             await m.channel.send(f"ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {e}")

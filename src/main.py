@@ -373,9 +373,8 @@ async def on_message(message):
                 func = FUNC_DICT[cmd][0]
                 arg = FUNC_DICT[cmd][1]
                 await func(message, arg)
-
     except discord.errors.HTTPException as e:
-        print("HTTPException: {}", e)
+        print(traceback.format_exc())
         pass
 
 client.run(config.DISCORD_KEY)

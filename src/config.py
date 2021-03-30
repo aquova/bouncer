@@ -37,10 +37,6 @@ DM_BAN = cfg['DM']['ban']
 DM_WARN = cfg['DM']['warn']
 DEBUG_BOT = (cfg['debug'].upper() == "TRUE")
 
-GATE_MES = cfg['gatekeeper']['message']
-GATE_EMOJI = cfg['gatekeeper']['emoji']
-GATE_ROLE = cfg['gatekeeper']['role']
-
 CENSOR_LIST = cfg['censor']['regex']
 CENSOR_WATCH = cfg['censor']['watch_regex']
 CENSOR_CHAN = cfg['censor']['notify_chan']

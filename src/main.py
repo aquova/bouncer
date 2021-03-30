@@ -163,32 +163,6 @@ async def on_member_remove(member):
     await chan.send(mes)
 
 """
-On Raw Reaction Add
-
-Occurs when a reaction is applied to a message
-Needs to be raw reaction so it can still get reactions after reboot
-"""
-@client.event
-async def on_raw_reaction_add(payload):
-    # If debugging, don't process
-    if config.DEBUG_BOT:
-        return
-
-    if payload.message_id == config.GATE_MES and payload.emoji.name == config.GATE_EMOJI:
-        # Raw payload just returns IDs, so need to iterate through connected servers to get server object
-        # Since each bouncer instance will only be in one server, it should be quick.
-        # If bouncer becomes general purpose (god forbid), may need to rethink this
-        try:
-            server = [x for x in client.guilds if x.id == payload.guild_id][0]
-            new_role = discord.utils.get(server.roles, id=config.GATE_ROLE)
-            target_user = discord.utils.get(server.members, id=payload.user_id)
-            await target_user.add_roles(new_role)
-        except IndexError as e:
-            print("Error: The client could not find any servers: {e}")
-        except AttributeError as e:
-            print("Couldn't find member to add role to: {e}")
-
-"""
 On Message Delete
 
 Occurs when a user's message is deleted

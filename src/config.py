@@ -2,7 +2,7 @@ import json, os
 from enum import Enum, unique
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
-DATABASE_PATH = os.path.join(dir_path, "../private/sdv.db")
+DATABASE_PATH = os.path.join(dir_path, "../private/bouncer.db")
 # Discord has a 2000 message character limit
 CHAR_LIMIT = 2000
 # Add extra message if more than threshold number of warns

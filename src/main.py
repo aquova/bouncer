@@ -312,10 +312,9 @@ async def on_message(message):
                 logMes = await chan.send(mes)
 
                 # Lets also add/update them in answering machine
-                mes_link = utils.get_mes_link(logMes)
                 username = f"{message.author.name}#{message.author.discriminator}"
 
-                mes_entry = AnsweringMachineEntry(username, message.created_at, content, mes_link)
+                mes_entry = AnsweringMachineEntry(username, message.created_at, content, logMes.jump_url)
                 commands.am.update_entry(message.author.id, mes_entry)
             return
 
@@ -336,7 +335,7 @@ async def on_message(message):
         if client.user in message.mentions:
             content = utils.combineMessage(message)
             mes = f"**{message.author.name}#{message.author.discriminator}** (ID: {message.author.id}) pinged me in <#{message.channel.id}>: {content}"
-            mes += f"\n{utils.get_mes_link(message)}"
+            mes += f"\n{message.jump_url}"
             chan = client.get_channel(config.MAILBOX)
             await chan.send(mes)
 

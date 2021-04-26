@@ -55,6 +55,3 @@ def combineMessage(mes):
             out += '\n' + item.url
 
     return out
-
-def get_mes_link(mes):
-    return f"https://discordapp.com/channels/{mes.guild.id}/{mes.channel.id}/{mes.id}"

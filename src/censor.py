@@ -1,6 +1,5 @@
 import discord
 from config import CENSOR_LIST, CENSOR_WATCH, CENSOR_CHAN, SYS_LOG, VALID_INPUT_CHANS, WATCHLIST_CHAN
-from utils import get_mes_link
 from re import search, IGNORECASE
 
 async def check_censor(message):
@@ -33,7 +32,7 @@ async def censor_message(message):
     syslog_chan = discord.utils.get(message.guild.channels, id=SYS_LOG)
     log_message = await syslog_chan.send(censor_mes)
 
-    mod_mes = f"Uh oh, looks like the censor might've been tripped.\n{get_mes_link(log_message)}"
+    mod_mes = f"Uh oh, looks like the censor might've been tripped.\n{log_message.jump_url}"
     chan = discord.utils.get(message.guild.channels, id=CENSOR_CHAN)
     await chan.send(mod_mes)
 
@@ -47,6 +46,6 @@ async def censor_message(message):
 async def watch_message(message):
     # These are words whose usage we don't want to delete, but we should post to the watch channel
     watch_chan = discord.utils.get(message.guild.channels, id=WATCHLIST_CHAN)
-    censor_mes = f"I've flagged a message from **{message.author.name}#{message.author.discriminator}** (ID: {message.author.id}) in <#{message.channel.id}>: `{message.content}`\n{get_mes_link(message)}"
+    censor_mes = f"I've flagged a message from **{message.author.name}#{message.author.discriminator}** (ID: {message.author.id}) in <#{message.channel.id}>: `{message.content}`\n{message.jump_url}"
 
     await watch_chan.send(censor_mes)

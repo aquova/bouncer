@@ -198,10 +198,10 @@ Inputs:
     m: Discord message object
 """
 async def preview(m, _):
-    mes = utils.strip(m.content)
-    # This isn't a command, but we'll co-opt the function
-    state_raw = utils.get_command(mes)
-    mes = utils.strip(mes)
+    mes = utils.strip_words(m.content, 1)
+
+    state_raw = utils.get_first_word(mes)
+    mes = utils.strip_words(mes, 1)
 
     state = None
     if state_raw == "ban":
@@ -268,7 +268,7 @@ async def removeError(m, edit):
 
     try:
         index = int(mes.split()[0]) - 1
-        mes = utils.strip(mes)
+        mes = utils.strip_words(mes, 1)
     except (IndexError, ValueError):
         index = -1
 
@@ -387,7 +387,7 @@ async def reply(m, _):
         return
     try:
         content = utils.combineMessage(m)
-        mes = utils.removeCommand(content)
+        mes = utils.strip_words(content, 2)
 
         # Don't allow blank messages
         if len(mes) == 0 or mes.isspace():

@@ -1,5 +1,5 @@
 # Bouncer
-# Written by aquova, 2018-2020
+# Written by aquova, 2018-2021
 # https://github.com/aquova/bouncer
 
 import discord, asyncio, os, subprocess, sys
@@ -342,7 +342,7 @@ async def on_message(message):
 
         # Functions in this category are those where we care that the user has the correct roles, but don't care about which channel they're invoked in
         elif utils.checkRoles(message.author, config.VALID_ROLES) and message.channel.id in config.VALID_INPUT_CHANS:
-            cmd = utils.get_command(message.content)
+            cmd = utils.get_first_word(message.content)
             if cmd in FUNC_DICT:
                 func = FUNC_DICT[cmd][0]
                 arg = FUNC_DICT[cmd][1]

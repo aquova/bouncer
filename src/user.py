@@ -1,9 +1,5 @@
 import discord, re
-import db
-
-def remove_command(mes):
-    request = mes.split()[1:]
-    return " ".join(request)
+import db, utils
 
 class UserLookup:
     def __init__(self):
@@ -39,9 +35,7 @@ class UserLookup:
     def check_username(self, message):
         # Usernames can have spaces, so need to throw away the first word (the command),
         # and then everything after the discriminator
-        # testUsername = remove_command(message.content)
-        testUsername = message.content.split()[1:]
-        testUsername = " ".join(testUsername)
+        testUsername = utils.strip_words(message.content, 1)
 
         try:
             # Some people *coughs* like to put a '@' at beginning of the username.
@@ -68,7 +62,7 @@ class UserLookup:
             return None
 
     def check_id(self, message):
-        content = remove_command(message.content)
+        content = utils.strip_words(message.content, 1)
 
         try:
             # If ping is typed out by user using their ID, it doesn't count as a mention

@@ -3,22 +3,15 @@
 import discord, time, sqlite3
 from config import DATABASE_PATH, LogTypes
 
-# Removes the first word of a string
-def strip(m):
-    tmp = m.split()[1:]
+def strip_words(m, num):
+    tmp = m.split()[num:]
     return " ".join(tmp)
 
-def get_command(m):
+def get_first_word(m):
     try:
         return m.split()[0]
     except IndexError:
         return ""
-
-# Removes the '$command <user>' to get just the request
-# TODO: This is a bad name
-def removeCommand(m):
-    tmp = m.split()[2:]
-    return " ".join(tmp)
 
 def formatTime(t):
     # Input t is of the form: YYYY-MM-DD HH:MM:SS.SSSSSS
@@ -45,7 +38,7 @@ def parseMessage(message, username):
     m = " ".join(message.split()[1:])
     if m.startswith(username):
         return m[len(username)+1:]
-    return removeCommand(message)
+    return strip_words(message, 2)
 
 def getTimeDelta(t1, t2):
     # t1 should be larger than t2

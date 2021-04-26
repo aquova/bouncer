@@ -30,7 +30,7 @@ def checkRoles(user, validRoles):
                     return True
         return False
     except AttributeError as e:
-        print(f"The user {user.name}#{user.discriminator} had this issue {e}")
+        print(f"The user {str(user)} had this issue {e}")
 
 # Since usernames can have spaces, first check if it's a username, otherwise just cut off first word as normal
 # 'user' will either be the correct username, or an ID.

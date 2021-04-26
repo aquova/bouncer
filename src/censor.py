@@ -28,7 +28,7 @@ async def censor_message(message):
 
     await message.delete()
 
-    censor_mes = f"**{message.author.name}#{message.author.discriminator}** (ID: {message.author.id}) had a message removed by the censor in <#{message.channel.id}>: `{message.content}`"
+    censor_mes = f"**{str(message.author)}** (ID: {message.author.id}) had a message removed by the censor in <#{message.channel.id}>: `{message.content}`"
     syslog_chan = discord.utils.get(message.guild.channels, id=SYS_LOG)
     log_message = await syslog_chan.send(censor_mes)
 
@@ -46,6 +46,6 @@ async def censor_message(message):
 async def watch_message(message):
     # These are words whose usage we don't want to delete, but we should post to the watch channel
     watch_chan = discord.utils.get(message.guild.channels, id=WATCHLIST_CHAN)
-    censor_mes = f"I've flagged a message from **{message.author.name}#{message.author.discriminator}** (ID: {message.author.id}) in <#{message.channel.id}>: `{message.content}`\n{message.jump_url}"
+    censor_mes = f"I've flagged a message from **{str(message.author)}** (ID: {message.author.id}) in <#{message.channel.id}>: `{message.content}`\n{message.jump_url}"
 
     await watch_chan.send(censor_mes)

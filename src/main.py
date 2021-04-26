@@ -51,7 +51,7 @@ Delete message
 A helper function that deletes and logs the given message
 """
 async def delete_message_helper(message):
-    mes = f"**{message.author.name}#{message.author.discriminator}** deleted in <#{message.channel.id}>: `{message.content}`"
+    mes = f"**{str(message.author)}** deleted in <#{message.channel.id}>: `{message.content}`"
     # Adds URLs for any attachments that were included in deleted message
     # These will likely become invalid, but it's nice to note them anyway
     if message.attachments != []:
@@ -95,10 +95,10 @@ async def on_member_update(before, after):
     if before.nick != after.nick:
         # If they don't have an ending nickname, they reset to their actual username
         if after.nick == None:
-            mes = f"**{after.name}#{after.discriminator}** has reset their username"
+            mes = f"**{str(after)}** has reset their username"
         else:
             new = after.nick
-            mes = f"**{after.name}#{after.discriminator}** is now known as `{after.nick}`"
+            mes = f"**{str(after)}** is now known as `{after.nick}`"
         chan = client.get_channel(config.SYS_LOG)
         await chan.send(mes)
     # If role quantity has changed
@@ -109,11 +109,11 @@ async def on_member_update(before, after):
         mes = ""
         if removed:
             removed_str = ', '.join(removed)
-            mes += f"**{after.name}#{after.discriminator}** had the role(s) `{removed_str}` removed.\n"
+            mes += f"**{str(after)}** had the role(s) `{removed_str}` removed.\n"
 
         if added:
             added_str = ', '.join(added)
-            mes += f"**{after.name}#{after.discriminator}** had the role(s) `{added_str}` added."
+            mes += f"**{str(after)}** had the role(s) `{added_str}` added."
 
         chan = client.get_channel(config.SYS_LOG)
         if mes != "":
@@ -135,7 +135,7 @@ async def on_member_ban(server, member):
     watch.remove_user(member.id)
 
     # Keep a record of their banning, in case the log is made after they're no longer here
-    username = f"{member.name}#{member.discriminator}"
+    username = f"{str(member)}"
     commands.ul.add_ban(member.id, username)
     mes = f"**{username} ({member.id})** has been banned."
     chan = client.get_channel(config.SYS_LOG)
@@ -156,7 +156,7 @@ async def on_member_remove(member):
     commands.am.remove_entry(member.id)
 
     # Remember that the user has left, in case we want to log after they're gone
-    username = f"{member.name}#{member.discriminator}"
+    username = f"{str(member)}"
     commands.ul.add_ban(member.id, username)
     mes = f"**{username} ({member.id})** has left"
     chan = client.get_channel(config.SYS_LOG)
@@ -211,7 +211,7 @@ async def on_message_edit(before, after):
 
     try:
         chan = client.get_channel(config.SYS_LOG)
-        mes = f"**{before.author.name}#{before.author.discriminator}** modified in <#{before.channel.id}>: `{before.content}`"
+        mes = f"**{str(before.author)}** modified in <#{before.channel.id}>: `{before.content}`"
 
         # Break into seperate parts if we're going to cross character limit
         if len(mes) + len(after.content) > (config.CHAR_LIMIT + 5):
@@ -241,7 +241,7 @@ async def on_member_join(member):
     if config.DEBUG_BOT:
         return
 
-    mes = f"**{member.name}#{member.discriminator} ({member.id})** has joined"
+    mes = f"**{str(member)} ({member.id})** has joined"
     chan = client.get_channel(config.SYS_LOG)
     await chan.send(mes)
 
@@ -257,11 +257,11 @@ async def on_voice_state_update(member, before, after):
         return
 
     if after.channel == None:
-        mes = f"**{member.name}#{member.discriminator}** has left voice channel {before.channel.name}"
+        mes = f"**{str(member)}** has left voice channel {before.channel.name}"
         chan = client.get_channel(config.SYS_LOG)
         await chan.send(mes)
     elif before.channel == None:
-        mes = f"**{member.name}#{member.discriminator}** has joined voice channel {after.channel.name}"
+        mes = f"**{str(member)}** has joined voice channel {after.channel.name}"
         chan = client.get_channel(config.SYS_LOG)
         await chan.send(mes)
 
@@ -304,7 +304,7 @@ async def on_message(message):
             commands.am.set_recent_reply(message.author)
 
             content = utils.combineMessage(message)
-            mes = f"**{message.author.name}#{message.author.discriminator}** (ID: {message.author.id}): {content}"
+            mes = f"**{str(message.author)}** (ID: {message.author.id}): {content}"
 
             # If not blocked, send message along to specified mod channel
             if not commands.bu.is_in_blocklist(message.author.id):
@@ -312,7 +312,7 @@ async def on_message(message):
                 logMes = await chan.send(mes)
 
                 # Lets also add/update them in answering machine
-                username = f"{message.author.name}#{message.author.discriminator}"
+                username = f"{str(message.author)}"
 
                 mes_entry = AnsweringMachineEntry(username, message.created_at, content, logMes.jump_url)
                 commands.am.update_entry(message.author.id, mes_entry)
@@ -328,14 +328,13 @@ async def on_message(message):
         if watching:
             chan = client.get_channel(config.WATCHLIST_CHAN)
             content = utils.combineMessage(message)
-            mes = f"**{message.author.name}#{message.author.discriminator}** (ID: {message.author.id}) said in <#{message.channel.id}>: {content}"
+            mes = f"**{str(message.author)}** (ID: {message.author.id}) said in <#{message.channel.id}>: {content}"
             await chan.send(mes)
 
         # If a user pings bouncer, log into mod channel
         if client.user in message.mentions:
             content = utils.combineMessage(message)
-            mes = f"**{message.author.name}#{message.author.discriminator}** (ID: {message.author.id}) pinged me in <#{message.channel.id}>: {content}"
-            mes += f"\n{message.jump_url}"
+            mes = f"**{str(message.author)}** (ID: {message.author.id}) pinged me in <#{message.channel.id}>: {content}\n{message.jump_url}"
             chan = client.get_channel(config.MAILBOX)
             await chan.send(mes)
 

@@ -84,7 +84,7 @@ class UserLookup:
         member = self.fetch_user(server, userid)
         if member != None:
             # If we found a member in the server, simply format the username
-            username = f"{member.name}#{member.discriminator}"
+            username = f"{str(member)}"
 
         if username == None:
             # If user has recently left, use that username

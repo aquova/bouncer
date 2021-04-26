@@ -394,7 +394,7 @@ async def reply(m, _):
             await m.channel.send("...That message was blank. Please send an actual message")
             return
 
-        uname = f"{u.name}#{u.discriminator}"
+        uname = f"{str(u)}"
         DMchan = u.dm_channel
         # If first DMing, need to create DM channel
         if DMchan == None:

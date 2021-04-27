@@ -1,5 +1,5 @@
 import db
-from user import UserLookup
+from commonbot.user import UserLookup
 
 class Watcher:
     def __init__(self):

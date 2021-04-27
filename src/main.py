@@ -4,12 +4,14 @@
 
 import discord, asyncio, os, subprocess, sys
 from dataclasses import dataclass
-import commands, config, db, visualize, utils
+import commands, config, db, visualize
+import commonbot.utils
 from censor import check_censor
 from config import LogTypes
-from timekeep import Timekeeper
 from waiting import AnsweringMachineEntry
 from watcher import Watcher
+
+from commonbot.timekeep import Timekeeper
 
 intents = discord.Intents.default()
 intents.members = True
@@ -303,7 +305,7 @@ async def on_message(message):
             # Store who the most recent user was, for $reply ^
             commands.am.set_recent_reply(message.author)
 
-            content = utils.combineMessage(message)
+            content = commonbot.utils.combineMessage(message)
             mes = f"**{str(message.author)}** (ID: {message.author.id}): {content}"
 
             # If not blocked, send message along to specified mod channel
@@ -327,20 +329,20 @@ async def on_message(message):
         watching = watch.should_note(message.author.id)
         if watching:
             chan = client.get_channel(config.WATCHLIST_CHAN)
-            content = utils.combineMessage(message)
+            content = commonbot.utils.combineMessage(message)
             mes = f"**{str(message.author)}** (ID: {message.author.id}) said in <#{message.channel.id}>: {content}"
             await chan.send(mes)
 
         # If a user pings bouncer, log into mod channel
         if client.user in message.mentions:
-            content = utils.combineMessage(message)
+            content = commonbot.utils.combineMessage(message)
             mes = f"**{str(message.author)}** (ID: {message.author.id}) pinged me in <#{message.channel.id}>: {content}\n{message.jump_url}"
             chan = client.get_channel(config.MAILBOX)
             await chan.send(mes)
 
         # Functions in this category are those where we care that the user has the correct roles, but don't care about which channel they're invoked in
-        elif utils.checkRoles(message.author, config.VALID_ROLES) and message.channel.id in config.VALID_INPUT_CHANS:
-            cmd = utils.get_first_word(message.content)
+        elif commonbot.utils.checkRoles(message.author, config.VALID_ROLES) and message.channel.id in config.VALID_INPUT_CHANS:
+            cmd = commonbot.utils.get_first_word(message.content)
             if cmd in FUNC_DICT:
                 func = FUNC_DICT[cmd][0]
                 arg = FUNC_DICT[cmd][1]

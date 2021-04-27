@@ -1,6 +1,6 @@
 import datetime, discord
 from dataclasses import dataclass
-from utils import getTimeDelta
+from commonbot.utils import getTimeDelta
 
 @dataclass
 class AnsweringMachineEntry:

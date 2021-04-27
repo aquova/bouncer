@@ -1,9 +1,10 @@
 import discord, datetime
-import config, db, utils
+import config, db
+import commonbot.utils
 from blocks import BlockedUsers
 from config import LogTypes
 from waiting import AnsweringMachine
-from user import UserLookup
+from commonbot.user import UserLookup
 
 ul = UserLookup()
 bu = BlockedUsers()
@@ -120,8 +121,8 @@ async def logUser(m, state):
         await m.channel.send("I wasn't able to find a username for that user, but whatever, I'll do it anyway.")
 
     # Generate log message, adding URLs of any attachments
-    content = utils.combineMessage(m)
-    mes = utils.parseMessage(content, username)
+    content = commonbot.utils.combineMessage(m)
+    mes = commonbot.utils.parseMessage(content, username)
 
     # If they didn't give a message, abort
     if mes == "":
@@ -131,9 +132,9 @@ async def logUser(m, state):
     # Update records for graphing
     import visualize
     if state == LogTypes.BAN:
-        visualize.updateCache(m.author.name, (1, 0), utils.formatTime(currentTime))
+        visualize.updateCache(m.author.name, (1, 0), commonbot.utils.formatTime(currentTime))
     elif state == LogTypes.WARN:
-        visualize.updateCache(m.author.name, (0, 1), utils.formatTime(currentTime))
+        visualize.updateCache(m.author.name, (0, 1), commonbot.utils.formatTime(currentTime))
     elif state == LogTypes.UNBAN:
         await m.channel.send("Removing all old logs for unbanning")
         db.clear_user_logs(userid)
@@ -198,10 +199,10 @@ Inputs:
     m: Discord message object
 """
 async def preview(m, _):
-    mes = utils.strip_words(m.content, 1)
+    mes = commonbot.utils.strip_words(m.content, 1)
 
-    state_raw = utils.get_first_word(mes)
-    mes = utils.strip_words(mes, 1)
+    state_raw = commonbot.utils.get_first_word(mes)
+    mes = commonbot.utils.strip_words(mes, 1)
 
     state = None
     if state_raw == "ban":
@@ -258,7 +259,7 @@ async def removeError(m, edit):
         username = str(userid)
 
     # If editing, and no message specified, abort.
-    mes = utils.parseMessage(m.content, username)
+    mes = commonbot.utils.parseMessage(m.content, username)
     if mes == "":
         if edit:
             await m.channel.send("You need to specify an edit message")
@@ -268,7 +269,7 @@ async def removeError(m, edit):
 
     try:
         index = int(mes.split()[0]) - 1
-        mes = utils.strip_words(mes, 1)
+        mes = commonbot.utils.strip_words(mes, 1)
     except (IndexError, ValueError):
         index = -1
 
@@ -304,9 +305,9 @@ async def removeError(m, edit):
         out += str(item)
 
         if item.log_type == LogTypes.BAN:
-            visualize.updateCache(item.staff, (-1, 0), utils.formatTime(item.timestamp))
+            visualize.updateCache(item.staff, (-1, 0), commonbot.utils.formatTime(item.timestamp))
         elif item.log_type == LogTypes.WARN:
-            visualize.updateCache(item.staff, (0, -1), utils.formatTime(item.timestamp))
+            visualize.updateCache(item.staff, (0, -1), commonbot.utils.formatTime(item.timestamp))
         await m.channel.send(out)
 
         # Search logging channel for matching post, and remove it
@@ -386,8 +387,8 @@ async def reply(m, _):
         await m.channel.send("Sorry, but they need to be in the server for me to message them")
         return
     try:
-        content = utils.combineMessage(m)
-        mes = utils.strip_words(content, 2)
+        content = commonbot.utils.combineMessage(m)
+        mes = commonbot.utils.strip_words(content, 2)
 
         # Don't allow blank messages
         if len(mes) == 0 or mes.isspace():

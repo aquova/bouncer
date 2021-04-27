@@ -2,7 +2,7 @@ import discord, datetime
 import config, db
 import commonbot.utils
 from blocks import BlockedUsers
-from config import LogTypes
+from config import LogTypes, CMD_PREFIX
 from waiting import AnsweringMachine
 from commonbot.user import UserLookup
 
@@ -18,27 +18,27 @@ async def send_help_mes(m, _):
     dmWarns = "On" if config.DM_WARN else "Off"
     dmBans = "On" if config.DM_BAN else "Off"
     helpMes = (
-        "Issue a warning: `$warn <user> <message>`\n"
-        "Log a ban: `$ban <user> <reason>`\n"
-        "Log an unbanning: `$unban <user> <reason>`\n"
-        "Log a kick: `$kick <user> <reason>`\n"
-        "Preview what will be sent to the user `$preview <warn/ban/kick> <reason>`\n"
+        f"Issue a warning: `{CMD_PREFIX}warn <user> <message>`\n"
+        f"Log a ban: `{CMD_PREFIX}ban <user> <reason>`\n"
+        f"Log an unbanning: `{CMD_PREFIX}unban <user> <reason>`\n"
+        f"Log a kick: `{CMD_PREFIX}kick <user> <reason>`\n"
+        f"Preview what will be sent to the user `{CMD_PREFIX}preview <warn/ban/kick> <reason>`\n"
         "\n"
-        "Search for a user: `$search <user>`\n"
-        "Create a note about a user: `$note <user> <message>`\n"
-        "Remove a user's log: `$remove <user> <index(optional)>`\n"
-        "Edit a user's note: `$edit <user> <index(optional)> <new_message>`\n"
+        f"Search for a user: `{CMD_PREFIX}search <user>`\n"
+        f"Create a note about a user: `{CMD_PREFIX}note <user> <message>`\n"
+        f"Remove a user's log: `{CMD_PREFIX}remove <user> <index(optional)>`\n"
+        f"Edit a user's note: `{CMD_PREFIX}edit <user> <index(optional)> <new_message>`\n"
         "\n"
-        "Reply to a user in DMs: `$reply USERID` - To reply to the most recent DM: `$reply ^`\n"
-        "View users waiting for a reply: `$waiting`. Clear the list with `$clear`\n"
-        "Stop a user from sending DMs to us: `$block/$unblock <user>`\n"
+        f"Reply to a user in DMs: `{CMD_PREFIX}reply USERID` - To reply to the most recent DM: `{CMD_PREFIX}reply ^`\n"
+        f"View users waiting for a reply: `{CMD_PREFIX}waiting`. Clear the list with `{CMD_PREFIX}clear`\n"
+        f"Stop a user from sending DMs to us: `{CMD_PREFIX}block/{CMD_PREFIX}unblock <user>`\n"
         "\n"
-        "Watch a user's every move: `$watch <user>`\n"
-        "Remove user from watch list: `$unwatch <user>`\n"
-        "List watched users: `$watchlist`\n"
+        f"Watch a user's every move: `{CMD_PREFIX}watch <user>`\n"
+        f"Remove user from watch list: `{CMD_PREFIX}unwatch <user>`\n"
+        f"List watched users: `{CMD_PREFIX}watchlist`\n"
         "\n"
-        "Plot warn/ban stats: `$graph`\n"
-        "View bot uptime: `$uptime`\n"
+        f"Plot warn/ban stats: `{CMD_PREFIX}graph`\n"
+        f"View bot uptime: `{CMD_PREFIX}uptime`\n"
         "\n"
         f"DMing users when they are banned is `{dmBans}`\n"
         f"DMing users when they are warned is `{dmWarns}`"
@@ -57,7 +57,7 @@ Input:
 async def userSearch(m, _):
     userid = ul.parse_mention(m)
     if userid == None:
-        await m.channel.send("I wasn't able to find a user anywhere based on that message. `$search USER`")
+        await m.channel.send(f"I wasn't able to find a user anywhere based on that message. `{CMD_PREFIX}search USER`")
         return
 
     # Get database values for given user
@@ -101,9 +101,9 @@ async def logUser(m, state):
     userid = ul.parse_mention(m)
     if userid == None:
         if state == LogTypes.NOTE:
-            await m.channel.send("I wasn't able to understand that message: `$note USER`")
+            await m.channel.send(f"I wasn't able to understand that message: `{CMD_PREFIX}note USER`")
         else:
-            await m.channel.send("I wasn't able to understand that message: `$log USER`")
+            await m.channel.send(f"I wasn't able to understand that message: `{CMD_PREFIX}log USER`")
         return
 
     # Calculate value for 'num' category in database
@@ -249,9 +249,9 @@ async def removeError(m, edit):
     userid = ul.parse_mention(m)
     if userid == None:
         if edit:
-            await m.channel.send("I wasn't able to understand that message: `$remove USER [num] new_message`")
+            await m.channel.send(f"I wasn't able to understand that message: `{CMD_PREFIX}remove USER [num] new_message`")
         else:
-            await m.channel.send("I wasn't able to understand that message: `$remove USER [num]`")
+            await m.channel.send(f"I wasn't able to understand that message: `{CMD_PREFIX}remove USER [num]`")
         return
 
     username = ul.fetch_username(m.guild, userid)
@@ -333,9 +333,9 @@ async def blockUser(m, block):
     userid = ul.parse_mention(m)
     if userid == None:
         if block:
-            await m.channel.send("I wasn't able to understand that message: `$block USER`")
+            await m.channel.send(f"I wasn't able to understand that message: `{CMD_PREFIX}block USER`")
         else:
-            await m.channel.send("I wasn't able to understand that message: `$unblock USER`")
+            await m.channel.send(f"I wasn't able to understand that message: `{CMD_PREFIX}unblock USER`")
         return
 
     username = ul.fetch_username(m.guild, userid)
@@ -378,7 +378,7 @@ async def reply(m, _):
         # Otherwise, attempt to get object for the specified user
         userid = ul.parse_mention(m)
         if userid == None:
-            await m.channel.send("I wasn't able to understand that message: `$reply USER`")
+            await m.channel.send(f"I wasn't able to understand that message: `{CMD_PREFIX}reply USER`")
             return
 
         u = ul.fetch_user(m.guild, userid)

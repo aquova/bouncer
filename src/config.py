@@ -24,6 +24,7 @@ with open(config_path) as config_file:
 # Set values from config file as constants
 DISCORD_KEY = cfg['discord']
 OWNER = cfg['owner']
+CMD_PREFIX = cfg['command_prefix']
 
 MAILBOX = cfg['channels']['mailbox']
 VALID_INPUT_CHANS = cfg['channels']['listening']

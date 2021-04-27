@@ -25,26 +25,26 @@ tk = Timekeeper()
 watch = Watcher()
 
 FUNC_DICT = {
-    "$ban":         [commands.logUser,              LogTypes.BAN],
-    "$block":       [commands.blockUser,            True],
-    "$clear":       [commands.am.clear_entries,     None],
-    "$edit":        [commands.removeError,          True],
-    "$graph":       [visualize.post_plots,          None],
-    "$help":        [commands.send_help_mes,        None],
-    "$kick":        [commands.logUser,              LogTypes.KICK],
-    "$note":        [commands.logUser,              LogTypes.NOTE],
-    "$preview":     [commands.preview,              None],
-    "$remove":      [commands.removeError,          False],
-    "$reply":       [commands.reply,                None],
-    "$search":      [commands.userSearch,           None],
-    "$unban":       [commands.logUser,              LogTypes.UNBAN],
-    "$unblock":     [commands.blockUser,            False],
-    "$uptime":      [tk.uptime,                     None],
-    "$waiting":     [commands.am.gen_waiting_list,  None],
-    "$warn":        [commands.logUser,              LogTypes.WARN],
-    "$watch":       [watch.watch_user,              None],
-    "$watchlist":   [watch.get_watchlist,           None],
-    "$unwatch":     [watch.unwatch_user,            None],
+    "ban":         [commands.logUser,              LogTypes.BAN],
+    "block":       [commands.blockUser,            True],
+    "clear":       [commands.am.clear_entries,     None],
+    "edit":        [commands.removeError,          True],
+    "graph":       [visualize.post_plots,          None],
+    "help":        [commands.send_help_mes,        None],
+    "kick":        [commands.logUser,              LogTypes.KICK],
+    "note":        [commands.logUser,              LogTypes.NOTE],
+    "preview":     [commands.preview,              None],
+    "remove":      [commands.removeError,          False],
+    "reply":       [commands.reply,                None],
+    "search":      [commands.userSearch,           None],
+    "unban":       [commands.logUser,              LogTypes.UNBAN],
+    "unblock":     [commands.blockUser,            False],
+    "uptime":      [tk.uptime,                     None],
+    "waiting":     [commands.am.gen_waiting_list,  None],
+    "warn":        [commands.logUser,              LogTypes.WARN],
+    "watch":       [watch.watch_user,              None],
+    "watchlist":   [watch.get_watchlist,           None],
+    "unwatch":     [watch.unwatch_user,            None],
 }
 
 """
@@ -283,7 +283,7 @@ async def on_message(message):
 
     try:
         # Allows the owner to enable debug mode
-        if message.content.startswith("$debug") and message.author.id == config.OWNER:
+        if message.content.startswith(f"{config.CMD_PREFIX}debug") and message.author.id == config.OWNER:
             if not config.DEBUG_BOT:
                 debugging = not debugging
                 txt = "enabled" if debugging else "disabled"
@@ -342,11 +342,13 @@ async def on_message(message):
 
         # Functions in this category are those where we care that the user has the correct roles, but don't care about which channel they're invoked in
         elif commonbot.utils.checkRoles(message.author, config.VALID_ROLES) and message.channel.id in config.VALID_INPUT_CHANS:
-            cmd = commonbot.utils.get_first_word(message.content)
-            if cmd in FUNC_DICT:
-                func = FUNC_DICT[cmd][0]
-                arg = FUNC_DICT[cmd][1]
-                await func(message, arg)
+            if message.content.startswith(config.CMD_PREFIX):
+                cmd = commonbot.utils.strip_prefix(message.content, config.CMD_PREFIX)
+                cmd = commonbot.utils.get_first_word(cmd)
+                if cmd in FUNC_DICT:
+                    func = FUNC_DICT[cmd][0]
+                    arg = FUNC_DICT[cmd][1]
+                    await func(message, arg)
     except discord.errors.HTTPException as e:
         print(traceback.format_exc())
         pass

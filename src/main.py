@@ -11,16 +11,16 @@ from config import LogTypes
 from waiting import AnsweringMachineEntry
 from watcher import Watcher
 
+from commonbot.debug import Debug
 from commonbot.timekeep import Timekeeper
 
 intents = discord.Intents.default()
 intents.members = True
 
-debugging = False
-
 # Initialize client and helper classes
 client = discord.Client(intents=intents)
 db.initialize()
+dbg = Debug(config.OWNER, config.CMD_PREFIX, config.DEBUG_BOT)
 tk = Timekeeper()
 watch = Watcher()
 
@@ -90,7 +90,7 @@ Occurs when a user updates an attribute (nickname, roles)
 @client.event
 async def on_member_update(before, after):
     # If debugging, don't process
-    if config.DEBUG_BOT:
+    if dbg.is_debug_bot():
         return
 
     # If nickname has changed
@@ -129,7 +129,7 @@ Occurs when a user is banned
 @client.event
 async def on_member_ban(server, member):
     # If debugging, don't process
-    if config.DEBUG_BOT:
+    if dbg.is_debug_bot():
         return
 
     # We can remove banned user from our answering machine and watch list (if they exist)
@@ -151,7 +151,7 @@ Occurs when a user leaves the server
 @client.event
 async def on_member_remove(member):
     # If debugging, don't process
-    if config.DEBUG_BOT:
+    if dbg.is_debug_bot():
         return
 
     # We can remove left users from our answering machine
@@ -172,7 +172,7 @@ Occurs when a user's message is deleted
 @client.event
 async def on_message_delete(message):
     # Ignore those pesky bots
-    if config.DEBUG_BOT or message.author.bot:
+    if dbg.is_debug_bot() or message.author.bot:
         return
 
     await delete_message_helper(message)
@@ -185,7 +185,7 @@ Occurs when a user's messages are bulk deleted, such as ban or kick
 @client.event
 async def on_bulk_message_delete(messages):
     # Ignore bots
-    if config.DEBUG_BOT or messages[0].author.bot:
+    if dbg.is_debug_bot() or messages[0].author.bot:
         return
 
     for message in messages:
@@ -199,7 +199,7 @@ Occurs when a user edits a message
 @client.event
 async def on_message_edit(before, after):
     # Ignore those pesky bots
-    if config.DEBUG_BOT or before.author.bot:
+    if dbg.is_debug_bot() or before.author.bot:
         return
 
     # Run edited message against censor.
@@ -240,7 +240,7 @@ Occurs when a user joins the server
 @client.event
 async def on_member_join(member):
     # If debugging, don't process
-    if config.DEBUG_BOT:
+    if dbg.is_debug_bot():
         return
 
     mes = f"**{str(member)} ({member.id})** has joined"
@@ -255,7 +255,7 @@ Occurs when a user joins/leaves an audio channel
 @client.event
 async def on_voice_state_update(member, before, after):
     # Ignore those pesky bots
-    if config.DEBUG_BOT or member.bot:
+    if dbg.is_debug_bot() or member.bot:
         return
 
     if after.channel == None:
@@ -275,27 +275,17 @@ More or less the main function
 """
 @client.event
 async def on_message(message):
-    global debugging
-
     # Bouncer should not react to its own messages
     if message.author.id == client.user.id:
         return
 
     try:
         # Allows the owner to enable debug mode
-        if message.content.startswith(f"{config.CMD_PREFIX}debug") and message.author.id == config.OWNER:
-            if not config.DEBUG_BOT:
-                debugging = not debugging
-                txt = "enabled" if debugging else "disabled"
-                await message.channel.send(f"Debugging {txt}")
-                return
-
-        # If debugging, the real bot should ignore the owner
-        if debugging and message.author.id == config.OWNER:
+        if dbg.check_toggle(message):
+            await dbg.toggle_debug(message)
             return
-        # The debug bot should only ever obey the owner
-        # Debug bot doesn't care about debug status. If it's running, it assumes it's debugging
-        elif config.DEBUG_BOT and message.author.id != config.OWNER:
+
+        if dbg.should_ignore_message(message):
             return
 
         # If bouncer detects a private DM sent to it

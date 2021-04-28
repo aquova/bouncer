@@ -1,4 +1,5 @@
-FROM aquova/discord.py:1.5.1-2
+# Run with 'docker run -v $(pwd):/bouncer -it bouncer sh'
+FROM aquova/commonbot:1.0.0
 
 RUN apk update && apk add \
     freetype-dev

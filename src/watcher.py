@@ -15,7 +15,7 @@ class Watcher:
             self.watchlist.remove(id)
 
     async def watch_user(self, mes, _):
-        userid = self.ul.parse_mention(mes)
+        userid = self.ul.parse_id(mes)
         if userid == None:
             await mes.channel.send("I was unable to find a user in that message")
             return
@@ -27,7 +27,7 @@ class Watcher:
         await mes.channel.send(f"{username} has been added to the watch list. :spy:")
 
     async def unwatch_user(self, mes, _):
-        userid = self.ul.parse_mention(mes)
+        userid = self.ul.parse_id(mes)
         if userid == None:
             await mes.channel.send("I was unable to find a user in that message")
             return

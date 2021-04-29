@@ -4,7 +4,7 @@ import commonbot.utils
 from blocks import BlockedUsers
 from config import LogTypes, CMD_PREFIX
 from waiting import AnsweringMachine
-from commonbot.user import UserLookup
+from commonbot.user import UserLookup, fetch_user
 
 ul = UserLookup()
 bu = BlockedUsers()
@@ -55,7 +55,7 @@ Input:
     m: Discord message object
 """
 async def userSearch(m, _):
-    userid = ul.parse_mention(m)
+    userid = ul.parse_id(m)
     if userid == None:
         await m.channel.send(f"I wasn't able to find a user anywhere based on that message. `{CMD_PREFIX}search USER`")
         return
@@ -98,7 +98,7 @@ Inputs:
 """
 async def logUser(m, state):
     # Attempt to generate user object
-    userid = ul.parse_mention(m)
+    userid = ul.parse_id(m)
     if userid == None:
         if state == LogTypes.NOTE:
             await m.channel.send(f"I wasn't able to understand that message: `{CMD_PREFIX}note USER`")
@@ -162,7 +162,7 @@ async def logUser(m, state):
 
         try:
             # Send a DM to the user
-            u = ul.fetch_user(m.guild, userid)
+            u = fetch_user(m.guild, userid)
             if u != None:
                 DMchan = u.dm_channel
                 # If first time DMing, need to create channel
@@ -246,7 +246,7 @@ Input:
     edit: Boolean, signifies if this is a deletion (false) or an edit (true)
 """
 async def removeError(m, edit):
-    userid = ul.parse_mention(m)
+    userid = ul.parse_id(m)
     if userid == None:
         if edit:
             await m.channel.send(f"I wasn't able to understand that message: `{CMD_PREFIX}remove USER [num] new_message`")
@@ -330,7 +330,7 @@ Input:
     block: Boolean, true for block, false for unblock
 """
 async def blockUser(m, block):
-    userid = ul.parse_mention(m)
+    userid = ul.parse_id(m)
     if userid == None:
         if block:
             await m.channel.send(f"I wasn't able to understand that message: `{CMD_PREFIX}block USER`")
@@ -376,12 +376,12 @@ async def reply(m, _):
             return
     else:
         # Otherwise, attempt to get object for the specified user
-        userid = ul.parse_mention(m)
+        userid = ul.parse_id(m)
         if userid == None:
             await m.channel.send(f"I wasn't able to understand that message: `{CMD_PREFIX}reply USER`")
             return
 
-        u = ul.fetch_user(m.guild, userid)
+        u = fetch_user(m.guild, userid)
     # If we couldn't find anyone, then they aren't in the server, and can't be DMed
     if u == None:
         await m.channel.send("Sorry, but they need to be in the server for me to message them")

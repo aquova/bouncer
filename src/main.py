@@ -303,10 +303,11 @@ async def on_message(message):
                 chan = client.get_channel(config.MAILBOX)
                 logMes = await chan.send(mes)
 
-                # Lets also add/update them in answering machine
-                username = f"{str(message.author)}"
+                # Send them a message so they know something actually happened
+                await message.channel.send("Your message has been forwarded!")
 
-                mes_entry = AnsweringMachineEntry(username, message.created_at, content, logMes.jump_url)
+                # Lets also add/update them in answering machine
+                mes_entry = AnsweringMachineEntry(f"{str(message.author)}", message.created_at, content, logMes.jump_url)
                 commands.am.update_entry(message.author.id, mes_entry)
             return
 

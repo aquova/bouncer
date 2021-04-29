@@ -72,7 +72,7 @@ async def userSearch(m, _):
         return
 
     # Format output message
-    out = f"User {username} was found with the following infractions\n"
+    out = f"User {username} (ID: {userid}) was found with the following infractions\n"
     for index, item in enumerate(search_results):
         # Enumerate each item
         n = f"{index + 1}. "

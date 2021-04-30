@@ -53,7 +53,7 @@ Delete message
 A helper function that deletes and logs the given message
 """
 async def delete_message_helper(message):
-    mes = f"**{str(message.author)}** deleted in <#{message.channel.id}>: `{message.content}`"
+    mes = f":no_mobile_phones: **{str(message.author)}** deleted in <#{message.channel.id}>: `{message.content}`"
     # Adds URLs for any attachments that were included in deleted message
     # These will likely become invalid, but it's nice to note them anyway
     if message.attachments != []:
@@ -97,10 +97,10 @@ async def on_member_update(before, after):
     if before.nick != after.nick:
         # If they don't have an ending nickname, they reset to their actual username
         if after.nick == None:
-            mes = f"**{str(after)}** has reset their username"
+            mes = f"**:spy: {str(after)}** has reset their username"
         else:
             new = after.nick
-            mes = f"**{str(after)}** is now known as `{after.nick}`"
+            mes = f"**:spy: {str(after)}** is now known as `{after.nick}`"
         chan = client.get_channel(config.SYS_LOG)
         await chan.send(mes)
     # If role quantity has changed
@@ -111,11 +111,11 @@ async def on_member_update(before, after):
         mes = ""
         if removed:
             removed_str = ', '.join(removed)
-            mes += f"**{str(after)}** had the role(s) `{removed_str}` removed.\n"
+            mes += f":no_entry_sign: **{str(after)}** had the role(s) `{removed_str}` removed.\n"
 
         if added:
             added_str = ', '.join(added)
-            mes += f"**{str(after)}** had the role(s) `{added_str}` added."
+            mes += f":new: **{str(after)}** had the role(s) `{added_str}` added."
 
         chan = client.get_channel(config.SYS_LOG)
         if mes != "":
@@ -139,7 +139,7 @@ async def on_member_ban(server, member):
     # Keep a record of their banning, in case the log is made after they're no longer here
     username = f"{str(member)}"
     commands.ul.add_ban(member.id, username)
-    mes = f"**{username} ({member.id})** has been banned."
+    mes = f":newspaper2: **{username} ({member.id})** has been banned."
     chan = client.get_channel(config.SYS_LOG)
     await chan.send(mes)
 
@@ -160,7 +160,7 @@ async def on_member_remove(member):
     # Remember that the user has left, in case we want to log after they're gone
     username = f"{str(member)}"
     commands.ul.add_ban(member.id, username)
-    mes = f"**{username} ({member.id})** has left"
+    mes = f":wave: **{username} ({member.id})** has left"
     chan = client.get_channel(config.SYS_LOG)
     await chan.send(mes)
 
@@ -213,7 +213,7 @@ async def on_message_edit(before, after):
 
     try:
         chan = client.get_channel(config.SYS_LOG)
-        mes = f"**{str(before.author)}** modified in <#{before.channel.id}>: `{before.content}`"
+        mes = f":pencil: **{str(before.author)}** modified in <#{before.channel.id}>: `{before.content}`"
 
         # Break into seperate parts if we're going to cross character limit
         if len(mes) + len(after.content) > (config.CHAR_LIMIT + 5):
@@ -243,7 +243,7 @@ async def on_member_join(member):
     if dbg.is_debug_bot():
         return
 
-    mes = f"**{str(member)} ({member.id})** has joined"
+    mes = f":confetti_ball: **{str(member)} ({member.id})** has joined"
     chan = client.get_channel(config.SYS_LOG)
     await chan.send(mes)
 
@@ -259,11 +259,11 @@ async def on_voice_state_update(member, before, after):
         return
 
     if after.channel == None:
-        mes = f"**{str(member)}** has left voice channel {before.channel.name}"
+        mes = f":mute: **{str(member)}** has left voice channel {before.channel.name}"
         chan = client.get_channel(config.SYS_LOG)
         await chan.send(mes)
     elif before.channel == None:
-        mes = f"**{str(member)}** has joined voice channel {after.channel.name}"
+        mes = f":loud_sound: **{str(member)}** has joined voice channel {after.channel.name}"
         chan = client.get_channel(config.SYS_LOG)
         await chan.send(mes)
 

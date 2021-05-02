@@ -1,5 +1,5 @@
 # Run with 'docker run -v $(pwd):/bouncer -it bouncer sh'
-FROM aquova/commonbot:1.1.0
+FROM aquova/commonbot:1.1.1
 
 RUN apk update && apk add \
     freetype-dev

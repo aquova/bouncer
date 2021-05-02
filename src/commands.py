@@ -46,6 +46,18 @@ async def send_help_mes(m, _):
 
     await m.channel.send(helpMes)
 
+def lookup_username(server, uid):
+    username = ul.fetch_username(server, uid)
+
+    if not username:
+        check_db =  db.search(userid)
+        if check_db != []:
+            username = check_db[-1].name
+        else:
+            username = "???"
+
+    return username
+
 """
 User Search
 
@@ -62,7 +74,7 @@ async def userSearch(m, _):
 
     # Get database values for given user
     search_results = db.search(userid)
-    username = ul.fetch_username(m.guild, userid)
+    username = lookup_username(m.guild, userid)
 
     if search_results == []:
         if username != None:
@@ -115,7 +127,7 @@ async def logUser(m, state):
     currentTime = datetime.datetime.utcnow()
 
     # Attempt to fetch the username for the user
-    username = ul.fetch_username(m.guild, userid)
+    username = lookup_username(m.guild, userid)
     if username == None:
         username = "ID: " + str(userid)
         await m.channel.send("I wasn't able to find a username for that user, but whatever, I'll do it anyway.")
@@ -254,7 +266,7 @@ async def removeError(m, edit):
             await m.channel.send(f"I wasn't able to understand that message: `{CMD_PREFIX}remove USER [num]`")
         return
 
-    username = ul.fetch_username(m.guild, userid)
+    username = lookup_username(m.guild, userid)
     if username == None:
         username = str(userid)
 
@@ -338,7 +350,7 @@ async def blockUser(m, block):
             await m.channel.send(f"I wasn't able to understand that message: `{CMD_PREFIX}unblock USER`")
         return
 
-    username = ul.fetch_username(m.guild, userid)
+    username = lookup_username(m.guild, userid)
     if username == None:
         username = str(userid)
 

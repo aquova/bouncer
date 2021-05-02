@@ -50,7 +50,7 @@ def lookup_username(server, uid):
     username = ul.fetch_username(server, uid)
 
     if not username:
-        check_db =  db.search(userid)
+        check_db =  db.search(uid)
         if check_db != []:
             username = check_db[-1].name
         else:

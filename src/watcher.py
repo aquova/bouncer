@@ -16,7 +16,7 @@ class Watcher:
 
     async def watch_user(self, mes, _):
         userid = self.ul.parse_id(mes)
-        if userid == None:
+        if userid:
             await mes.channel.send("I was unable to find a user in that message")
             return
 
@@ -28,7 +28,7 @@ class Watcher:
 
     async def unwatch_user(self, mes, _):
         userid = self.ul.parse_id(mes)
-        if userid == None:
+        if not userid:
             await mes.channel.send("I was unable to find a user in that message")
             return
         elif userid not in self.watchlist:
@@ -48,7 +48,8 @@ class Watcher:
         output = "```"
         for userid in self.watchlist:
             username = self.ul.fetch_username(mes.guild, userid)
-            output += f"{username} "
+            if username:
+                output += f"{username} "
         output += "```"
 
         await mes.channel.send(output)

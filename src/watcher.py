@@ -16,7 +16,7 @@ class Watcher:
 
     async def watch_user(self, mes, _):
         userid = self.ul.parse_id(mes)
-        if userid:
+        if not userid:
             await mes.channel.send("I was unable to find a user in that message")
             return
 

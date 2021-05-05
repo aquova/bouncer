@@ -50,6 +50,10 @@ class Watcher:
             username = self.ul.fetch_username(mes.guild, userid)
             if username:
                 output += f"{username} "
+            else:
+                # If we couldn't find them, just prune them
+                self.remove_user(userid)
+
         output += "```"
 
         await mes.channel.send(output)

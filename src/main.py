@@ -4,7 +4,7 @@
 
 import discord, asyncio, os, subprocess, sys
 from dataclasses import dataclass
-import commands, config, db, visualize
+import censor, commands, config, db, visualize
 import commonbot.utils
 from censor import check_censor
 from config import LogTypes
@@ -27,6 +27,7 @@ watch = Watcher()
 FUNC_DICT = {
     "ban":         [commands.logUser,              LogTypes.BAN],
     "block":       [commands.blockUser,            True],
+    "censor":      [censor.listCensor,             None],
     "clear":       [commands.am.clear_entries,     None],
     "edit":        [commands.removeError,          True],
     "graph":       [visualize.post_plots,          None],

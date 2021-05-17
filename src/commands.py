@@ -37,6 +37,7 @@ async def send_help_mes(m, _):
         f"Remove user from watch list: `{CMD_PREFIX}unwatch <user>`\n"
         f"List watched users: `{CMD_PREFIX}watchlist`\n"
         "\n"
+        f"List what we censor: `{CMD_PREFIX}censor`\n"
         f"Plot warn/ban stats: `{CMD_PREFIX}graph`\n"
         f"View bot uptime: `{CMD_PREFIX}uptime`\n"
         "\n"

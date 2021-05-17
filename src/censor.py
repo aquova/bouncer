@@ -2,6 +2,13 @@ import discord
 from config import CENSOR_LIST, CENSOR_WATCH, CENSOR_CHAN, SYS_LOG, VALID_INPUT_CHANS, WATCHLIST_CHAN
 from re import search, IGNORECASE
 
+async def listCensor(message, _):
+    delete_items = '\n'.join(CENSOR_LIST)
+    watch_items = '\n'.join(CENSOR_WATCH)
+    mes = f"Here are the things we censor. I hope you know regex.\n\nItems we delete:\n```{delete_items}```\nItems we watch:\n```{watch_items}```"
+
+    await message.channel.send(mes)
+
 async def check_censor(message):
     # If you're posting in an admin channel, you can swear all you like
     if message.channel.id in VALID_INPUT_CHANS:

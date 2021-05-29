@@ -2,8 +2,7 @@
 # Written by aquova, 2018-2021
 # https://github.com/aquova/bouncer
 
-import discord, asyncio, os, subprocess, sys
-from dataclasses import dataclass
+import discord, traceback
 import censor, commands, config, db, visualize
 import commonbot.utils
 from censor import check_censor
@@ -55,6 +54,7 @@ A helper function that deletes and logs the given message
 """
 async def delete_message_helper(message):
     mes = f":no_mobile_phones: **{str(message.author)}** deleted in <#{message.channel.id}>: `{message.content}`"
+    chan = client.get_channel(config.SYS_LOG)
     # Adds URLs for any attachments that were included in deleted message
     # These will likely become invalid, but it's nice to note them anyway
     if message.attachments != []:
@@ -65,7 +65,6 @@ async def delete_message_helper(message):
                 mes = item.url
             else:
                 mes += '\n' + item.url
-    chan = client.get_channel(config.SYS_LOG)
     await chan.send(mes)
 
 """

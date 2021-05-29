@@ -49,7 +49,7 @@ class Watcher:
         for userid in self.watchlist:
             username = self.ul.fetch_username(mes.guild, userid)
             if username:
-                output += f"{username} "
+                output += f"{username} ({userid})\n"
             else:
                 # If we couldn't find them, just prune them
                 self.remove_user(userid)

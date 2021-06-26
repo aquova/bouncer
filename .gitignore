@@ -8,16 +8,6 @@ private/*
 *.code-workspace
 **/.devcontainer/*
 
-# Virtualenv stuff
-bin/*
-include/*
-lib/*
-local/*
-share/*
-.Python
-pip-selfcheck.json
-pyvenv.cfg
-
 # Other junk
 .DS_Store
 __pycache__

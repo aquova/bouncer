@@ -1,0 +1,8 @@
+version: '3'
+services:
+    bouncer:
+        image: aquova/bouncer:latest
+        restart: unless-stopped
+        volumes:
+            - ./src:/bouncer
+            - ./private:/private

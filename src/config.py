@@ -1,8 +1,7 @@
-import json, os
+import json
 from enum import Enum, unique
 
-dir_path = os.path.dirname(os.path.realpath(__file__))
-DATABASE_PATH = os.path.join(dir_path, "../private/bouncer.db")
+DATABASE_PATH = "/private/bouncer.db"
 # Discord has a 2000 message character limit
 CHAR_LIMIT = 2000
 # Add extra message if more than threshold number of warns
@@ -17,7 +16,7 @@ class LogTypes(Enum):
     WARN = 1
 
 # Read values from config file
-config_path = os.path.join(dir_path, "../private/config.json")
+config_path = "/private/config.json"
 with open(config_path) as config_file:
     cfg = json.load(config_file)
 
@@ -42,5 +41,5 @@ CENSOR_LIST = cfg['censor']['regex']
 CENSOR_WATCH = cfg['censor']['watch_regex']
 CENSOR_CHAN = cfg['censor']['notify_chan']
 
-USER_PLOT = os.path.join(dir_path, "../private/user_plot.png")
-MONTH_PLOT = os.path.join(dir_path, "../private/month_plot.png")
+USER_PLOT = "/private/user_plot.png"
+MONTH_PLOT = "/private/month_plot.png"

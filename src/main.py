@@ -68,6 +68,14 @@ async def delete_message_helper(message):
     await chan.send(mes)
 
 """
+Should Log
+
+Whether the bot should log this event in config.SYS_LOG
+"""
+def should_log(server):
+    return not dbg.is_debug_bot() and server.id == config.HOME_SERVER
+
+"""
 On Ready
 
 Occurs when Discord bot is first brought online
@@ -89,8 +97,7 @@ Occurs when a user updates an attribute (nickname, roles)
 """
 @client.event
 async def on_member_update(before, after):
-    # If debugging, don't process
-    if dbg.is_debug_bot():
+    if not should_log(before.guild):
         return
 
     # If nickname has changed
@@ -128,8 +135,7 @@ Occurs when a user is banned
 """
 @client.event
 async def on_member_ban(server, member):
-    # If debugging, don't process
-    if dbg.is_debug_bot():
+    if not should_log(server):
         return
 
     # We can remove banned user from our answering machine and watch list (if they exist)
@@ -150,8 +156,7 @@ Occurs when a user leaves the server
 """
 @client.event
 async def on_member_remove(member):
-    # If debugging, don't process
-    if dbg.is_debug_bot():
+    if not should_log(member.guild):
         return
 
     # We can remove left users from our answering machine
@@ -172,8 +177,7 @@ Occurs when a user's message is deleted
 """
 @client.event
 async def on_message_delete(message):
-    # Ignore those pesky bots
-    if dbg.is_debug_bot() or message.author.bot:
+    if not should_log(message.guild) or message.author.bot:
         return
 
     await delete_message_helper(message)
@@ -185,8 +189,7 @@ Occurs when a user's messages are bulk deleted, such as ban or kick
 """
 @client.event
 async def on_bulk_message_delete(messages):
-    # Ignore bots
-    if dbg.is_debug_bot() or messages[0].author.bot:
+    if not should_log(messages[0].guild) or messages[0].author.bot:
         return
 
     for message in messages:
@@ -199,8 +202,7 @@ Occurs when a user edits a message
 """
 @client.event
 async def on_message_edit(before, after):
-    # Ignore those pesky bots
-    if dbg.is_debug_bot() or before.author.bot:
+    if not should_log(before.guild) or before.author.bot:
         return
 
     # Run edited message against censor.
@@ -240,8 +242,7 @@ Occurs when a user joins the server
 """
 @client.event
 async def on_member_join(member):
-    # If debugging, don't process
-    if dbg.is_debug_bot():
+    if not should_log(member.guild):
         return
 
     mes = f":confetti_ball: **{str(member)} ({member.id})** has joined"
@@ -255,8 +256,7 @@ Occurs when a user joins/leaves an audio channel
 """
 @client.event
 async def on_voice_state_update(member, before, after):
-    # Ignore those pesky bots
-    if dbg.is_debug_bot() or member.bot:
+    if not should_log(member.guild) or member.bot:
         return
 
     if after.channel == None:
@@ -291,8 +291,6 @@ async def on_message(message):
 
         # If bouncer detects a private DM sent to it
         if type(message.channel) is discord.channel.DMChannel:
-            ts = message.created_at.strftime('%Y-%m-%d %H:%M:%S')
-
             # Store who the most recent user was, for $reply ^
             commands.am.set_recent_reply(message.author)
 
@@ -301,7 +299,14 @@ async def on_message(message):
 
             # If not blocked, send message along to specified mod channel
             if not commands.bu.is_in_blocklist(message.author.id):
-                chan = client.get_channel(config.MAILBOX)
+                chan = None
+                # If we share the main server, treat that as a DM
+                if config.HOME_SERVER in [x.id for x in message.author.mutual_guilds]:
+                    chan = client.get_channel(config.MAILBOX)
+                # The only other server we should share is the ban appeal server
+                else:
+                    chan = client.get_channel(config.BAN_APPEAL)
+
                 logMes = await chan.send(mes)
 
                 # Send them a message so they know something actually happened
@@ -341,6 +346,13 @@ async def on_message(message):
                     func = FUNC_DICT[cmd][0]
                     arg = FUNC_DICT[cmd][1]
                     await func(message, arg)
+    except discord.errors.Forbidden as e:
+        if e.code == 50007:
+            chan = client.get_channel(config.MAILBOX)
+            logMes = await chan.send("Unable to send message - Can't send messages to that user")
+        else:
+            print(traceback.format_exc())
+            pass
     except discord.errors.HTTPException as e:
         print(traceback.format_exc())
         pass

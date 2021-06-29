@@ -25,11 +25,14 @@ DISCORD_KEY = cfg['discord']
 OWNER = cfg['owner']
 CMD_PREFIX = cfg['command_prefix']
 
+HOME_SERVER = cfg['servers']['home']
+
 MAILBOX = cfg['channels']['mailbox']
 VALID_INPUT_CHANS = cfg['channels']['listening']
 LOG_CHAN = cfg['channels']['log']
 SYS_LOG = cfg['channels']['syslog']
 WATCHLIST_CHAN = cfg['channels']['watchlist']
+BAN_APPEAL = cfg['channels']['ban_appeal']
 
 VALID_ROLES = cfg['roles']
 

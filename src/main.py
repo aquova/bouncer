@@ -164,7 +164,6 @@ async def on_member_remove(member):
 
     # We can remove left users from our answering machine
     commands.am.remove_entry(member.id)
-    watch.remove_user(member.id)
 
     # Remember that the user has left, in case we want to log after they're gone
     username = f"{str(member)}"

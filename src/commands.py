@@ -32,6 +32,7 @@ async def send_help_mes(m, _):
         f"Reply to a user in DMs: `{CMD_PREFIX}reply USERID` - To reply to the most recent DM: `{CMD_PREFIX}reply ^`\n"
         f"View users waiting for a reply: `{CMD_PREFIX}waiting`. Clear the list with `{CMD_PREFIX}clear`\n"
         f"Stop a user from sending DMs to us: `{CMD_PREFIX}block/{CMD_PREFIX}unblock <user>`\n"
+        f"Say a message as the bot: `{CMD_PREFIX}say <user> <message>`\n"
         "\n"
         f"Watch a user's every move: `{CMD_PREFIX}watch <user>`\n"
         f"Remove user from watch list: `{CMD_PREFIX}unwatch <user>`\n"
@@ -429,3 +430,35 @@ async def reply(m, _):
             await m.channel.send(f"ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {e}")
     except Exception as e:
         await m.channel.send(f"ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {e}")
+
+"""
+Say
+
+Speaks a message to the specified channel as the bot
+"""
+async def say(message, _):
+    try:
+        payload = commonbot.utils.strip_words(message.content, 1)
+        channel_id = commonbot.utils.get_first_word(payload)
+        channel = discord.utils.get(message.guild.channels, id=int(channel_id))
+        m = commonbot.utils.strip_words(payload, 1)
+        if m == "" and len(message.attachments) == 0:
+            await message.channel.send("You cannot send empty messages.")
+
+        for item in message.attachments:
+            f = await item.to_file()
+            await channel.send(file=f)
+
+        if m != "":
+            await channel.send(m)
+
+        return "Message sent."
+    except (IndexError, ValueError):
+        await message.channel.send(f"I was unable to find a channel ID in that message. `{CMD_PREFIX}say CHAN_ID message`")
+    except AttributeError:
+        await message.channel.send("Are you sure that was a channel ID?")
+    except discord.errors.HTTPException as e:
+        if e.code == 50013:
+            await message.channel.send("You do not have permissions to post in that channel.")
+        else:
+            await message.channel.send(f"Oh god something went wrong, everyone panic! {str(e)}")

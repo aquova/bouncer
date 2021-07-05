@@ -36,6 +36,7 @@ FUNC_DICT = {
     "preview":     [commands.preview,              None],
     "remove":      [commands.removeError,          False],
     "reply":       [commands.reply,                None],
+    "say":         [commands.say,                  None],
     "search":      [commands.userSearch,           None],
     "unban":       [commands.logUser,              LogTypes.UNBAN],
     "unblock":     [commands.blockUser,            False],

@@ -10,7 +10,7 @@ ul = UserLookup()
 bu = BlockedUsers()
 am = AnsweringMachine()
 
-BAN_KICK_MES = "Hi there! You've been {type} from the Stardew Valley Discord for violating the rules: `{mes}`. If you have any questions, you can send a message to the moderators via the sidebar at <https://www.reddit.com/r/StardewValley>, and they'll forward it to us."
+BAN_KICK_MES = "Hi there! You've been {type} from the Stardew Valley Discord for violating the rules: `{mes}`. If you have any questions, and for information on appeals, you can join <https://discord.gg/uz6KPaCPhf>."
 
 WARN_MES = "Hi there! You've received warning #{count} in the Stardew Valley Discord for violating the rules: `{mes}`. Please review <#707359005655171172> and <#718593494775496754> for more info. If you have any questions, you can reply directly to this message to contact the staff."
 

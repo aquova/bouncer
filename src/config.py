@@ -1,4 +1,4 @@
-import json
+import discord, json
 from enum import Enum, unique
 
 DATABASE_PATH = "/private/bouncer.db"
@@ -50,3 +50,9 @@ CENSOR_CHAN = censor['notify_chan']
 
 USER_PLOT = "/private/user_plot.png"
 MONTH_PLOT = "/private/month_plot.png"
+
+# Initialize our bot client object
+intents = discord.Intents.default()
+intents.members = True
+
+client = discord.Client(intents=intents)

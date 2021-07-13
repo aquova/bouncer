@@ -1,4 +1,5 @@
 import db
+from config import client
 from commonbot.user import UserLookup
 
 class Watcher:
@@ -23,7 +24,7 @@ class Watcher:
         db.add_watch(userid)
         self.watchlist.append(userid)
 
-        username = self.ul.fetch_username(mes.guild, userid)
+        username = self.ul.fetch_username(client, userid)
         await mes.channel.send(f"{username} has been added to the watch list. :spy:")
 
     async def unwatch_user(self, mes, _):
@@ -37,7 +38,7 @@ class Watcher:
 
         self.remove_user(userid)
 
-        username = self.ul.fetch_username(mes.guild, userid)
+        username = self.ul.fetch_username(client, userid)
         await mes.channel.send(f"{username} has been removed from the watch list.")
 
     async def get_watchlist(self, mes, _):
@@ -47,7 +48,7 @@ class Watcher:
 
         output = "```"
         for userid in self.watchlist:
-            username = self.ul.fetch_username(mes.guild, userid)
+            username = self.ul.fetch_username(client, userid)
             if username:
                 output += f"{username} ({userid})\n"
             else:

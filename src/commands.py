@@ -2,7 +2,7 @@ import discord, datetime
 import config, db
 import commonbot.utils
 from blocks import BlockedUsers
-from config import LogTypes, CMD_PREFIX
+from config import client, LogTypes, CMD_PREFIX
 from waiting import AnsweringMachine
 from commonbot.user import UserLookup, fetch_user
 
@@ -48,8 +48,8 @@ async def send_help_mes(m, _):
 
     await m.channel.send(helpMes)
 
-def lookup_username(server, uid):
-    username = ul.fetch_username(server, uid)
+def lookup_username(uid):
+    username = ul.fetch_username(client, uid)
 
     if not username:
         check_db =  db.search(uid)
@@ -76,7 +76,7 @@ async def userSearch(m, _):
 
     # Get database values for given user
     search_results = db.search(userid)
-    username = lookup_username(m.guild, userid)
+    username = lookup_username(userid)
 
     if search_results == []:
         if username != None:
@@ -129,7 +129,7 @@ async def logUser(m, state):
     currentTime = datetime.datetime.utcnow()
 
     # Attempt to fetch the username for the user
-    username = lookup_username(m.guild, userid)
+    username = lookup_username(userid)
     if username == None:
         username = "ID: " + str(userid)
         await m.channel.send("I wasn't able to find a username for that user, but whatever, I'll do it anyway.")
@@ -176,7 +176,7 @@ async def logUser(m, state):
 
         try:
             # Send a DM to the user
-            u = fetch_user(m.guild, userid)
+            u = fetch_user(client, userid)
             if u != None:
                 DMchan = u.dm_channel
                 # If first time DMing, need to create channel
@@ -268,7 +268,7 @@ async def removeError(m, edit):
             await m.channel.send(f"I wasn't able to understand that message: `{CMD_PREFIX}remove USER [num]`")
         return
 
-    username = lookup_username(m.guild, userid)
+    username = lookup_username(userid)
     if username == None:
         username = str(userid)
 
@@ -352,7 +352,7 @@ async def blockUser(m, block):
             await m.channel.send(f"I wasn't able to understand that message: `{CMD_PREFIX}unblock USER`")
         return
 
-    username = lookup_username(m.guild, userid)
+    username = lookup_username(userid)
     if username == None:
         username = str(userid)
 
@@ -395,7 +395,7 @@ async def reply(m, _):
             await m.channel.send(f"I wasn't able to understand that message: `{CMD_PREFIX}reply USER`")
             return
 
-        u = fetch_user(m.guild, userid)
+        u = fetch_user(client, userid)
     # If we couldn't find anyone, then they aren't in the server, and can't be DMed
     if u == None:
         await m.channel.send("Sorry, but they need to be in the server for me to message them")

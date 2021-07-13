@@ -11,3 +11,4 @@ private/*
 # Other junk
 .DS_Store
 __pycache__
+*.whl

@@ -6,18 +6,14 @@ import discord, traceback
 import censor, commands, config, db, visualize
 import commonbot.utils
 from censor import check_censor
-from config import LogTypes
+from config import client, LogTypes
 from waiting import AnsweringMachineEntry
 from watcher import Watcher
 
 from commonbot.debug import Debug
 from commonbot.timekeep import Timekeeper
 
-intents = discord.Intents.default()
-intents.members = True
-
-# Initialize client and helper classes
-client = discord.Client(intents=intents)
+# Initialize helper classes
 db.initialize()
 dbg = Debug(config.OWNER, config.CMD_PREFIX, config.DEBUG_BOT)
 tk = Timekeeper()

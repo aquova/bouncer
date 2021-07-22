@@ -39,7 +39,7 @@ async def censor_message(message):
     syslog_chan = discord.utils.get(message.guild.channels, id=SYS_LOG)
     log_message = await syslog_chan.send(censor_mes)
 
-    mod_mes = f"Uh oh, looks like the censor might've been tripped.\n{log_message.jump_url}"
+    mod_mes = f"Uh oh, looks like <@{message.author.id}> tripped the censor.\n{log_message.jump_url}"
     chan = discord.utils.get(message.guild.channels, id=CENSOR_CHAN)
     await chan.send(mod_mes)
 

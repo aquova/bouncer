@@ -267,6 +267,15 @@ async def on_voice_state_update(member, before, after):
         chan = client.get_channel(config.SYS_LOG)
         await chan.send(mes)
 
+@client.event
+async def on_reaction_remove(reaction, user):
+    if user.bot:
+        return
+
+    emoji_name = reaction.emoji if type(reaction.emoji) == str else reaction.emoji.name
+    chan = client.get_channel(config.SYS_LOG)
+    await chan.send(f":face_in_clouds: {str(user)} ({user.id}) removed the `{emoji_name}` emoji")
+
 """
 On Message
 

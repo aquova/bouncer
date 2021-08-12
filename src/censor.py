@@ -48,7 +48,13 @@ async def censor_message(message):
     if dm_chan == None:
         dm_chan = await message.author.create_dm()
 
-    await dm_chan.send(f"Hi there! This is an automated courtesy message informing you that your post was deleted for containing a censored word: `{message.content}`. This is not a warning. The staff team will examine the context and situation of the censor trip and you will be contacted later only if any disciplinary action is taken.")
+    try:
+        await dm_chan.send(f"Hi there! This is an automated courtesy message informing you that your post was deleted for containing a censored word: `{message.content}`. This is not a warning. The staff team will examine the context and situation of the censor trip and you will be contacted later only if any disciplinary action is taken.")
+    except discord.errors.HTTPException as e:
+        if e.code == 50007:
+            pass
+        else:
+            raise discord.errors.HTTPException
 
 async def watch_message(message):
     # These are words whose usage we don't want to delete, but we should post to the watch channel

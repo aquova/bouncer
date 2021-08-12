@@ -56,13 +56,21 @@ async def delete_message_helper(message):
     # These will likely become invalid, but it's nice to note them anyway
     if message.attachments != []:
         for item in message.attachments:
-            # Break into seperate parts if we're going to cross character limit
-            if len(mes) + len(item.url) > config.CHAR_LIMIT:
-                await chan.send(mes)
-                mes = item.url
-            else:
-                mes += '\n' + item.url
-    await chan.send(mes)
+            mes += '\n' + item.url
+
+    await message_send_helper(mes, chan)
+
+"""
+Message send helper
+
+Breaks up a message (as a string) into chunks small enough for Discord's character limit
+"""
+async def message_send_helper(message, channel):
+    mes = message
+    while mes != "":
+        to_send = mes[:config.CHAR_LIMIT]
+        mes = mes[config.CHAR_LIMIT:]
+        await channel.send(to_send)
 
 """
 Should Log
@@ -215,21 +223,14 @@ async def on_message_edit(before, after):
 
     try:
         chan = client.get_channel(config.SYS_LOG)
-        mes = f":pencil: **{str(before.author)}** modified in <#{before.channel.id}>: `{before.content}`"
-
-        # Break into seperate parts if we're going to cross character limit
-        if len(mes) + len(after.content) > (config.CHAR_LIMIT + 5):
-            await chan.send(mes)
-            mes = ""
-
-        mes += f" to `{after.content}`"
-        await chan.send(mes)
+        mes = f":pencil: **{str(before.author)}** modified in <#{before.channel.id}>: `{before.content}` to `{after.content}`"
+        await message_send_helper(mes, chan)
 
         # If user is on watchlist, then post it there as well
         watching = watch.should_note(after.author.id)
         if watching:
             watchchan = client.get_channel(config.WATCHLIST_CHAN)
-            await watchchan.send(mes)
+            await message_send_helper(mes, watchchan)
 
     except discord.errors.HTTPException as e:
         print(f"Unknown error with editing message. This message was unable to post for this reason: {e}\n")
@@ -267,6 +268,11 @@ async def on_voice_state_update(member, before, after):
         chan = client.get_channel(config.SYS_LOG)
         await chan.send(mes)
 
+"""
+On Reaction Remove
+
+Occurs when a user removes a reaction from a message
+"""
 @client.event
 async def on_reaction_remove(reaction, user):
     if user.bot:
@@ -336,14 +342,14 @@ async def on_message(message):
             chan = client.get_channel(config.WATCHLIST_CHAN)
             content = commonbot.utils.combineMessage(message)
             mes = f"**{str(message.author)}** (ID: {message.author.id}) said in <#{message.channel.id}>: {content}"
-            await chan.send(mes)
+            await message_send_helper(mes, chan)
 
         # If a user pings bouncer, log into mod channel
         if client.user in message.mentions:
             content = commonbot.utils.combineMessage(message)
             mes = f"**{str(message.author)}** (ID: {message.author.id}) pinged me in <#{message.channel.id}>: {content}\n{message.jump_url}"
             chan = client.get_channel(config.MAILBOX)
-            await chan.send(mes)
+            await message_send_helper(mes, chan)
 
         # Functions in this category are those where we care that the user has the correct roles, but don't care about which channel they're invoked in
         elif commonbot.utils.checkRoles(message.author, config.VALID_ROLES) and message.channel.id in config.VALID_INPUT_CHANS:
@@ -360,9 +366,7 @@ async def on_message(message):
             logMes = await chan.send("Unable to send message - Can't send messages to that user")
         else:
             print(traceback.format_exc())
-            pass
     except discord.errors.HTTPException as e:
         print(traceback.format_exc())
-        pass
 
 client.run(config.DISCORD_KEY)

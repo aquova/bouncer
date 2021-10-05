@@ -42,7 +42,8 @@ class Spammers:
         uid = message.author.id
 
         if uid not in self.spammers:
-            if self.check_censor(self, message):
+            censored = await self.check_censor(message)
+            if censored:
                 return True
             self.spammers[uid] = Spammer(message)
             return False
@@ -50,7 +51,8 @@ class Spammers:
             await message.delete()
             return True
         else:
-            if self.check_censor(self, message):
+            censored = await self.check_censor(message)
+            if censored:
                 return True
             self.spammers[uid].append(message)
 

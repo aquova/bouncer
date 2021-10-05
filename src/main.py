@@ -36,6 +36,7 @@ FUNC_DICT = {
     "reply":       [commands.reply,                None],
     "say":         [commands.say,                  None],
     "search":      [commands.userSearch,           None],
+    "scam":        [commands.logUser,              LogTypes.SCAM],
     "unban":       [commands.logUser,              LogTypes.UNBAN],
     "unblock":     [commands.blockUser,            False],
     "uptime":      [tk.uptime,                     None],

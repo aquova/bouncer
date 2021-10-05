@@ -16,7 +16,7 @@ class UserLogEntry:
 
     def __str__(self):
         logWord = ""
-        if self.log_type == LogTypes.BAN.value:
+        if self.log_type == LogTypes.BAN.value or self.log_type == LogTypes.SCAM.value:
             logWord = "Banned"
         elif self.log_type == LogTypes.NOTE.value:
             logWord = "Note"

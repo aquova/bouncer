@@ -11,7 +11,7 @@ bu = BlockedUsers()
 am = AnsweringMachine()
 
 BAN_KICK_MES = "Hi there! You've been {type} from the Stardew Valley Discord for violating the rules: `{mes}`. If you have any questions, and for information on appeals, you can join <https://discord.gg/uz6KPaCPhf>."
-
+SCAM_MES = "Hi there! You've been banned from the Stardew Valley Discord for posting scam links. If your account was compromised, please change your password, enable 2FA, and join <https://discord.gg/uz6KPaCPhf> to appeal."
 WARN_MES = "Hi there! You've received warning #{count} in the Stardew Valley Discord for violating the rules: `{mes}`. Please review <#707359005655171172> and <#718593494775496754> for more info. If you have any questions, you can reply directly to this message to contact the staff."
 
 async def send_help_mes(m, _):
@@ -22,6 +22,7 @@ async def send_help_mes(m, _):
         f"Log a ban: `{CMD_PREFIX}ban <user> <reason>`\n"
         f"Log an unbanning: `{CMD_PREFIX}unban <user> <reason>`\n"
         f"Log a kick: `{CMD_PREFIX}kick <user> <reason>`\n"
+        f"Ban with a pre-made scam message: `{CMD_PREFIX}scam <user>`\n"
         f"Preview what will be sent to the user `{CMD_PREFIX}preview <warn/ban/kick> <reason>`\n"
         "\n"
         f"Search for a user: `{CMD_PREFIX}search <user>`\n"
@@ -138,6 +139,9 @@ async def logUser(m, state):
     content = commonbot.utils.combineMessage(m)
     mes = commonbot.utils.parseMessage(content, username)
 
+    if state == LogTypes.SCAM:
+        mes = "Banned for sending scam in chat."
+
     # If they didn't give a message, abort
     if mes == "":
         await m.channel.send("Please give a reason for why you want to log them.")
@@ -145,7 +149,7 @@ async def logUser(m, state):
 
     # Update records for graphing
     import visualize
-    if state == LogTypes.BAN:
+    if state == LogTypes.BAN or state == LogTypes.SCAM:
         visualize.updateCache(m.author.name, (1, 0), commonbot.utils.formatTime(currentTime))
     elif state == LogTypes.WARN:
         visualize.updateCache(m.author.name, (0, 1), commonbot.utils.formatTime(currentTime))
@@ -190,7 +194,8 @@ async def logUser(m, state):
                     await DMchan.send(WARN_MES.format(count=count, mes=mes))
                 elif state == LogTypes.KICK and config.DM_BAN:
                     await DMchan.send(BAN_KICK_MES.format(type="kicked", mes=mes))
-
+                elif state == LogTypes.SCAM and config.DM_BAN:
+                    await DMchan.send(SCAM_MES)
         # Exception handling
         except discord.errors.HTTPException as e:
             if e.code == 50007:
@@ -225,12 +230,14 @@ async def preview(m, _):
         state = LogTypes.KICK
     elif state_raw == "warn":
         state = LogTypes.WARN
+    elif state_raw == "scam":
+        state = LogTypes.SCAM
     else:
         await m.channel.send(f"I have no idea what a {state_raw} is, but it's certainly not a `ban`, `warn`, or `kick`.")
         return
 
     # Might as well mimic logging behavior
-    if mes == "":
+    if mes == "" and state != LogTypes.SCAM:
         await m.channel.send("Please give a reason for why you want to log them.")
         return
 
@@ -249,6 +256,11 @@ async def preview(m, _):
             await m.channel.send(BAN_KICK_MES.format(type="kicked", mes=mes))
         else:
             await m.channel.send("DMing the user about their kicks is currently off, they won't see any message")
+    elif state == LogTypes.SCAM:
+        if config.DM_BAN:
+            await m.channel.send(SCAM_MES)
+        else:
+            await m.channel.send("DMing the user about their bans is currently off, they won't see any message")
 
 """
 Remove Error

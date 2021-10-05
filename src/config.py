@@ -9,6 +9,7 @@ WARN_THRESHOLD = 3
 
 @unique
 class LogTypes(Enum):
+    SCAM = -4
     UNBAN = -3
     KICK = -2
     NOTE = -1

@@ -34,7 +34,7 @@ class Spammers:
         for item in CENSOR_SPAM:
             if bool(search(item, message.content, IGNORECASE)):
                 self.spammers[message.author.id] = message
-                await self.mark_spammer(self, message.author)
+                await self.mark_spammer(message.author)
                 return True
         return False
 

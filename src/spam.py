@@ -76,3 +76,16 @@ class Spammers:
         if mute_role not in roles:
             roles.append(mute_role)
             await user.edit(roles=roles)
+
+        # Create a DM channel between Bouncer if it doesn't exist
+        dm_chan = user.dm_channel
+        if not dm_chan:
+            dm_chan = await user.create_dm()
+
+        try:
+            await dm_chan.send(f"Hi there! This is an automated courtesy message informing you that your recent posts have been deleted for spamming. You have been muted from speaking in the server until a moderator can verify your message. If you have any questions, please reply to this bot.")
+        except discord.errors.HTTPException as e:
+            if e.code == 50007:
+                pass
+            else:
+                raise discord.errors.HTTPException

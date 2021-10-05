@@ -7,6 +7,7 @@ import censor, commands, config, db, visualize
 import commonbot.utils
 from censor import check_censor
 from config import client, LogTypes
+from spam import Spammers
 from waiting import AnsweringMachineEntry
 from watcher import Watcher
 
@@ -16,6 +17,7 @@ from commonbot.timekeep import Timekeeper
 # Initialize helper classes
 db.initialize()
 dbg = Debug(config.OWNER, config.CMD_PREFIX, config.DEBUG_BOT)
+spam = Spammers()
 tk = Timekeeper()
 watch = Watcher()
 
@@ -98,6 +100,8 @@ async def on_ready():
     activity_object = discord.Activity(name="for your reports!", type=discord.ActivityType.watching)
     await client.change_presence(activity=activity_object)
 
+    spam.set_channel()
+
 """
 On Member Update
 
@@ -111,10 +115,9 @@ async def on_member_update(before, after):
     # If nickname has changed
     if before.nick != after.nick:
         # If they don't have an ending nickname, they reset to their actual username
-        if after.nick == None:
+        if not after.nick:
             mes = f"**:spy: {str(after)}** has reset their username"
         else:
-            new = after.nick
             mes = f"**:spy: {str(after)}** is now known as `{after.nick}`"
         chan = client.get_channel(config.SYS_LOG)
         await chan.send(mes)
@@ -259,11 +262,11 @@ async def on_voice_state_update(member, before, after):
     if not should_log(member.guild) or member.bot:
         return
 
-    if after.channel == None:
+    if not after.channel:
         mes = f":mute: **{str(member)}** has left voice channel {before.channel.name}"
         chan = client.get_channel(config.SYS_LOG)
         await chan.send(mes)
-    elif before.channel == None:
+    elif not before.channel:
         mes = f":loud_sound: **{str(member)}** has joined voice channel {after.channel.name}"
         chan = client.get_channel(config.SYS_LOG)
         await chan.send(mes)
@@ -329,6 +332,11 @@ async def on_message(message):
                 # Lets also add/update them in answering machine
                 mes_entry = AnsweringMachineEntry(f"{str(message.author)}", message.created_at, content, logMes.jump_url)
                 commands.am.update_entry(message.author.id, mes_entry)
+            return
+
+        # Remove spam
+        spam_message = await spam.check_spammer(message)
+        if spam_message:
             return
 
         # Run message against censor

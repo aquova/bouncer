@@ -1,11 +1,12 @@
 import discord
-from config import CENSOR_LIST, CENSOR_WATCH, CENSOR_CHAN, SYS_LOG, VALID_INPUT_CHANS, WATCHLIST_CHAN
+from config import CENSOR_LIST, CENSOR_SPAM, CENSOR_WATCH, CENSOR_CHAN, SYS_LOG, VALID_INPUT_CHANS, WATCHLIST_CHAN
 from re import search, IGNORECASE
 
 async def listCensor(message, _):
     delete_items = '\n'.join(CENSOR_LIST)
     watch_items = '\n'.join(CENSOR_WATCH)
-    mes = f"Here are the things we censor. I hope you know regex.\n\nItems we delete:\n```{delete_items}```\nItems we watch:\n```{watch_items}```"
+    spam_items = '\n'.join(CENSOR_SPAM)
+    mes = f"Here are the things we censor. I hope you know regex.\n\nItems we delete:\n```{delete_items}```\nItems we watch:\n```{watch_items}```\nItems on our spam list:\n```{spam_items}"
 
     await message.channel.send(mes)
 

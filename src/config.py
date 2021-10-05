@@ -38,7 +38,8 @@ SYS_LOG = cfg['channels']['syslog']
 WATCHLIST_CHAN = cfg['channels']['watchlist']
 BAN_APPEAL = cfg['channels']['ban_appeal']
 
-VALID_ROLES = cfg['roles']
+VALID_ROLES = cfg['roles']['admin']
+MUTE_ROLE = cfg['roles']['mute']
 
 DM_BAN = cfg['DM']['ban']
 DM_WARN = cfg['DM']['warn']
@@ -46,7 +47,9 @@ DEBUG_BOT = (cfg['debug'].upper() == "TRUE")
 
 CENSOR_LIST = censor['regex']
 CENSOR_WATCH = censor['watch_regex']
+CENSOR_SPAM = censor['spam_regex']
 CENSOR_CHAN = censor['notify_chan']
+SPAM_CHAN = cfg['channels']['spam']
 
 USER_PLOT = "/private/user_plot.png"
 MONTH_PLOT = "/private/month_plot.png"

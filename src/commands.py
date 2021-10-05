@@ -32,7 +32,7 @@ async def send_help_mes(m, _):
         f"Reply to a user in DMs: `{CMD_PREFIX}reply USERID` - To reply to the most recent DM: `{CMD_PREFIX}reply ^`\n"
         f"View users waiting for a reply: `{CMD_PREFIX}waiting`. Clear the list with `{CMD_PREFIX}clear`\n"
         f"Stop a user from sending DMs to us: `{CMD_PREFIX}block/{CMD_PREFIX}unblock <user>`\n"
-        f"Say a message as the bot: `{CMD_PREFIX}say <user> <message>`\n"
+        f"Say a message as the bot: `{CMD_PREFIX}say <channel> <message>`\n"
         "\n"
         f"Watch a user's every move: `{CMD_PREFIX}watch <user>`\n"
         f"Remove user from watch list: `{CMD_PREFIX}unwatch <user>`\n"

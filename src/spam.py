@@ -33,7 +33,7 @@ class Spammers:
     async def check_censor(self, message):
         for item in CENSOR_SPAM:
             if bool(search(item, message.content, IGNORECASE)):
-                self.spammers[message.author.id] = message
+                self.spammers[message.author.id] = Spammer(message)
                 await self.mark_spammer(message.author)
                 return True
         return False

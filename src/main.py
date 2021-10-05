@@ -335,14 +335,14 @@ async def on_message(message):
                 commands.am.update_entry(message.author.id, mes_entry)
             return
 
-        # Remove spam
-        spam_message = await spam.check_spammer(message)
-        if spam_message:
-            return
-
         # Run message against censor
         bad_message = await check_censor(message)
         if bad_message:
+            return
+
+        # Remove spam
+        spam_message = await spam.check_spammer(message)
+        if spam_message:
             return
 
         # Check if user is on watchlist, and should be tracked

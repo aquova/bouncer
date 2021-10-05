@@ -15,7 +15,7 @@ class Spammer:
     def __len__(self):
         return len(self.messages)
 
-    def append(self, message):
+    def add(self, message):
         if message.content == self.messages[0].content:
             self.messages.append(message)
         else:
@@ -54,7 +54,7 @@ class Spammers:
             censored = await self.check_censor(message)
             if censored:
                 return True
-            self.spammers[uid].append(message)
+            self.spammers[uid].add(message)
 
         dt = datetime.utcnow() - self.spammers[uid].timestamp
         if len(self.spammers[uid]) >= SPAM_MES_THRESHOLD and dt.total_seconds() <= SPAM_TIME_THRESHOLD:
@@ -70,6 +70,7 @@ class Spammers:
 
         for message in spammer.messages:
             await message.delete()
+        spammer.messages = {}
 
         roles = user.roles
         mute_role = discord.utils.get(user.guild.roles, id=MUTE_ROLE)

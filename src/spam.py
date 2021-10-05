@@ -16,7 +16,7 @@ class Spammer:
         return len(self.messages)
 
     def add(self, message):
-        if message.content == self.messages[0].content:
+        if len(self.messages) > 0 and message.content == self.messages[0].content:
             self.messages.append(message)
         else:
             self.messages = [message]

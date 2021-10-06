@@ -16,11 +16,15 @@ class Spammer:
         return len(self.messages)
 
     def add(self, message):
+        current_time = datetime.utcnow()
         if len(self.messages) > 0 and message.content == self.messages[0].content:
             self.messages.append(message)
+            dt = current_time - self.timestamp
+            if dt.total_seconds() > SPAM_TIME_THRESHOLD:
+                self.timestamp = current_time
         else:
             self.messages = [message]
-            self.timestamp = datetime.utcnow()
+            self.timestamp = current_time
 
 class Spammers:
     def __init__(self):
@@ -40,6 +44,9 @@ class Spammers:
 
     async def check_spammer(self, message):
         uid = message.author.id
+
+        if message.content == "":
+            return
 
         if uid not in self.spammers:
             censored = await self.check_censor(message)

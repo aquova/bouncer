@@ -43,6 +43,9 @@ class Spammers:
         return False
 
     async def check_spammer(self, message):
+        if message.author.bot:
+            return False
+
         uid = message.author.id
 
         if message.content == "":

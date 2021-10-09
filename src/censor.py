@@ -6,7 +6,7 @@ async def listCensor(message, _):
     delete_items = '\n'.join(CENSOR_LIST)
     watch_items = '\n'.join(CENSOR_WATCH)
     spam_items = '\n'.join(CENSOR_SPAM)
-    mes = f"Here are the things we censor. I hope you know regex.\n\nItems we delete:\n```{delete_items}```\nItems we watch:\n```{watch_items}```\nItems on our spam list:\n```{spam_items}"
+    mes = f"Here are the things we censor. I hope you know regex.\n\nItems we delete:\n```{delete_items}```\nItems we watch:\n```{watch_items}```\nItems on our spam list:\n```{spam_items}```"
 
     await message.channel.send(mes)
 
@@ -45,16 +45,14 @@ async def censor_message(message):
     await chan.send(mod_mes)
 
     # Create a DM channel between Bouncer if it doesn't exist
-    dm_chan = message.author.dm_channel
-    if dm_chan == None:
-        dm_chan = await message.author.create_dm()
-
     try:
+        dm_chan = message.author.dm_channel
+        if not dm_chan:
+            dm_chan = await message.author.create_dm()
+
         await dm_chan.send(f"Hi there! This is an automated courtesy message informing you that your post was deleted for containing a censored word: `{message.content}`. This is not a warning. The staff team will examine the context and situation of the censor trip and you will be contacted later only if any disciplinary action is taken.")
     except discord.errors.HTTPException as e:
-        if e.code == 50007:
-            pass
-        else:
+        if e.code != 50007:
             raise discord.errors.HTTPException
 
 async def watch_message(message):

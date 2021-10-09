@@ -3,8 +3,8 @@ from datetime import datetime
 from re import search, IGNORECASE
 from config import client, SPAM_CHAN, MUTE_ROLE, CENSOR_SPAM
 
-SPAM_MES_THRESHOLD = 3
-SPAM_TIME_THRESHOLD = 30 # in secs
+SPAM_MES_THRESHOLD = 4
+SPAM_TIME_THRESHOLD = 10 # in secs
 
 class Spammer:
     def __init__(self, message):

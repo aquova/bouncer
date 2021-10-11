@@ -1,4 +1,4 @@
-import discord, datetime
+import discord
 from datetime import datetime
 from re import search, IGNORECASE
 from config import client, SPAM_CHAN, MUTE_ROLE, CENSOR_SPAM
@@ -49,7 +49,7 @@ class Spammers:
         uid = message.author.id
 
         if message.content == "":
-            return
+            return False
 
         if uid not in self.spammers:
             censored = await self.check_censor(message)
@@ -75,18 +75,20 @@ class Spammers:
 
     async def mark_spammer(self, user):
         uid = user.id
+        self.spammers[uid].is_spammer = True
+
         spammer = self.spammers[uid]
-        await self.notification.send(f"{str(user)} ({uid}) has been spamming the message: `{spammer.messages[0].content}`")
-
-        for message in spammer.messages:
-            await message.delete()
-        spammer.messages = {}
-
         roles = user.roles
         mute_role = discord.utils.get(user.guild.roles, id=MUTE_ROLE)
         if mute_role not in roles:
             roles.append(mute_role)
             await user.edit(roles=roles)
+
+        for message in spammer.messages:
+            await message.delete()
+        spammer.messages = {}
+
+        await self.notification.send(f"{str(user)} ({uid}) has been spamming the message: `{spammer.messages[0].content}`")
 
         # Create a DM channel between Bouncer if it doesn't exist
         try:

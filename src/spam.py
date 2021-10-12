@@ -83,12 +83,12 @@ class Spammers:
         if mute_role not in roles:
             roles.append(mute_role)
             await user.edit(roles=roles)
-
+            
+        await self.notification.send(f"{str(user)} ({uid}) has been spamming the message: `{spammer.messages[0].content}`")
+        
         for message in spammer.messages:
             await message.delete()
         spammer.messages = {}
-
-        await self.notification.send(f"{str(user)} ({uid}) has been spamming the message: `{spammer.messages[0].content}`")
 
         # Create a DM channel between Bouncer if it doesn't exist
         try:

@@ -82,7 +82,10 @@ class Spammers:
         await self.notification.send(f"{str(user)} ({uid}) has been spamming the message: `{spammer.messages[0].content}`")
 
         for message in spammer.messages:
-            await message.delete()
+            try:
+                await message.delete()
+            except discord.errors.NotFound:
+                pass
         spammer.messages = {}
 
         # Create a DM channel between Bouncer if it doesn't exist

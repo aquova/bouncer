@@ -8,7 +8,6 @@ SPAM_TIME_THRESHOLD = 10 # in secs
 
 class Spammer:
     def __init__(self, message):
-        self.is_spammer = False
         self.messages = [message]
         self.timestamp = datetime.utcnow()
 
@@ -57,9 +56,6 @@ class Spammers:
                 return True
             self.spammers[uid] = Spammer(message)
             return False
-        elif self.spammers[uid].is_spammer: # May not be needed as they'll have role
-            await message.delete()
-            return True
         else:
             censored = await self.check_censor(message)
             if censored:
@@ -75,7 +71,6 @@ class Spammers:
 
     async def mark_spammer(self, user):
         uid = user.id
-        self.spammers[uid].is_spammer = True
 
         spammer = self.spammers[uid]
         roles = user.roles
@@ -83,9 +78,9 @@ class Spammers:
         if mute_role not in roles:
             roles.append(mute_role)
             await user.edit(roles=roles)
-            
+
         await self.notification.send(f"{str(user)} ({uid}) has been spamming the message: `{spammer.messages[0].content}`")
-        
+
         for message in spammer.messages:
             await message.delete()
         spammer.messages = {}

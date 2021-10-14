@@ -18,9 +18,7 @@ class Spammer:
         current_time = datetime.utcnow()
         if len(self.messages) > 0 and message.content == self.messages[0].content:
             self.messages.append(message)
-            dt = current_time - self.timestamp
-            if dt.total_seconds() > SPAM_TIME_THRESHOLD:
-                self.timestamp = current_time
+            # TODO: May need to update timestamp here, to cover situation where they post slowly then quickly
         else:
             self.messages = [message]
             self.timestamp = current_time
@@ -42,24 +40,18 @@ class Spammers:
         return False
 
     async def check_spammer(self, message):
-        if message.author.bot:
+        if message.author.bot or message.content == "":
             return False
+
+        censored = await self.check_censor(message)
+        if censored:
+            return True
 
         uid = message.author.id
-
-        if message.content == "":
-            return False
-
         if uid not in self.spammers:
-            censored = await self.check_censor(message)
-            if censored:
-                return True
             self.spammers[uid] = Spammer(message)
             return False
         else:
-            censored = await self.check_censor(message)
-            if censored:
-                return True
             self.spammers[uid].add(message)
 
         dt = datetime.utcnow() - self.spammers[uid].timestamp
@@ -69,6 +61,8 @@ class Spammers:
 
         return False
 
+    # I'm a little concerned this has the potential for a race condition
+    # Need to keep an eye out and see if this is the case
     async def mark_spammer(self, user):
         uid = user.id
 
@@ -86,7 +80,7 @@ class Spammers:
                 await message.delete()
             except discord.errors.NotFound:
                 pass
-        spammer.messages = {}
+        del self.spammers[uid]
 
         # Create a DM channel between Bouncer if it doesn't exist
         try:

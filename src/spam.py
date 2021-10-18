@@ -73,7 +73,7 @@ class Spammers:
             roles.append(mute_role)
             await user.edit(roles=roles)
 
-        await self.notification.send(f"{str(user)} ({uid}) has been spamming the message: `{spammer.messages[0].content}`")
+        await self.notification.send(f"<@{uid}> has been spamming the message: `{spammer.messages[0].content}`")
 
         for message in spammer.messages:
             try:

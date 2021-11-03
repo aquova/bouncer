@@ -53,6 +53,7 @@ def initialize():
     sqlconn.execute("CREATE TABLE IF NOT EXISTS staffLogs (staff TEXT PRIMARY KEY, bans INT, warns INT);")
     sqlconn.execute("CREATE TABLE IF NOT EXISTS monthLogs (month TEXT PRIMARY KEY, bans INT, warns INT);")
     sqlconn.execute("CREATE TABLE IF NOT EXISTS watching (id INT PRIMARY KEY);")
+    sqlconn.execute("CREATE TABLE IF NOT EXISTS censored (id INT PRIMARY KEY, logs INT, last DATE);")
     sqlconn.commit()
     sqlconn.close()
 
@@ -114,6 +115,24 @@ def clear_user_logs(userid):
     logs = search(userid)
     for log in logs:
         remove_log(log.dbid)
+
+def get_censor_count(userid):
+    query = ("SELECT * FROM censored WHERE id=?", [userid])
+    searchResults = _db_read(query)
+    if searchResults != []:
+        return (searchResults[0][1], searchResults[0][2])
+    else:
+        return None
+
+def add_censor_count(userid):
+    read_query = ("SELECT logs FROM censored WHERE id=?", [userid])
+    searchResults = _db_read(read_query)
+    num_censors = 1
+    if searchResults != []:
+        num_censors = searchResults[0][0] + 1
+
+    write_query = ("INSERT OR REPLACE INTO censored (id, logs, last) VALUES (?, ?, ?)", [userid, num_censors, datetime.datetime.utcnow()])
+    _db_write(write_query)
 
 def get_dbid():
     query = ("SELECT COUNT(*) FROM badeggs",)

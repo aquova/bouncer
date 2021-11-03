@@ -1,4 +1,4 @@
-import discord
+import discord, db
 from config import CENSOR_LIST, CENSOR_SPAM, CENSOR_WATCH, CENSOR_CHAN, SYS_LOG, VALID_INPUT_CHANS, WATCHLIST_CHAN
 from re import search, IGNORECASE
 
@@ -32,6 +32,7 @@ async def censor_message(message):
     # - Delete message
     # - Post a message removal message ourselves (since bots are normally ignored)
     # - Point the admins to the fact that we deleted a message
+    # - Increment their censor violation in the database
     # - DM the user telling them that we deleted their message
 
     await message.delete()
@@ -43,6 +44,8 @@ async def censor_message(message):
     mod_mes = f"Uh oh, looks like <@{message.author.id}> tripped the censor.\n{log_message.jump_url}"
     chan = discord.utils.get(message.guild.channels, id=CENSOR_CHAN)
     await chan.send(mod_mes)
+
+    db.add_censor_count(message.author.id)
 
     # Create a DM channel between Bouncer if it doesn't exist
     try:

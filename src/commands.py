@@ -57,7 +57,7 @@ def lookup_username(uid):
         if check_db != []:
             username = check_db[-1].name
         else:
-            username = "???"
+            return None
 
     return username
 
@@ -80,27 +80,32 @@ async def userSearch(m, _):
     username = lookup_username(userid)
 
     if search_results == []:
-        if username != None:
+        if username:
             await m.channel.send(f"User {username} was not found in the database\n")
         else:
             await m.channel.send("That user was not found in the database or the server\n")
-        return
+            return
+    else:
+        # Format output message
+        out = f"User {username} (ID: {userid}) was found with the following infractions\n"
+        for index, item in enumerate(search_results):
+            # Enumerate each item
+            n = f"{index + 1}. "
+            n += str(item)
 
-    # Format output message
-    out = f"User {username} (ID: {userid}) was found with the following infractions\n"
-    for index, item in enumerate(search_results):
-        # Enumerate each item
-        n = f"{index + 1}. "
-        n += str(item)
+            # If message becomes too long, send what we have and start a new post
+            if len(out) + len(n) < config.CHAR_LIMIT:
+                out += n
+            else:
+                await m.channel.send(out)
+                out = n
+        await m.channel.send(out)
 
-        # If message becomes too long, send what we have and start a new post
-        if len(out) + len(n) < config.CHAR_LIMIT:
-            out += n
-        else:
-            await m.channel.send(out)
-            out = n
-
-    await m.channel.send(out)
+    censored = db.get_censor_count(userid)
+    if not censored:
+        await m.channel.send("They have never tripped the censor")
+    else:
+        await m.channel.send(f"They have tripped the censor {censored[0]} times, most recently on {commonbot.utils.formatTime(censored[1])}")
 
 """
 Log User
@@ -131,7 +136,7 @@ async def logUser(m, state):
 
     # Attempt to fetch the username for the user
     username = lookup_username(userid)
-    if username == None:
+    if not username:
         username = "ID: " + str(userid)
         await m.channel.send("I wasn't able to find a username for that user, but whatever, I'll do it anyway.")
 
@@ -281,7 +286,7 @@ async def removeError(m, edit):
         return
 
     username = lookup_username(userid)
-    if username == None:
+    if not username:
         username = str(userid)
 
     # If editing, and no message specified, abort.
@@ -365,7 +370,7 @@ async def blockUser(m, block):
         return
 
     username = lookup_username(userid)
-    if username == None:
+    if not username:
         username = str(userid)
 
     # Store in the database that the given user is un/blocked

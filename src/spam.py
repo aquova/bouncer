@@ -80,7 +80,9 @@ class Spammers:
                 await message.delete()
             except discord.errors.NotFound:
                 pass
-        del self.spammers[uid]
+
+        if uid in self.spammers:
+            del self.spammers[uid]
 
         # Create a DM channel between Bouncer if it doesn't exist
         try:

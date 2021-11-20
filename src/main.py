@@ -40,6 +40,7 @@ FUNC_DICT = {
     "unban":       [commands.logUser,              LogTypes.UNBAN],
     "unblock":     [commands.blockUser,            False],
     "uptime":      [tk.uptime,                     None],
+    "unmute":      [spam.unmute,                   None],
     "waiting":     [commands.am.gen_waiting_list,  None],
     "warn":        [commands.logUser,              LogTypes.WARN],
     "watch":       [watch.watch_user,              None],

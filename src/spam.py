@@ -1,10 +1,14 @@
+from commonbot.user import UserLookup
 import discord
 from datetime import datetime
 from re import search, IGNORECASE
 from config import client, SPAM_CHAN, MUTE_ROLE, CENSOR_SPAM
+from commonbot.user import UserLookup, fetch_user
 
 SPAM_MES_THRESHOLD = 3
 SPAM_TIME_THRESHOLD = 10 # in secs
+
+ul = UserLookup()
 
 class Spammer:
     def __init__(self, message):
@@ -94,3 +98,27 @@ class Spammers:
         except discord.errors.HTTPException as e:
             if e.code != 50007:
                 raise discord.errors.HTTPException
+
+    async def unmute(self, message, _):
+        uid = ul.parse_id(message)
+        if not uid:
+            await message.channel.send("I wasn't able to find a user in that message")
+            return
+
+        try:
+            user = await message.guild.fetch_member(uid)
+        except discord.errors.NotFound:
+            await message.channel.send("That user does not appear to be in the server")
+            return
+
+        if uid in self.spammers:
+            del self.spammers[uid]
+
+        user_roles = user.roles
+        mute_role = discord.utils.get(user.guild.roles, id=MUTE_ROLE)
+        if mute_role in user_roles:
+            user_roles.remove(mute_role)
+            await user.edit(roles=user_roles)
+            await message.channel.send(f"<@{uid}> has been unmuted")
+        else:
+            await message.channel.send(f"<@{uid}> does not appear to have been muted...")

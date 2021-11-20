@@ -72,7 +72,7 @@ Input:
 """
 async def userSearch(m, _):
     userid = ul.parse_id(m)
-    if userid == None:
+    if not userid:
         await m.channel.send(f"I wasn't able to find a user anywhere based on that message. `{CMD_PREFIX}search USER`")
         return
 
@@ -120,7 +120,7 @@ Inputs:
 async def logUser(m, state):
     # Attempt to generate user object
     userid = ul.parse_id(m)
-    if userid == None:
+    if not userid:
         if state == LogTypes.NOTE:
             await m.channel.send(f"I wasn't able to understand that message: `{CMD_PREFIX}note USER`")
         else:
@@ -187,10 +187,10 @@ async def logUser(m, state):
         try:
             # Send a DM to the user
             u = fetch_user(client, userid)
-            if u != None:
+            if u:
                 DMchan = u.dm_channel
                 # If first time DMing, need to create channel
-                if DMchan == None:
+                if not DMchan:
                     DMchan = await u.create_dm()
 
                 # Only send DM when specified in configs
@@ -279,7 +279,7 @@ Input:
 """
 async def removeError(m, edit):
     userid = ul.parse_id(m)
-    if userid == None:
+    if not userid:
         if edit:
             await m.channel.send(f"I wasn't able to understand that message: `{CMD_PREFIX}remove USER [num] new_message`")
         else:
@@ -363,7 +363,7 @@ Input:
 """
 async def blockUser(m, block):
     userid = ul.parse_id(m)
-    if userid == None:
+    if not userid:
         if block:
             await m.channel.send(f"I wasn't able to understand that message: `{CMD_PREFIX}block USER`")
         else:
@@ -409,13 +409,13 @@ async def reply(m, _):
     else:
         # Otherwise, attempt to get object for the specified user
         userid = ul.parse_id(m)
-        if userid == None:
+        if not userid:
             await m.channel.send(f"I wasn't able to understand that message: `{CMD_PREFIX}reply USER`")
             return
 
         u = fetch_user(client, userid)
     # If we couldn't find anyone, then they aren't in the server, and can't be DMed
-    if u == None:
+    if not u:
         await m.channel.send("Sorry, but they need to be in the server for me to message them")
         return
     try:
@@ -430,7 +430,7 @@ async def reply(m, _):
         uname = f"{str(u)}"
         DMchan = u.dm_channel
         # If first DMing, need to create DM channel
-        if DMchan == None:
+        if not DMchan:
             DMchan = await u.create_dm()
         # Message sent to user
         await DMchan.send(f"A message from the SDV staff: {mes}")

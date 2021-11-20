@@ -153,7 +153,7 @@ def del_watch(userid):
     _db_write(query)
 
 def get_staffdata(staff):
-    if staff == None:
+    if not staff:
         query = ("SELECT * FROM staffLogs",)
     else:
         query = ("SELECT * FROM staffLogs WHERE staff=?", [staff])
@@ -169,7 +169,7 @@ def add_staffdata(staff, bans, warns, is_replace):
     _db_write(query)
 
 def get_monthdata(month):
-    if month == None:
+    if not month:
         query = ("SELECT * FROM monthLogs",)
     else:
         query = ("SELECT * FROM monthLogs WHERE month=?", [month])

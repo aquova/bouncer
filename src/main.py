@@ -82,7 +82,7 @@ Should Log
 Whether the bot should log this event in config.SYS_LOG
 """
 def should_log(server):
-    if server is None:
+    if not server:
         return False
 
     return not dbg.is_debug_bot() and server.id == config.HOME_SERVER

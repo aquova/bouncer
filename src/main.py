@@ -1,8 +1,8 @@
 # Bouncer
-# Written by aquova, 2018-2021
+# Written by aquova, 2018-2022
 # https://github.com/aquova/bouncer
 
-import discord, traceback
+import discord, traceback, datetime
 import censor, commands, config, db, visualize
 import commonbot.utils
 from censor import check_censor
@@ -103,6 +103,13 @@ async def on_ready():
     await client.change_presence(activity=activity_object)
 
     spam.set_channel()
+
+    # Upload our DB file to a private channel as a backup
+    chan = client.get_channel(config.LOG_CHAN)
+    currentTime = datetime.datetime.utcnow()
+    filename = f"bouncer_backup_{commonbot.utils.formatTime(currentTime)}.db"
+    with open(config.DATABASE_PATH, 'rb') as db_file:
+        await chan.send(file=discord.File(db_file, filename=filename))
 
 """
 On Member Update

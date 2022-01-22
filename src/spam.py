@@ -1,31 +1,28 @@
-from commonbot.user import UserLookup
 import discord
-from datetime import datetime
 from re import search, IGNORECASE
 from config import client, SPAM_CHAN, MUTE_ROLE, CENSOR_SPAM
 from commonbot.user import UserLookup, fetch_user
 
 SPAM_MES_THRESHOLD = 3
-SPAM_TIME_THRESHOLD = 10 # in secs
+URL_REGEX = "https?:\/\/.+\..+"
 
 ul = UserLookup()
 
 class Spammer:
     def __init__(self, message):
         self.messages = [message]
-        self.timestamp = datetime.utcnow()
 
     def __len__(self):
         return len(self.messages)
 
+    def get_text(self):
+        return self.messages[0].content
+
     def add(self, message):
-        current_time = datetime.utcnow()
         if len(self.messages) > 0 and message.content == self.messages[0].content:
             self.messages.append(message)
-            # TODO: May need to update timestamp here, to cover situation where they post slowly then quickly
         else:
             self.messages = [message]
-            self.timestamp = current_time
 
 class Spammers:
     def __init__(self):
@@ -58,8 +55,7 @@ class Spammers:
         else:
             self.spammers[uid].add(message)
 
-        dt = datetime.utcnow() - self.spammers[uid].timestamp
-        if len(self.spammers[uid]) >= SPAM_MES_THRESHOLD and dt.total_seconds() <= SPAM_TIME_THRESHOLD:
+        if len(self.spammers[uid]) >= SPAM_MES_THRESHOLD and bool(search(URL_REGEX, self.spammers[uid].get_text(), IGNORECASE)):
             await self.mark_spammer(message.author)
             return True
 
@@ -77,7 +73,7 @@ class Spammers:
             roles.append(mute_role)
             await user.edit(roles=roles)
 
-        await self.notification.send(f"<@{uid}> has been spamming the message: `{spammer.messages[0].content}`")
+        await self.notification.send(f"<@{uid}> has been spamming the message: `{spammer.get_text()}`")
 
         for message in spammer.messages:
             try:

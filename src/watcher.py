@@ -1,3 +1,4 @@
+import discord
 import db
 from config import client
 from commonbot.user import UserLookup
@@ -7,15 +8,15 @@ class Watcher:
         self.watchlist = [x[0] for x in db.get_watch_list()]
         self.ul = UserLookup()
 
-    def should_note(self, id):
+    def should_note(self, id: int) -> bool:
         return id in self.watchlist
 
-    def remove_user(self, id):
+    def remove_user(self, id: int):
         if id in self.watchlist:
             db.del_watch(id)
             self.watchlist.remove(id)
 
-    async def watch_user(self, mes, _):
+    async def watch_user(self, mes: discord.Message, _):
         userid = self.ul.parse_id(mes)
         if not userid:
             await mes.channel.send("I was unable to find a user in that message")
@@ -27,7 +28,7 @@ class Watcher:
         username = self.ul.fetch_username(client, userid)
         await mes.channel.send(f"{username} has been added to the watch list. :spy:")
 
-    async def unwatch_user(self, mes, _):
+    async def unwatch_user(self, mes: discord.Message, _):
         userid = self.ul.parse_id(mes)
         if not userid:
             await mes.channel.send("I was unable to find a user in that message")
@@ -41,7 +42,7 @@ class Watcher:
         username = self.ul.fetch_username(client, userid)
         await mes.channel.send(f"{username} has been removed from the watch list.")
 
-    async def get_watchlist(self, mes, _):
+    async def get_watchlist(self, mes: discord.Message, _):
         if len(self.watchlist) == 0:
             await mes.channel.send("There are no users being watched")
             return

@@ -6,6 +6,8 @@ from config import client, LogTypes, CMD_PREFIX
 from waiting import AnsweringMachine
 from commonbot.user import UserLookup, fetch_user
 
+from typing import Optional
+
 ul = UserLookup()
 bu = BlockedUsers()
 am = AnsweringMachine()
@@ -14,7 +16,7 @@ BAN_KICK_MES = "Hi there! You've been {type} from the Stardew Valley Discord for
 SCAM_MES = "Hi there! You've been banned from the Stardew Valley Discord for posting scam links. If your account was compromised, please change your password, enable 2FA, and join <https://discord.gg/uz6KPaCPhf> to appeal."
 WARN_MES = "Hi there! You've received warning #{count} in the Stardew Valley Discord for violating the rules: `{mes}`. Please review <#707359005655171172> and <#718593494775496754> for more info. If you have any questions, you can reply directly to this message to contact the staff."
 
-async def send_help_mes(m, _):
+async def send_help_mes(m: discord.Message, _):
     dmWarns = "On" if config.DM_WARN else "Off"
     dmBans = "On" if config.DM_BAN else "Off"
     helpMes = (
@@ -50,7 +52,7 @@ async def send_help_mes(m, _):
 
     await m.channel.send(helpMes)
 
-def lookup_username(uid):
+def lookup_username(uid: int) -> Optional[str]:
     username = ul.fetch_username(client, uid)
 
     if not username:
@@ -66,11 +68,8 @@ def lookup_username(uid):
 User Search
 
 Searches the database for the specified user, given a message
-
-Input:
-    m: Discord message object
 """
-async def userSearch(m, _):
+async def userSearch(m: discord.Message, _):
     userid = ul.parse_id(m)
     if not userid:
         await m.channel.send(f"I wasn't able to find a user anywhere based on that message. `{CMD_PREFIX}search USER`")
@@ -112,12 +111,8 @@ async def userSearch(m, _):
 Log User
 
 Notes an infraction for a user
-
-Inputs:
-    m: Discord message object
-    state: Type of infraction
 """
-async def logUser(m, state):
+async def logUser(m: discord.Message, state: LogTypes):
     # Attempt to generate user object
     userid = ul.parse_id(m)
     if not userid:
@@ -156,9 +151,9 @@ async def logUser(m, state):
     # Update records for graphing
     import visualize
     if state == LogTypes.BAN or state == LogTypes.SCAM:
-        visualize.updateCache(m.author.name, (1, 0), commonbot.utils.format_time(currentTime))
+        visualize.update_cache(m.author.name, (1, 0), commonbot.utils.format_time(currentTime))
     elif state == LogTypes.WARN:
-        visualize.updateCache(m.author.name, (0, 1), commonbot.utils.format_time(currentTime))
+        visualize.update_cache(m.author.name, (0, 1), commonbot.utils.format_time(currentTime))
     elif state == LogTypes.UNBAN:
         await m.channel.send("Removing all old logs for unbanning")
         db.clear_user_logs(userid)
@@ -212,18 +207,15 @@ async def logUser(m, state):
             await m.channel.send(f"ERROR: An unexpected error has occurred. Tell aquova this: {e}")
 
     # Update database
-    new_log.message_url = logMesID
+    new_log.message_id = logMesID
     db.add_log(new_log)
 
 """
 Preview message
 
 Prints out Bouncer's DM message as the user will receive it
-
-Inputs:
-    m: Discord message object
 """
-async def preview(m, _):
+async def preview(m: discord.Message, _):
     mes = commonbot.utils.strip_words(m.content, 1)
 
     state_raw = commonbot.utils.get_first_word(mes)
@@ -272,12 +264,8 @@ async def preview(m, _):
 Remove Error
 
 Removes last database entry for specified user
-
-Input:
-    m: Discord message object
-    edit: Boolean, signifies if this is a deletion (false) or an edit (true)
 """
-async def removeError(m, edit):
+async def removeError(m: discord.Message, edit: bool):
     userid = ul.parse_id(m)
     if not userid:
         if edit:
@@ -337,16 +325,16 @@ async def removeError(m, edit):
         out += str(item)
 
         if item.log_type == LogTypes.BAN:
-            visualize.updateCache(item.staff, (-1, 0), commonbot.utils.format_time(item.timestamp))
+            visualize.update_cache(item.staff, (-1, 0), commonbot.utils.format_time(item.timestamp))
         elif item.log_type == LogTypes.WARN:
-            visualize.updateCache(item.staff, (0, -1), commonbot.utils.format_time(item.timestamp))
+            visualize.update_cache(item.staff, (0, -1), commonbot.utils.format_time(item.timestamp))
         await m.channel.send(out)
 
         # Search logging channel for matching post, and remove it
         try:
-            if item.message_url != 0:
+            if item.message_id != 0:
                 chan = discord.utils.get(m.guild.channels, id=config.LOG_CHAN)
-                m = await chan.fetch_message(item.message_url)
+                m = await chan.fetch_message(item.message_id)
                 await m.delete()
         # Print message if unable to find message to delete, but don't stop
         except discord.errors.HTTPException as e:
@@ -356,12 +344,8 @@ async def removeError(m, edit):
 Block User
 
 Prevents DMs from a given user from being forwarded
-
-Input:
-    m: Discord message object
-    block: Boolean, true for block, false for unblock
 """
-async def blockUser(m, block):
+async def blockUser(m: discord.Message, block: bool):
     userid = ul.parse_id(m)
     if not userid:
         if block:
@@ -393,11 +377,8 @@ async def blockUser(m, block):
 Reply
 
 Sends a private message to the specified user
-
-Input:
-    m: Discord message object
 """
-async def reply(m, _):
+async def reply(m: discord.Message, _):
     # If given '^' instead of user, message the last person to DM bouncer
     # Uses whoever DMed last since last startup, don't bother keeping in database or anything like that
     if m.content.split()[1] == "^":
@@ -454,7 +435,7 @@ Say
 
 Speaks a message to the specified channel as the bot
 """
-async def say(message, _):
+async def say(message: discord.Message, _):
     try:
         payload = commonbot.utils.strip_words(message.content, 1)
         channel_id = commonbot.utils.get_first_word(payload)

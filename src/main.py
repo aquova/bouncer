@@ -53,7 +53,7 @@ Delete message
 
 A helper function that deletes and logs the given message
 """
-async def delete_message_helper(message):
+async def delete_message_helper(message: discord.Message):
     mes = f":no_mobile_phones: **{str(message.author)}** deleted in <#{message.channel.id}>: `{message.content}`"
     chan = client.get_channel(config.SYS_LOG)
     # Adds URLs for any attachments that were included in deleted message
@@ -69,7 +69,7 @@ Message send helper
 
 Breaks up a message (as a string) into chunks small enough for Discord's character limit
 """
-async def message_send_helper(message, channel):
+async def message_send_helper(message: discord.Message, channel: discord.TextChannel):
     mes = message
     while mes != "":
         to_send = mes[:config.CHAR_LIMIT]
@@ -81,7 +81,7 @@ Should Log
 
 Whether the bot should log this event in config.SYS_LOG
 """
-def should_log(server):
+def should_log(server: discord.Guild) -> bool:
     if not server:
         return False
 
@@ -117,7 +117,7 @@ On Member Update
 Occurs when a user updates an attribute (nickname, roles)
 """
 @client.event
-async def on_member_update(before, after):
+async def on_member_update(before: discord.Member, after: discord.Member):
     if not should_log(before.guild):
         return
 
@@ -154,7 +154,7 @@ On Member Ban
 Occurs when a user is banned
 """
 @client.event
-async def on_member_ban(server, member):
+async def on_member_ban(server: discord.Guild, member: discord.Member):
     if not should_log(server):
         return
 
@@ -175,7 +175,7 @@ On Member Remove
 Occurs when a user leaves the server
 """
 @client.event
-async def on_member_remove(member):
+async def on_member_remove(member: discord.Member):
     if not should_log(member.guild):
         return
 
@@ -195,7 +195,7 @@ On Message Delete
 Occurs when a user's message is deleted
 """
 @client.event
-async def on_message_delete(message):
+async def on_message_delete(message: discord.Message):
     if not should_log(message.guild) or message.author.bot:
         return
 
@@ -207,7 +207,7 @@ On Bulk Message Delete
 Occurs when a user's messages are bulk deleted, such as ban or kick
 """
 @client.event
-async def on_bulk_message_delete(messages):
+async def on_bulk_message_delete(messages: list[discord.Message]):
     if not should_log(messages[0].guild) or messages[0].author.bot:
         return
 
@@ -220,7 +220,7 @@ On Message Edit
 Occurs when a user edits a message
 """
 @client.event
-async def on_message_edit(before, after):
+async def on_message_edit(before: discord.Message, after: discord.Message):
     if not should_log(before.guild) or before.author.bot:
         return
 
@@ -253,7 +253,7 @@ On Member Join
 Occurs when a user joins the server
 """
 @client.event
-async def on_member_join(member):
+async def on_member_join(member: discord.Member):
     if not should_log(member.guild):
         return
 
@@ -267,7 +267,7 @@ On Voice State Update
 Occurs when a user joins/leaves an audio channel
 """
 @client.event
-async def on_voice_state_update(member, before, after):
+async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
     if not should_log(member.guild) or member.bot:
         return
 
@@ -286,7 +286,7 @@ On Reaction Remove
 Occurs when a user removes a reaction from a message
 """
 @client.event
-async def on_reaction_remove(reaction, user):
+async def on_reaction_remove(reaction: discord.Reaction, user: discord.Member):
     if user.bot:
         return
 
@@ -301,7 +301,7 @@ Occurs when a user posts a message
 More or less the main function
 """
 @client.event
-async def on_message(message):
+async def on_message(message: discord.Message):
     # Bouncer should not react to its own messages
     if message.author.id == client.user.id:
         return

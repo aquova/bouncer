@@ -9,16 +9,16 @@ URL_REGEX = "https?:\/\/.+\..+"
 ul = UserLookup()
 
 class Spammer:
-    def __init__(self, message):
+    def __init__(self, message: discord.Message):
         self.messages = [message]
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.messages)
 
-    def get_text(self):
+    def get_text(self) -> str:
         return self.messages[0].content
 
-    def add(self, message):
+    def add(self, message: discord.Message):
         if len(self.messages) > 0 and message.content == self.messages[0].content:
             self.messages.append(message)
         else:
@@ -32,7 +32,7 @@ class Spammers:
     def set_channel(self):
         self.notification = client.get_channel(SPAM_CHAN)
 
-    async def check_censor(self, message):
+    async def check_censor(self, message: discord.Message) -> bool:
         for item in CENSOR_SPAM:
             if bool(search(item, message.content, IGNORECASE)):
                 self.spammers[message.author.id] = Spammer(message)
@@ -40,7 +40,7 @@ class Spammers:
                 return True
         return False
 
-    async def check_spammer(self, message):
+    async def check_spammer(self, message: discord.Message) -> bool:
         if message.author.bot or message.content == "":
             return False
 
@@ -63,7 +63,7 @@ class Spammers:
 
     # I'm a little concerned this has the potential for a race condition
     # Need to keep an eye out and see if this is the case
-    async def mark_spammer(self, user):
+    async def mark_spammer(self, user: discord.Member):
         uid = user.id
 
         spammer = self.spammers[uid]
@@ -95,7 +95,7 @@ class Spammers:
             if e.code != 50007:
                 raise discord.errors.HTTPException
 
-    async def unmute(self, message, _):
+    async def unmute(self, message: discord.Message, _):
         uid = ul.parse_id(message)
         if not uid:
             await message.channel.send("I wasn't able to find a user in that message")

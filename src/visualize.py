@@ -11,10 +11,10 @@ from config import USER_PLOT, MONTH_PLOT
 
 months = ["", "Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"]
 
-def roundup(x):
+def roundup(x: float) -> int:
     return int(math.ceil(x / 10.0)) * 10 + 1
 
-def getMax(a):
+def get_max(a: list[tuple[int, int]]) -> int:
     maximum = 0
     for x in a:
         if (x[0] + x[1]) > maximum:
@@ -23,7 +23,7 @@ def getMax(a):
 
 # Val is a tuple which determines what to modify
 # (ban # change, warn # change)
-def updateCache(staff, val, date):
+def update_cache(staff: str, val: tuple[int, int], date: str):
     formatDate = f"{date.split('-')[0]}-{date.split('-')[1]}"
 
     checkStaff = db.get_staffdata(staff)
@@ -69,7 +69,7 @@ def gen_user_plot():
     plt.title("Warns/Bans per User")
     plt.xticks(ind, sortedTotals)
     plt.xticks(rotation=-90)
-    plt.yticks(np.arange(0, getMax(list(staffData.values())), 20))
+    plt.yticks(np.arange(0, get_max(list(staffData.values())), 20))
     plt.legend((p1[0], p2[0]), ("Bans", "Warns"))
     plt.tight_layout()
     plt.grid(True, axis="y")
@@ -97,14 +97,14 @@ def gen_monthly_plot():
     plt.title("Warns/Bans per Month")
     plt.xticks(ind, labels)
     plt.xticks(rotation=-90)
-    plt.yticks(np.arange(0, getMax(list(monthData.values())), 10))
+    plt.yticks(np.arange(0, get_max(list(monthData.values())), 10))
     plt.legend((p1[0], p2[0]), ("Bans", "Warns"))
     plt.tight_layout()
     plt.grid(True, axis="y")
 
     plt.savefig(MONTH_PLOT)
 
-async def post_plots(message, _):
+async def post_plots(message: discord.Message, _):
     gen_user_plot()
     gen_monthly_plot()
 

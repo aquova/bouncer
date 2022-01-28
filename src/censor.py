@@ -2,7 +2,7 @@ import discord, db
 from config import CENSOR_LIST, CENSOR_SPAM, CENSOR_WATCH, CENSOR_CHAN, SYS_LOG, VALID_INPUT_CHANS, WATCHLIST_CHAN
 from re import search, IGNORECASE
 
-async def listCensor(message, _):
+async def listCensor(message: discord.Message, _):
     delete_items = '\n'.join(CENSOR_LIST)
     watch_items = '\n'.join(CENSOR_WATCH)
     spam_items = '\n'.join(CENSOR_SPAM)
@@ -10,7 +10,7 @@ async def listCensor(message, _):
 
     await message.channel.send(mes)
 
-async def check_censor(message):
+async def check_censor(message: discord.Message) -> bool:
     # If you're posting in an admin channel, you can swear all you like
     if message.channel.id in VALID_INPUT_CHANS:
         return False
@@ -27,7 +27,7 @@ async def check_censor(message):
 
     return False
 
-async def censor_message(message):
+async def censor_message(message: discord.Message):
     # If censor violation found:
     # - Delete message
     # - Post a message removal message ourselves (since bots are normally ignored)
@@ -58,7 +58,7 @@ async def censor_message(message):
         if e.code != 50007:
             raise discord.errors.HTTPException
 
-async def watch_message(message):
+async def watch_message(message: discord.Message):
     # These are words whose usage we don't want to delete, but we should post to the watch channel
     watch_chan = discord.utils.get(message.guild.channels, id=WATCHLIST_CHAN)
     censor_mes = f"I've flagged a message from **{str(message.author)}** (ID: {message.author.id}) in <#{message.channel.id}>: `{message.content}`\n{message.jump_url}"

@@ -1,7 +1,9 @@
-import datetime, sqlite3
+import sqlite3
 from dataclasses import dataclass
 from config import DATABASE_PATH, LogTypes
 from commonbot.utils import format_time
+from datetime import datetime
+from typing import Optional
 
 @dataclass
 class UserLogEntry:
@@ -12,7 +14,7 @@ class UserLogEntry:
     timestamp: datetime
     log_message: str
     staff: str
-    message_url: str
+    message_id: Optional[int]
 
     def __str__(self):
         logWord = ""
@@ -38,7 +40,7 @@ class UserLogEntry:
             self.timestamp,
             self.log_message,
             self.staff,
-            self.message_url
+            self.message_id
         ]
 
 """
@@ -57,7 +59,7 @@ def initialize():
     sqlconn.commit()
     sqlconn.close()
 
-def _db_read(query):
+def _db_read(query: tuple) -> list[tuple]:
     sqlconn = sqlite3.connect(DATABASE_PATH)
     # The * operator in Python expands a tuple into function params
     results = sqlconn.execute(*query).fetchall()
@@ -65,13 +67,13 @@ def _db_read(query):
 
     return results
 
-def _db_write(query):
+def _db_write(query: tuple[str, list]):
     sqlconn = sqlite3.connect(DATABASE_PATH)
     sqlconn.execute(*query)
     sqlconn.commit()
     sqlconn.close()
 
-def search(user_id):
+def search(user_id: int) -> list[UserLogEntry]:
     query = ("SELECT dbid, id, username, num, date, message, staff, post FROM badeggs WHERE id=?", [user_id])
     search_results = _db_read(query)
 
@@ -82,7 +84,7 @@ def search(user_id):
 
     return entries
 
-def fetch_id_by_username(username):
+def fetch_id_by_username(username: str) -> Optional[str]:
     query = ("SELECT id FROM badeggs WHERE username=?", [username])
     searchResults = _db_read(query)
 
@@ -91,32 +93,32 @@ def fetch_id_by_username(username):
     else:
         return None
 
-def get_warn_count(userid):
+def get_warn_count(userid: int) -> int:
     query = ("SELECT COUNT(*) FROM badeggs WHERE id=? AND num > 0", [userid])
     searchResults = _db_read(query)
 
     return searchResults[0][0] + 1
 
-def get_note_count(userid):
+def get_note_count(userid: int) -> int:
     query = ("SELECT COUNT(*) FROM badeggs WHERE id=? AND num = -1", [userid])
     searchResults = _db_read(query)
 
     return searchResults[0][0] + 1
 
-def add_log(log_entry):
+def add_log(log_entry: UserLogEntry):
     query = ("INSERT OR REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", log_entry.as_list())
     _db_write(query)
 
-def remove_log(dbid):
+def remove_log(dbid: int):
     query = ("REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, NULL, NULL, NULL, NULL, NULL, NULL, NULL)", [dbid])
     _db_write(query)
 
-def clear_user_logs(userid):
+def clear_user_logs(userid: int):
     logs = search(userid)
     for log in logs:
         remove_log(log.dbid)
 
-def get_censor_count(userid):
+def get_censor_count(userid: int) -> Optional[tuple[int, datetime]]:
     query = ("SELECT * FROM censored WHERE id=?", [userid])
     searchResults = _db_read(query)
     if searchResults != []:
@@ -124,43 +126,43 @@ def get_censor_count(userid):
     else:
         return None
 
-def add_censor_count(userid):
+def add_censor_count(userid: int):
     read_query = ("SELECT logs FROM censored WHERE id=?", [userid])
     searchResults = _db_read(read_query)
     num_censors = 1
     if searchResults != []:
         num_censors = searchResults[0][0] + 1
 
-    write_query = ("INSERT OR REPLACE INTO censored (id, logs, last) VALUES (?, ?, ?)", [userid, num_censors, datetime.datetime.utcnow()])
+    write_query = ("INSERT OR REPLACE INTO censored (id, logs, last) VALUES (?, ?, ?)", [userid, num_censors, datetime.utcnow()])
     _db_write(write_query)
 
-def get_dbid():
+def get_dbid() -> int:
     query = ("SELECT COUNT(*) FROM badeggs",)
     globalcount = _db_read(query)
 
     return globalcount[0][0]
 
-def get_watch_list():
+def get_watch_list() -> list[tuple]:
     query = ("SELECT * FROM watching",)
     return _db_read(query)
 
-def add_watch(userid):
+def add_watch(userid: int):
     query = ("INSERT OR REPLACE INTO watching (id) VALUES (?)", [userid])
     _db_write(query)
 
-def del_watch(userid):
+def del_watch(userid: int):
     query = ("DELETE FROM watching WHERE id=?", [userid])
     _db_write(query)
 
-def get_staffdata(staff):
+def get_staffdata(staff: str) -> list[tuple]:
     if not staff:
         query = ("SELECT * FROM staffLogs",)
+        return _db_read(query)
     else:
-        query = ("SELECT * FROM staffLogs WHERE staff=?", [staff])
+        squery = ("SELECT * FROM staffLogs WHERE staff=?", [staff])
+        return _db_read(squery)
 
-    return _db_read(query)
-
-def add_staffdata(staff, bans, warns, is_replace):
+def add_staffdata(staff: str, bans: int, warns: int, is_replace: bool):
     if is_replace:
         query = ("REPLACE INTO staffLogs (staff, bans, warns) VALUES (?, ?, ?)", [staff, bans, warns])
     else:
@@ -168,15 +170,15 @@ def add_staffdata(staff, bans, warns, is_replace):
 
     _db_write(query)
 
-def get_monthdata(month):
+def get_monthdata(month: str) -> list[tuple]:
     if not month:
         query = ("SELECT * FROM monthLogs",)
+        return _db_read(query)
     else:
-        query = ("SELECT * FROM monthLogs WHERE month=?", [month])
+        mquery = ("SELECT * FROM monthLogs WHERE month=?", [month])
+        return _db_read(mquery)
 
-    return _db_read(query)
-
-def add_monthdata(month, bans, warns, is_replace):
+def add_monthdata(month: str, bans: int, warns: int, is_replace: bool):
     if is_replace:
         query = ("REPLACE INTO monthLogs (month, bans, warns) VALUES (?, ?, ?)", [month, bans, warns])
     else:
@@ -184,14 +186,14 @@ def add_monthdata(month, bans, warns, is_replace):
 
     _db_write(query)
 
-def get_blocklist():
+def get_blocklist() -> list[tuple]:
     query = ("SELECT * FROM blocks",)
     return _db_read(query)
 
-def add_block(userid):
+def add_block(userid: int):
     query = ("INSERT INTO blocks (id) VALUES (?)", [userid])
     _db_write(query)
 
-def remove_block(userid):
+def remove_block(userid: int):
     query = ("DELETE FROM blocks WHERE ID=?", [userid])
     _db_write(query)

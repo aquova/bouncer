@@ -1,6 +1,8 @@
-import datetime, discord
+import discord
 from dataclasses import dataclass
+from datetime import datetime
 from commonbot.utils import get_time_delta
+from typing import Optional
 
 @dataclass
 class AnsweringMachineEntry:
@@ -14,31 +16,31 @@ class AnsweringMachine:
         self.waiting_list = {}
         self.recent_reply = None
 
-    def set_recent_reply(self, user):
+    def set_recent_reply(self, user: discord.Member):
         self.recent_reply = user
 
-    def get_recent_reply(self):
+    def get_recent_reply(self) -> Optional[discord.Member]:
         return self.recent_reply
 
-    def recent_reply_exists(self):
+    def recent_reply_exists(self) -> bool:
         return self.recent_reply != None
 
-    def remove_entry(self, user_id):
+    def remove_entry(self, user_id: int):
         if user_id in self.waiting_list:
             del self.waiting_list[user_id]
 
-    def get_entries(self):
+    def get_entries(self) -> dict[int, discord.Member]:
         return self.waiting_list
 
-    def update_entry(self, user_id, user_entry):
+    def update_entry(self, user_id: int, user_entry: discord.Member):
         self.waiting_list[user_id] = user_entry
 
-    async def clear_entries(self, message, _):
+    async def clear_entries(self, message: discord.Message, _):
         self.waiting_list.clear()
         await message.channel.send("Waiting queue has been cleared")
 
-    async def gen_waiting_list(self, message, _):
-        curr_time = datetime.datetime.utcnow()
+    async def gen_waiting_list(self, message: discord.Message, _):
+        curr_time = datetime.utcnow()
         # Assume there are no messages in the queue
         found = False
 

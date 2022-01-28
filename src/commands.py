@@ -106,7 +106,7 @@ async def userSearch(m, _):
     if not censored:
         await m.channel.send("They have never tripped the censor")
     else:
-        await m.channel.send(f"They have tripped the censor {censored[0]} times, most recently on {commonbot.utils.formatTime(censored[1])}")
+        await m.channel.send(f"They have tripped the censor {censored[0]} times, most recently on {commonbot.utils.format_time(censored[1])}")
 
 """
 Log User
@@ -142,8 +142,8 @@ async def logUser(m, state):
         await m.channel.send("I wasn't able to find a username for that user, but whatever, I'll do it anyway.")
 
     # Generate log message, adding URLs of any attachments
-    content = commonbot.utils.combineMessage(m)
-    mes = commonbot.utils.parseMessage(content, username)
+    content = commonbot.utils.combine_message(m)
+    mes = commonbot.utils.parse_message(content, username)
 
     if state == LogTypes.SCAM:
         mes = "Banned for sending scam in chat."
@@ -156,9 +156,9 @@ async def logUser(m, state):
     # Update records for graphing
     import visualize
     if state == LogTypes.BAN or state == LogTypes.SCAM:
-        visualize.updateCache(m.author.name, (1, 0), commonbot.utils.formatTime(currentTime))
+        visualize.updateCache(m.author.name, (1, 0), commonbot.utils.format_time(currentTime))
     elif state == LogTypes.WARN:
-        visualize.updateCache(m.author.name, (0, 1), commonbot.utils.formatTime(currentTime))
+        visualize.updateCache(m.author.name, (0, 1), commonbot.utils.format_time(currentTime))
     elif state == LogTypes.UNBAN:
         await m.channel.send("Removing all old logs for unbanning")
         db.clear_user_logs(userid)
@@ -291,7 +291,7 @@ async def removeError(m, edit):
         username = str(userid)
 
     # If editing, and no message specified, abort.
-    mes = commonbot.utils.parseMessage(m.content, username)
+    mes = commonbot.utils.parse_message(m.content, username)
     if mes == "":
         if edit:
             await m.channel.send("You need to specify an edit message")
@@ -337,9 +337,9 @@ async def removeError(m, edit):
         out += str(item)
 
         if item.log_type == LogTypes.BAN:
-            visualize.updateCache(item.staff, (-1, 0), commonbot.utils.formatTime(item.timestamp))
+            visualize.updateCache(item.staff, (-1, 0), commonbot.utils.format_time(item.timestamp))
         elif item.log_type == LogTypes.WARN:
-            visualize.updateCache(item.staff, (0, -1), commonbot.utils.formatTime(item.timestamp))
+            visualize.updateCache(item.staff, (0, -1), commonbot.utils.format_time(item.timestamp))
         await m.channel.send(out)
 
         # Search logging channel for matching post, and remove it
@@ -419,7 +419,7 @@ async def reply(m, _):
         await m.channel.send("Sorry, but they need to be in the server for me to message them")
         return
     try:
-        content = commonbot.utils.combineMessage(m)
+        content = commonbot.utils.combine_message(m)
         mes = commonbot.utils.strip_words(content, 2)
 
         # Don't allow blank messages

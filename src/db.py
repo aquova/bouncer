@@ -1,7 +1,7 @@
 import datetime, sqlite3
 from dataclasses import dataclass
 from config import DATABASE_PATH, LogTypes
-from commonbot.utils import formatTime
+from commonbot.utils import format_time
 
 @dataclass
 class UserLogEntry:
@@ -27,7 +27,7 @@ class UserLogEntry:
         else: # LogTypes.WARN
             logWord = f"Warning #{self.log_type}"
 
-        return f"[{formatTime(self.timestamp)}] **{self.name}** - {logWord} by {self.staff} - {self.log_message}\n"
+        return f"[{format_time(self.timestamp)}] **{self.name}** - {logWord} by {self.staff} - {self.log_message}\n"
 
     def as_list(self):
         return [

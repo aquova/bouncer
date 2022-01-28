@@ -107,7 +107,7 @@ async def on_ready():
     # Upload our DB file to a private channel as a backup
     chan = client.get_channel(config.LOG_CHAN)
     currentTime = datetime.datetime.utcnow()
-    filename = f"bouncer_backup_{commonbot.utils.formatTime(currentTime)}.db"
+    filename = f"bouncer_backup_{commonbot.utils.format_time(currentTime)}.db"
     with open(config.DATABASE_PATH, 'rb') as db_file:
         await chan.send(file=discord.File(db_file, filename=filename))
 
@@ -320,7 +320,7 @@ async def on_message(message):
             # Store who the most recent user was, for $reply ^
             commands.am.set_recent_reply(message.author)
 
-            content = commonbot.utils.combineMessage(message)
+            content = commonbot.utils.combine_message(message)
             mes = f"**{str(message.author)}** (ID: {message.author.id}): {content}"
 
             # If not blocked, send message along to specified mod channel
@@ -357,19 +357,19 @@ async def on_message(message):
         watching = watch.should_note(message.author.id)
         if watching:
             chan = client.get_channel(config.WATCHLIST_CHAN)
-            content = commonbot.utils.combineMessage(message)
+            content = commonbot.utils.combine_message(message)
             mes = f"**{str(message.author)}** (ID: {message.author.id}) said in <#{message.channel.id}>: {content}"
             await message_send_helper(mes, chan)
 
         # If a user pings bouncer, log into mod channel
         if client.user in message.mentions:
-            content = commonbot.utils.combineMessage(message)
+            content = commonbot.utils.combine_message(message)
             mes = f"**{str(message.author)}** (ID: {message.author.id}) pinged me in <#{message.channel.id}>: {content}\n{message.jump_url}"
             chan = client.get_channel(config.MAILBOX)
             await message_send_helper(mes, chan)
 
         # Functions in this category are those where we care that the user has the correct roles, but don't care about which channel they're invoked in
-        elif commonbot.utils.checkRoles(message.author, config.VALID_ROLES) and message.channel.id in config.VALID_INPUT_CHANS:
+        elif commonbot.utils.check_roles(message.author, config.VALID_ROLES) and message.channel.id in config.VALID_INPUT_CHANS:
             if message.content.startswith(config.CMD_PREFIX):
                 cmd = commonbot.utils.strip_prefix(message.content, config.CMD_PREFIX)
                 cmd = commonbot.utils.get_first_word(cmd)

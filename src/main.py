@@ -363,15 +363,15 @@ async def on_message(message: discord.Message):
             await message_send_helper(mes, chan)
 
         # If a user pings bouncer, log into mod channel, unless it's us
-        if client.user in message.mentions and message.channel.id not in config.VALID_INPUT_CHANS:
+        if client.user in message.mentions and message.channel.category_id not in config.INPUT_CATEGORIES:
             content = commonbot.utils.combine_message(message)
             mes = f"**{str(message.author)}** (ID: {message.author.id}) pinged me in <#{message.channel.id}>: {content}\n{message.jump_url}"
             chan = client.get_channel(config.MAILBOX)
             await message_send_helper(mes, chan)
 
-        # Functions in this category are those where we care that the user has the correct roles, but don't care about which channel they're invoked in
-        elif commonbot.utils.check_roles(message.author, config.VALID_ROLES) and message.channel.id in config.VALID_INPUT_CHANS:
-            if message.content.startswith(config.CMD_PREFIX):
+        # Only allow moderators to invoke commands, and only in staff category
+        if message.content.startswith(config.CMD_PREFIX):
+            if commonbot.utils.check_roles(message.author, config.VALID_ROLES) and message.channel.category_id in config.INPUT_CATEGORIES:
                 cmd = commonbot.utils.strip_prefix(message.content, config.CMD_PREFIX)
                 cmd = commonbot.utils.get_first_word(cmd)
                 if cmd in FUNC_DICT:

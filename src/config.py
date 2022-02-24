@@ -32,8 +32,8 @@ CMD_PREFIX = cfg['command_prefix']
 
 HOME_SERVER = cfg['servers']['home']
 
+INPUT_CATEGORIES = cfg['categories']['listening']
 MAILBOX = cfg['channels']['mailbox']
-VALID_INPUT_CHANS = cfg['channels']['listening']
 LOG_CHAN = cfg['channels']['log']
 SYS_LOG = cfg['channels']['syslog']
 WATCHLIST_CHAN = cfg['channels']['watchlist']

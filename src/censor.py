@@ -1,5 +1,5 @@
 import discord, db
-from config import CENSOR_LIST, CENSOR_SPAM, CENSOR_WATCH, CENSOR_CHAN, SYS_LOG, VALID_INPUT_CHANS, WATCHLIST_CHAN
+from config import CENSOR_LIST, CENSOR_SPAM, CENSOR_WATCH, CENSOR_CHAN, SYS_LOG, INPUT_CATEGORIES, WATCHLIST_CHAN
 from re import search, IGNORECASE
 
 async def listCensor(message: discord.Message, _):
@@ -12,7 +12,7 @@ async def listCensor(message: discord.Message, _):
 
 async def check_censor(message: discord.Message) -> bool:
     # If you're posting in an admin channel, you can swear all you like
-    if message.channel.id in VALID_INPUT_CHANS:
+    if message.channel.category_id in INPUT_CATEGORIES:
         return False
 
     for item in CENSOR_LIST:

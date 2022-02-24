@@ -67,13 +67,14 @@ class Spammers:
         uid = user.id
 
         spammer = self.spammers[uid]
+        txt = spammer.get_text()
         roles = user.roles
         mute_role = discord.utils.get(user.guild.roles, id=MUTE_ROLE)
         if mute_role not in roles:
             roles.append(mute_role)
             await user.edit(roles=roles)
 
-        await self.notification.send(f"<@{uid}> has been spamming the message: `{spammer.get_text()}`")
+        await self.notification.send(f"<@{uid}> has been spamming the message: `{txt}`")
 
         for message in spammer.messages:
             try:
@@ -90,7 +91,7 @@ class Spammers:
             if not dm_chan:
                 dm_chan = await user.create_dm()
 
-            await dm_chan.send(f"Hi there! This is an automated courtesy message informing you that your recent posts have been deleted for spamming. You have been muted from speaking in the server until a moderator can verify your message. If you have any questions, please reply to this bot.")
+            await dm_chan.send(f"Hi there! This is an automated courtesy message informing you that your recent posts have been deleted for spamming {txt}. You have been muted from speaking in the server until a moderator can verify your message. If you have any questions, please reply to this bot.")
         except discord.errors.HTTPException as e:
             if e.code != 50007:
                 raise discord.errors.HTTPException

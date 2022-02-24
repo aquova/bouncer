@@ -362,8 +362,8 @@ async def on_message(message: discord.Message):
             mes = f"**{str(message.author)}** (ID: {message.author.id}) said in <#{message.channel.id}>: {content}"
             await message_send_helper(mes, chan)
 
-        # If a user pings bouncer, log into mod channel
-        if client.user in message.mentions:
+        # If a user pings bouncer, log into mod channel, unless it's us
+        if client.user in message.mentions and message.channel.id not in config.VALID_INPUT_CHANS:
             content = commonbot.utils.combine_message(message)
             mes = f"**{str(message.author)}** (ID: {message.author.id}) pinged me in <#{message.channel.id}>: {content}\n{message.jump_url}"
             chan = client.get_channel(config.MAILBOX)

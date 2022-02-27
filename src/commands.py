@@ -32,9 +32,12 @@ async def send_help_mes(m: discord.Message, _):
         f"Remove a user's log: `{CMD_PREFIX}remove <user> <index(optional)>`\n"
         f"Edit a user's note: `{CMD_PREFIX}edit <user> <index(optional)> <new_message>`\n"
         "\n"
-        f"Reply to a user in DMs: `{CMD_PREFIX}reply USERID` - To reply to the most recent DM: `{CMD_PREFIX}reply ^`\n"
+        f"Reply to a user in DMs: `{CMD_PREFIX}reply <user> <message>`\n"
+        f" - To reply to the most recent DM: `{CMD_PREFIX}reply ^ <message>`\n"
+        f" - You can also Discord reply to a DM with `{CMD_PREFIX}reply <message>`\n"
         f"View users waiting for a reply: `{CMD_PREFIX}waiting`. Clear the list with `{CMD_PREFIX}clear`\n"
         f"Stop a user from sending DMs to us: `{CMD_PREFIX}block/{CMD_PREFIX}unblock <user>`\n"
+        "\n"
         f"Remove a user's 'Muted' role: `{CMD_PREFIX}unmute <user>`\n"
         f"Say a message as the bot: `{CMD_PREFIX}say <channel> <message>`\n"
         "\n"
@@ -379,36 +382,48 @@ Reply
 Sends a private message to the specified user
 """
 async def reply(m: discord.Message, _):
-    # If given '^' instead of user, message the last person to DM bouncer
-    # Uses whoever DMed last since last startup, don't bother keeping in database or anything like that
-    if m.content.split()[1] == "^":
-        if am.recent_reply_exists():
-            u = am.get_recent_reply()
-        else:
-            await m.channel.send("Sorry, I have no previous user stored. Gotta do it the old fashioned way.")
-            return
-    else:
-        # Otherwise, attempt to get object for the specified user
-        userid = ul.parse_id(m)
-        if not userid:
-            await m.channel.send(f"I wasn't able to understand that message: `{CMD_PREFIX}reply USER`")
-            return
+    u = None
+    metadata_words = 0
+    # Check if we are replying via a Discord reply to a Bouncer message
+    if m.reference:
+        user_reply = m.reference.cached_message
+        if user_reply:
+            if user_reply.author == client.user and len(user_reply.mentions) == 1:
+                u = user_reply.mentions[0]
+                metadata_words = 1
 
-        u = fetch_user(client, userid)
+    if not u:
+        # If given '^' instead of user, message the last person to DM bouncer
+        # Uses whoever DMed last since last startup, don't bother keeping in database or anything like that
+        if m.content.split()[1] == "^":
+            if am.recent_reply_exists():
+                u = am.get_recent_reply()
+                metadata_words = 2
+            else:
+                await m.channel.send("Sorry, I have no previous user stored. Gotta do it the old fashioned way.")
+                return
+        else:
+            # Otherwise, attempt to get object for the specified user
+            userid = ul.parse_id(m)
+            if not userid:
+                await m.channel.send(f"I wasn't able to understand that message: `{CMD_PREFIX}reply USER`")
+                return
+
+            u = fetch_user(client, userid)
+            metadata_words = 2
     # If we couldn't find anyone, then they aren't in the server, and can't be DMed
     if not u:
         await m.channel.send("Sorry, but they need to be in the server for me to message them")
         return
     try:
         content = commonbot.utils.combine_message(m)
-        mes = commonbot.utils.strip_words(content, 2)
+        mes = commonbot.utils.strip_words(content, metadata_words)
 
         # Don't allow blank messages
         if len(mes) == 0 or mes.isspace():
             await m.channel.send("...That message was blank. Please send an actual message")
             return
 
-        uname = f"{str(u)}"
         DMchan = u.dm_channel
         # If first DMing, need to create DM channel
         if not DMchan:
@@ -416,7 +431,7 @@ async def reply(m: discord.Message, _):
         # Message sent to user
         await DMchan.send(f"A message from the SDV staff: {mes}")
         # Notification of sent message to the senders
-        await m.channel.send(f"Message sent to {uname}.")
+        await m.channel.send(f"Message sent to {str(u)}.")
 
         # If they were in our answering machine, they have been replied to, and can be removed
         am.remove_entry(u.id)

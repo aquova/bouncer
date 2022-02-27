@@ -322,7 +322,7 @@ async def on_message(message: discord.Message):
             commands.am.set_recent_reply(message.author)
 
             content = commonbot.utils.combine_message(message)
-            mes = f"**{str(message.author)}** (ID: {message.author.id}): {content}"
+            mes = f"<@{message.author.id}>: {content}"
 
             # If not blocked, send message along to specified mod channel
             if not commands.bu.is_in_blocklist(message.author.id):

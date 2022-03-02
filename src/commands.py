@@ -391,8 +391,7 @@ async def reply(m: discord.Message, _):
             if user_reply.author == client.user and len(user_reply.mentions) == 1:
                 u = user_reply.mentions[0]
                 metadata_words = 1
-
-    if not u:
+    else:
         # If given '^' instead of user, message the last person to DM bouncer
         # Uses whoever DMed last since last startup, don't bother keeping in database or anything like that
         if m.content.split()[1] == "^":
@@ -411,9 +410,13 @@ async def reply(m: discord.Message, _):
 
             u = fetch_user(client, userid)
             metadata_words = 2
+
     # If we couldn't find anyone, then they aren't in the server, and can't be DMed
     if not u:
-        await m.channel.send("Sorry, but they need to be in the server for me to message them")
+        if m.reference:
+            await m.channel.send("Sorry, but I wasn't able to get the user from the message. Odds are the bot was restarted after that was sent. You will need to do it 'the old fashioned way'")
+        else:
+            await m.channel.send("Sorry, but they need to be in the server for me to message them")
         return
     try:
         content = commonbot.utils.combine_message(m)

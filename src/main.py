@@ -322,16 +322,17 @@ async def on_message(message: discord.Message):
             commands.am.set_recent_reply(message.author)
 
             content = commonbot.utils.combine_message(message)
-            mes = f"<@{message.author.id}>: {content}"
-
             # If not blocked, send message along to specified mod channel
             if not commands.bu.is_in_blocklist(message.author.id):
+                mes = ""
                 chan = None
                 # If we share the main server, treat that as a DM
                 if config.HOME_SERVER in [x.id for x in message.author.mutual_guilds]:
+                    mes = f"<@{message.author.id}>: {content}"
                     chan = client.get_channel(config.MAILBOX)
                 # The only other server we should share is the ban appeal server
                 else:
+                    mes = f"{str(message.author)} ({message.author.id}): {content}"
                     chan = client.get_channel(config.BAN_APPEAL)
 
                 logMes = await chan.send(mes)

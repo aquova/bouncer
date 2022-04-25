@@ -1,7 +1,7 @@
 import discord
 from re import search, IGNORECASE
 from config import client, SPAM_CHAN, MUTE_ROLE, CENSOR_SPAM
-from commonbot.user import UserLookup, fetch_user
+from commonbot.user import UserLookup
 
 SPAM_MES_THRESHOLD = 3
 URL_REGEX = "https?:\/\/.+\..+"

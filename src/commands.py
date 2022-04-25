@@ -4,7 +4,7 @@ import commonbot.utils
 from blocks import BlockedUsers
 from config import client, LogTypes, CMD_PREFIX
 from waiting import AnsweringMachine
-from commonbot.user import UserLookup, fetch_user
+from commonbot.user import UserLookup
 
 from typing import Optional
 
@@ -184,7 +184,7 @@ async def logUser(m: discord.Message, state: LogTypes):
 
         try:
             # Send a DM to the user
-            u = fetch_user(client, userid)
+            u = client.get_user(userid)
             if u:
                 DMchan = u.dm_channel
                 # If first time DMing, need to create channel
@@ -408,7 +408,7 @@ async def reply(m: discord.Message, _):
                 await m.channel.send(f"I wasn't able to understand that message: `{CMD_PREFIX}reply USER`")
                 return
 
-            u = fetch_user(client, userid)
+            u = client.get_user(userid)
             metadata_words = 2
 
     # If we couldn't find anyone, then they aren't in the server, and can't be DMed

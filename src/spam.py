@@ -1,10 +1,12 @@
 import discord
+from datetime import timedelta
 from re import search, IGNORECASE
-from config import client, SPAM_CHAN, MUTE_ROLE, CENSOR_SPAM
+from config import client, SPAM_CHAN, CENSOR_SPAM
 from commonbot.user import UserLookup
 
 SPAM_MES_THRESHOLD = 3
 URL_REGEX = "https?:\/\/.+\..+"
+TIMEOUT_HRS = 1
 
 ul = UserLookup()
 
@@ -15,7 +17,7 @@ class Spammer:
     def __len__(self) -> int:
         return len(self.messages)
 
-    def get_text(self) -> str:
+    def __str__(self) -> str:
         return self.messages[0].content
 
     def add(self, message: discord.Message):
@@ -55,26 +57,25 @@ class Spammers:
         else:
             self.spammers[uid].add(message)
 
-        if len(self.spammers[uid]) >= SPAM_MES_THRESHOLD and bool(search(URL_REGEX, self.spammers[uid].get_text(), IGNORECASE)):
+        if len(self.spammers[uid]) >= SPAM_MES_THRESHOLD and bool(search(URL_REGEX, str(self.spammers[uid]), IGNORECASE)):
             await self.mark_spammer(message.author)
             return True
 
         return False
 
-    # I'm a little concerned this has the potential for a race condition
-    # Need to keep an eye out and see if this is the case
     async def mark_spammer(self, user: discord.Member):
         uid = user.id
 
         spammer = self.spammers[uid]
-        txt = spammer.get_text()
-        roles = user.roles
-        mute_role = discord.utils.get(user.guild.roles, id=MUTE_ROLE)
-        if mute_role not in roles:
-            roles.append(mute_role)
-            await user.edit(roles=roles)
+        txt = str(spammer)
+        if not user.is_timed_out():
+            try:
+                await user.timeout(timedelta(hours=TIMEOUT_HRS))
+            # Can't timeout roles higher in hierarchy
+            except discord.errors.Forbidden:
+                pass
 
-        await self.notification.send(f"<@{uid}> has been spamming the message: `{txt}`")
+        await self.notification.send(f"<@{uid}> has been timed out for {TIMEOUT_HRS} hours for spamming the message: `{txt}`")
 
         for message in spammer.messages:
             try:
@@ -91,7 +92,7 @@ class Spammers:
             if not dm_chan:
                 dm_chan = await user.create_dm()
 
-            await dm_chan.send(f"Hi there! This is an automated courtesy message informing you that your recent posts have been deleted for spamming {txt}. You have been muted from speaking in the server until a moderator can verify your message. If you have any questions, please reply to this bot.")
+            await dm_chan.send(f"Hi there! This is an automated courtesy message informing you that your recent posts have been deleted for spamming '{txt}'. You have been muted from speaking in the server until a moderator can verify your message. If you have any questions, please reply to this bot.")
         except discord.errors.HTTPException as e:
             if e.code != 50007:
                 raise discord.errors.HTTPException
@@ -111,11 +112,11 @@ class Spammers:
         if uid in self.spammers:
             del self.spammers[uid]
 
-        user_roles = user.roles
-        mute_role = discord.utils.get(user.guild.roles, id=MUTE_ROLE)
-        if mute_role in user_roles:
-            user_roles.remove(mute_role)
-            await user.edit(roles=user_roles)
-            await message.channel.send(f"<@{uid}> has been unmuted")
+        if user.is_timed_out():
+            try:
+                await user.timeout(None)
+                await message.channel.send(f"<@{uid}> has been unmuted")
+            except discord.errors.Forbidden:
+                pass
         else:
             await message.channel.send(f"<@{uid}> does not appear to have been muted...")

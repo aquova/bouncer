@@ -55,7 +55,4 @@ USER_PLOT = "/private/user_plot.png"
 MONTH_PLOT = "/private/month_plot.png"
 
 # Initialize our bot client object
-intents = discord.Intents.default()
-intents.members = True
-
-client = discord.Client(intents=intents)
+client = discord.Client(intents=discord.Intents.all())

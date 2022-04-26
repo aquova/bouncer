@@ -8,6 +8,7 @@ import commonbot.utils
 from censor import check_censor
 from config import client, LogTypes
 from spam import Spammers
+from tattletale import check_tattletale
 from waiting import AnsweringMachineEntry
 from watcher import Watcher
 
@@ -280,6 +281,15 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
         mes = f":loud_sound: **{str(member)}** has joined voice channel {after.channel.name}"
         chan = client.get_channel(config.SYS_LOG)
         await chan.send(mes)
+
+"""
+On Reaction Add
+
+Occurs when a message receives a reaction
+"""
+@client.event
+async def on_reaction_add(reaction: discord.Reaction, user: discord.Member):
+    await check_tattletale(reaction, user)
 
 """
 On Reaction Remove

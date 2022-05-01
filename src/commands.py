@@ -1,4 +1,5 @@
-import discord, datetime
+import discord
+from datetime import datetime, timezone
 import config, db
 import commonbot.utils
 from blocks import BlockedUsers
@@ -131,7 +132,7 @@ async def logUser(m: discord.Message, state: LogTypes):
         count = db.get_warn_count(userid)
     else:
         count = state.value
-    currentTime = datetime.datetime.utcnow()
+    currentTime = datetime.now(timezone.utc)
 
     # Attempt to fetch the username for the user
     username = lookup_username(userid)
@@ -309,7 +310,7 @@ async def removeError(m: discord.Message, edit: bool):
         import visualize
         if edit:
             if item.log_type == LogTypes.NOTE.value:
-                currentTime = datetime.datetime.utcnow()
+                currentTime = datetime.now(timezone.utc)
                 item.timestamp = currentTime
                 item.log_message = mes
                 item.staff = m.author.name

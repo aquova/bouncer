@@ -1,6 +1,6 @@
 import discord
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from commonbot.utils import get_time_delta
 from typing import Optional
 
@@ -40,7 +40,7 @@ class AnsweringMachine:
         await message.channel.send("Waiting queue has been cleared")
 
     async def gen_waiting_list(self, message: discord.Message, _):
-        curr_time = datetime.utcnow()
+        curr_time = datetime.now(timezone.utc)
         # Assume there are no messages in the queue
         found = False
 

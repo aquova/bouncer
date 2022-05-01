@@ -2,7 +2,8 @@
 # Written by aquova, 2018-2022
 # https://github.com/aquova/bouncer
 
-import discord, traceback, datetime
+import discord, traceback
+from datetime import datetime, timezone
 import censor, commands, config, db, visualize
 import commonbot.utils
 from censor import check_censor
@@ -108,7 +109,7 @@ async def on_ready():
     # Upload our DB file to a private channel as a backup
     if not dbg.is_debug_bot():
         chan = client.get_channel(config.LOG_CHAN)
-        currentTime = datetime.datetime.utcnow()
+        currentTime = datetime.now(timezone.utc)
         filename = f"bouncer_backup_{commonbot.utils.format_time(currentTime)}.db"
         with open(config.DATABASE_PATH, 'rb') as db_file:
             await chan.send(file=discord.File(db_file, filename=filename))

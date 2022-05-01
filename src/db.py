@@ -2,7 +2,7 @@ import sqlite3
 from dataclasses import dataclass
 from config import DATABASE_PATH, LogTypes
 from commonbot.utils import format_time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 @dataclass
@@ -133,7 +133,7 @@ def add_censor_count(userid: int):
     if searchResults != []:
         num_censors = searchResults[0][0] + 1
 
-    write_query = ("INSERT OR REPLACE INTO censored (id, logs, last) VALUES (?, ?, ?)", [userid, num_censors, datetime.utcnow()])
+    write_query = ("INSERT OR REPLACE INTO censored (id, logs, last) VALUES (?, ?, ?)", [userid, num_censors, datetime.now(timezone.utc)])
     _db_write(write_query)
 
 def get_dbid() -> int:

@@ -40,6 +40,7 @@ WATCHLIST_CHAN = cfg['channels']['watchlist']
 BAN_APPEAL = cfg['channels']['ban_appeal']
 
 VALID_ROLES = cfg['roles']['admin']
+TTL_ROLES = cfg['roles']['tattletale']
 
 DM_BAN = cfg['DM']['ban']
 DM_WARN = cfg['DM']['warn']

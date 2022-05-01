@@ -1,13 +1,13 @@
 import discord
 from datetime import timedelta
-from config import client, MAILBOX
-from commonbot.utils import combine_message
+from config import client, MAILBOX, TTL_ROLES
+from commonbot.utils import combine_message, check_roles
 
 REACTION_THRESHOLD = 3
 REACTION_EMOJI = '❌' # The :x: emoji
 TIMEOUT_MIN = 10
 
-async def check_tattletale(reaction: discord.Reaction, user: discord.Member):
+async def check_tattletale(reaction: discord.Reaction):
     if reaction.emoji != REACTION_EMOJI or reaction.count < REACTION_THRESHOLD:
         return
 
@@ -20,17 +20,22 @@ async def check_tattletale(reaction: discord.Reaction, user: discord.Member):
     # - Time out the flagged user
     # - Notify staff, both of the offending message as well as who reacted, for potential abuse
 
-    # If they're timed out, then they've already been taken care of
-    if m.author.is_timed_out():
+    # Limited rollout: Only count reactions by users with certain role
+    reactors = [x async for x in reaction.users()]
+    num_valid_reactors = len([x for x in reactors if check_roles(x, TTL_ROLES)])
+    if num_valid_reactors < REACTION_THRESHOLD:
         return
+    reactor_list = "\n".join([str(x) for x in reactors])
 
-    await m.author.timeout(timedelta(minutes=TIMEOUT_MIN))
-    msg_txt = combine_message(m)
-    reactors = [str(x) async for x in reaction.users()]
-    reactor_list = "\n".join(reactors)
+    if not m.author.is_timed_out():
+        await m.author.timeout(timedelta(minutes=TIMEOUT_MIN))
 
-    await m.delete()
+    try:
+        await m.delete()
+        msg_txt = combine_message(m)
 
-    staff_chan = client.get_channel(MAILBOX)
-    report = f"Users have flagged a message by <@{m.author.id}> in <#{m.channel.id}>: {msg_txt}.\n\nThese are the users who flagged:\n {reactor_list}"
-    await staff_chan.send(report)
+        staff_chan = client.get_channel(MAILBOX)
+        report = f"Users have flagged a message by <@{m.author.id}> in <#{m.channel.id}>: {msg_txt}.\n\nThese are the users who flagged:\n {reactor_list}"
+        await staff_chan.send(report)
+    except discord.NotFound:
+        pass

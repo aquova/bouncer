@@ -1,6 +1,5 @@
 # Bouncer
-# Written by aquova, 2018-2022
-# https://github.com/aquova/bouncer
+# https://github.com/StardewValleyDiscord/bouncer
 
 import discord, traceback
 from datetime import datetime, timezone

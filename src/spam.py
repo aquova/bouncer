@@ -1,8 +1,9 @@
 import discord
 from datetime import timedelta
 from re import search, IGNORECASE
-from config import client, SPAM_CHAN, CENSOR_SPAM
+from config import client, SPAM_CHAN, CENSOR_SPAM, VALID_ROLES
 from commonbot.user import UserLookup
+from commonbot.utils import check_roles
 
 SPAM_MES_THRESHOLD = 3
 URL_REGEX = "https?:\/\/.+\..+"
@@ -44,6 +45,10 @@ class Spammers:
 
     async def check_spammer(self, message: discord.Message) -> bool:
         if message.author.bot or message.content == "":
+            return False
+
+        # Don't censor admins
+        if check_roles(message.author, VALID_ROLES):
             return False
 
         censored = await self.check_censor(message)

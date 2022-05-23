@@ -1,6 +1,7 @@
 import discord, db
-from config import CENSOR_LIST, CENSOR_SPAM, CENSOR_WATCH, CENSOR_CHAN, SYS_LOG, INPUT_CATEGORIES, WATCHLIST_CHAN
+from config import CENSOR_LIST, CENSOR_SPAM, CENSOR_WATCH, CENSOR_CHAN, SYS_LOG, WATCHLIST_CHAN, VALID_ROLES
 from re import search, IGNORECASE
+from commonbot.utils import check_roles
 
 async def listCensor(message: discord.Message, _):
     delete_items = '\n'.join(CENSOR_LIST)
@@ -11,8 +12,8 @@ async def listCensor(message: discord.Message, _):
     await message.channel.send(mes)
 
 async def check_censor(message: discord.Message) -> bool:
-    # If you're posting in an admin channel, you can swear all you like
-    if message.channel.category_id in INPUT_CATEGORIES:
+    # Don't censor admins
+    if check_roles(message.author, VALID_ROLES):
         return False
 
     for item in CENSOR_LIST:

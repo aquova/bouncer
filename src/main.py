@@ -287,9 +287,9 @@ On Reaction Add
 
 Occurs when a message receives a reaction
 """
-@client.event
-async def on_reaction_add(reaction: discord.Reaction, user: discord.Member):
-    await check_tattletale(reaction)
+# @client.event
+# async def on_reaction_add(reaction: discord.Reaction, user: discord.Member):
+#     await check_tattletale(reaction)
 
 """
 On Reaction Remove

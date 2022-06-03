@@ -6,7 +6,8 @@ from datetime import datetime, timezone
 import censor, commands, config, db, visualize
 import commonbot.utils
 from censor import check_censor
-from config import client, LogTypes
+from client import client
+from config import LogTypes
 from spam import Spammers
 from tattletale import check_tattletale
 from waiting import AnsweringMachineEntry
@@ -112,6 +113,10 @@ async def on_ready():
         filename = f"bouncer_backup_{commonbot.utils.format_time(currentTime)}.db"
         with open(config.DATABASE_PATH, 'rb') as db_file:
             await chan.send(file=discord.File(db_file, filename=filename))
+
+@client.event
+async def on_guild_available(guild: discord.Guild):
+    await client.setup_guild(guild)
 
 """
 On Member Update

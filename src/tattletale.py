@@ -1,6 +1,7 @@
 import discord
 from datetime import timedelta
-from config import client, MAILBOX, TTL_ROLES
+from client import client
+from config import MAILBOX, TTL_ROLES
 from commonbot.utils import combine_message, check_roles
 
 REACTION_THRESHOLD = 3

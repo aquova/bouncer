@@ -55,5 +55,3 @@ SPAM_CHAN = cfg['channels']['spam']
 USER_PLOT = "/private/user_plot.png"
 MONTH_PLOT = "/private/month_plot.png"
 
-# Initialize our bot client object
-client = discord.Client(intents=discord.Intents.all())

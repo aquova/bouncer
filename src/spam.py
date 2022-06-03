@@ -1,7 +1,8 @@
 import discord
 from datetime import timedelta
 from re import search, IGNORECASE
-from config import client, SPAM_CHAN, CENSOR_SPAM, VALID_ROLES
+from client import client
+from config import SPAM_CHAN, CENSOR_SPAM, VALID_ROLES
 from commonbot.user import UserLookup
 from commonbot.utils import check_roles
 

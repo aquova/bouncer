@@ -2,8 +2,9 @@ import discord
 from datetime import datetime, timezone
 import config, db
 import commonbot.utils
+from client import client
 from blocks import BlockedUsers
-from config import client, LogTypes, CMD_PREFIX
+from config import LogTypes, CMD_PREFIX
 from waiting import AnsweringMachine
 from commonbot.user import UserLookup
 

@@ -1,6 +1,6 @@
 import discord
 import db
-from config import client
+from client import client
 from commonbot.user import UserLookup
 
 class Watcher:

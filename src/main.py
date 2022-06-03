@@ -5,6 +5,7 @@ import discord, traceback
 from datetime import datetime, timezone
 import censor, commands, config, db, visualize
 import commonbot.utils
+import context # Import just so bot can see them
 from censor import check_censor
 from client import client
 from config import LogTypes

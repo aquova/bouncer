@@ -74,43 +74,40 @@ User Search
 
 Searches the database for the specified user, given a message
 """
-async def userSearch(m: discord.Message, _):
+async def search_command(m: discord.Message, _):
     userid = ul.parse_id(m)
     if not userid:
         await m.channel.send(f"I wasn't able to find a user anywhere based on that message. `{CMD_PREFIX}search USER`")
         return
 
+    output = await search_helper(userid)
+    await m.channel.send(output)
+
+async def search_helper(uid: int) -> str:
+    ret = ""
     # Get database values for given user
-    search_results = db.search(userid)
-    username = lookup_username(userid)
+    search_results = db.search(uid)
+    username = lookup_username(uid)
 
     if search_results == []:
         if username:
-            await m.channel.send(f"User {username} was not found in the database\n")
+            ret += f"User {username} was not found in the database\n"
         else:
-            await m.channel.send("That user was not found in the database or the server\n")
-            return
+            return "That user was not found in the database or the server\n"
     else:
         # Format output message
-        out = f"User {username} (ID: {userid}) was found with the following infractions\n"
+        out = f"User {username} (ID: {uid}) was found with the following infractions\n"
         for index, item in enumerate(search_results):
-            # Enumerate each item
-            n = f"{index + 1}. "
-            n += str(item)
+            out += f"{index + 1}. {str(item)}"
+        ret += out
 
-            # If message becomes too long, send what we have and start a new post
-            if len(out) + len(n) < config.CHAR_LIMIT:
-                out += n
-            else:
-                await m.channel.send(out)
-                out = n
-        await m.channel.send(out)
-
-    censored = db.get_censor_count(userid)
+    censored = db.get_censor_count(uid)
     if not censored:
-        await m.channel.send("They have never tripped the censor")
+        ret += "They have never tripped the censor"
     else:
-        await m.channel.send(f"They have tripped the censor {censored[0]} times, most recently on {commonbot.utils.format_time(censored[1])}")
+        ret += f"They have tripped the censor {censored[0]} times, most recently on {commonbot.utils.format_time(censored[1])}"
+
+    return ret
 
 """
 Log User

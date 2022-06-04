@@ -81,7 +81,7 @@ async def search_command(m: discord.Message, _):
         return
 
     output = await search_helper(userid)
-    await m.channel.send(output)
+    await commonbot.utils.send_message(output, m.channel)
 
 async def search_helper(uid: int) -> str:
     ret = ""

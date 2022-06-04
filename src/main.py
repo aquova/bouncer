@@ -95,9 +95,6 @@ async def on_ready():
     spam.set_channel()
 
     if not dbg.is_debug_bot():
-        # Only let live bot import context menu items
-        import context
-
         # Upload our DB file to a private channel as a backup
         chan = client.get_channel(config.LOG_CHAN)
         currentTime = datetime.now(timezone.utc)
@@ -105,9 +102,17 @@ async def on_ready():
         with open(config.DATABASE_PATH, 'rb') as db_file:
             await chan.send(file=discord.File(db_file, filename=filename))
 
+"""
+On Guild Available
+
+Runs when the bot is initialized within each Guild
+"""
 @client.event
 async def on_guild_available(guild: discord.Guild):
-    await client.setup_guild(guild)
+    if not dbg.is_debug_bot():
+        # Only let live bot import context menu items
+        import context
+        await client.setup_guild(guild)
 
 """
 On Member Update

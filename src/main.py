@@ -5,7 +5,6 @@ import discord, traceback
 from datetime import datetime, timezone
 import censor, commands, config, db, visualize
 import commonbot.utils
-import context # Import just so bot can see them
 from censor import check_censor
 from client import client
 from config import LogTypes
@@ -107,8 +106,11 @@ async def on_ready():
 
     spam.set_channel()
 
-    # Upload our DB file to a private channel as a backup
     if not dbg.is_debug_bot():
+        # Only let live bot import context menu items
+        import context
+
+        # Upload our DB file to a private channel as a backup
         chan = client.get_channel(config.LOG_CHAN)
         currentTime = datetime.now(timezone.utc)
         filename = f"bouncer_backup_{commonbot.utils.format_time(currentTime)}.db"

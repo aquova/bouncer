@@ -6,5 +6,5 @@ import commands
 @discord.app_commands.default_permissions() # Only allow admins to use this command
 async def search_context(interaction: discord.Interaction, user: discord.Member):
     response = await commands.search_helper(user.id)
-    await interaction.response.send_message(response, ephemeral=False)
+    await interaction.response.send_message(response, ephemeral=True)
 

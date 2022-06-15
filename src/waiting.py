@@ -46,7 +46,7 @@ class AnsweringMachine:
 
         waiting_list = self.get_entries().copy()
         for key, item in waiting_list.items():
-            days, hours, minutes = get_time_delta(curr_time, item.timestamp)
+            days, hours, minutes, seconds = get_time_delta(curr_time, item.timestamp)
             # Purge items that are older than one day
             if days > 0:
                 self.remove_entry(key)

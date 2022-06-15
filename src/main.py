@@ -117,7 +117,7 @@ async def on_guild_available(guild: discord.Guild):
 """
 On Member Update
 
-Occurs when a user updates an attribute (nickname, roles)
+Occurs when a user updates an attribute (nickname, roles, timeout)
 """
 @client.event
 async def on_member_update(before: discord.Member, after: discord.Member):
@@ -150,6 +150,25 @@ async def on_member_update(before: discord.Member, after: discord.Member):
         chan = client.get_channel(config.SYS_LOG)
         if mes != "":
             await chan.send(mes)
+    # If they were timed out
+    # Note, this won't trip when the timeout wears off, due to a Discord limitation
+    if before.timed_out_until != after.timed_out_until:
+        chan = client.get_channel(config.SYS_LOG)
+        if after.timed_out_until:
+            now = datetime.now(timezone.utc)
+            days, hours, minutes, seconds = commonbot.utils.get_time_delta(after.timed_out_until, now)
+            mes = f":zipper_mouth: {str(after)} has been timed out for "
+            if days > 0:
+                mes += f"{days} days "
+            if hours > 0:
+                mes += f"{hours} hours "
+            if minutes > 0:
+                mes += f"{minutes} minutes "
+            if seconds > 0:
+                mes += f"{seconds} seconds"
+            await chan.send(mes)
+        else:
+            await chan.send(f":grin: {str(after)} is no longer timed out.")
 
 """
 On Member Ban

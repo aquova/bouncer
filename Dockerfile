@@ -1,4 +1,4 @@
-FROM aquova/commonbot:2.0.0b4
+FROM aquova/commonbot:2.0.0b5
 
 RUN apk update && apk add \
     freetype-dev

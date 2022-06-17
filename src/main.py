@@ -365,7 +365,7 @@ async def on_message(message: discord.Message):
                     mes = f"{str(message.author)} ({message.author.id}): {content}"
                     chan = client.get_channel(config.BAN_APPEAL)
 
-                logMes = await commonbot.utils.send_message(chan, mes)
+                logMes = await commonbot.utils.send_message(mes, chan)
 
                 # Send them a message so they know something actually happened
                 await message.channel.send("Your message has been forwarded!")

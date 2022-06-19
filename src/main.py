@@ -1,19 +1,25 @@
 # Bouncer
 # https://github.com/StardewValleyDiscord/bouncer
 
-import discord, traceback
 from datetime import datetime, timezone
-import censor, commands, config, db, visualize
+
+import discord
+
 import commonbot.utils
-from censor import check_censor
+from commonbot.debug import Debug
+from commonbot.timekeep import Timekeeper
+
+import commands
+import config
+import db
+import visualize
+from censor import check_censor, list_censor
 from client import client
 from config import LogTypes
 from spam import Spammers
 from waiting import AnsweringMachineEntry
 from watcher import Watcher
 
-from commonbot.debug import Debug
-from commonbot.timekeep import Timekeeper
 
 # Initialize helper classes
 db.initialize()
@@ -23,27 +29,27 @@ tk = Timekeeper()
 watch = Watcher()
 
 FUNC_DICT = {
-    "ban":         [commands.logUser,              LogTypes.BAN],
-    "block":       [commands.blockUser,            True],
-    "censor":      [censor.listCensor,             None],
+    "ban":         [commands.log_user,             LogTypes.BAN],
+    "block":       [commands.block_user,           True],
+    "censor":      [list_censor,                   None],
     "clear":       [commands.am.clear_entries,     None],
-    "edit":        [commands.removeError,          True],
+    "edit":        [commands.remove_error,         True],
     "graph":       [visualize.post_plots,          None],
     "help":        [commands.send_help_mes,        None],
-    "kick":        [commands.logUser,              LogTypes.KICK],
-    "note":        [commands.logUser,              LogTypes.NOTE],
+    "kick":        [commands.log_user,             LogTypes.KICK],
+    "note":        [commands.log_user,             LogTypes.NOTE],
     "preview":     [commands.preview,              None],
-    "remove":      [commands.removeError,          False],
+    "remove":      [commands.remove_error,         False],
     "reply":       [commands.reply,                None],
     "say":         [commands.say,                  None],
     "search":      [commands.search_command,       None],
-    "scam":        [commands.logUser,              LogTypes.SCAM],
-    "unban":       [commands.logUser,              LogTypes.UNBAN],
-    "unblock":     [commands.blockUser,            False],
+    "scam":        [commands.log_user,             LogTypes.SCAM],
+    "unban":       [commands.log_user,             LogTypes.UNBAN],
+    "unblock":     [commands.block_user,           False],
     "uptime":      [tk.uptime,                     None],
     "unmute":      [spam.unmute,                   None],
     "waiting":     [commands.am.gen_waiting_list,  None],
-    "warn":        [commands.logUser,              LogTypes.WARN],
+    "warn":        [commands.log_user,             LogTypes.WARN],
     "watch":       [watch.watch_user,              None],
     "watchlist":   [watch.get_watchlist,           None],
     "unwatch":     [watch.unwatch_user,            None],
@@ -96,8 +102,8 @@ async def on_ready():
     if not dbg.is_debug_bot():
         # Upload our DB file to a private channel as a backup
         chan = client.get_channel(config.LOG_CHAN)
-        currentTime = datetime.now(timezone.utc)
-        filename = f"bouncer_backup_{commonbot.utils.format_time(currentTime)}.db"
+        current_time = datetime.now(timezone.utc)
+        filename = f"bouncer_backup_{commonbot.utils.format_time(current_time)}.db"
         with open(config.DATABASE_PATH, 'rb') as db_file:
             await chan.send(file=discord.File(db_file, filename=filename))
 
@@ -265,8 +271,8 @@ async def on_message_edit(before: discord.Message, after: discord.Message):
             watchchan = client.get_channel(config.WATCHLIST_CHAN)
             await commonbot.utils.send_message(mes, watchchan)
 
-    except discord.errors.HTTPException as e:
-        print(f"Unknown error with editing message. This message was unable to post for this reason: {e}\n")
+    except discord.errors.HTTPException as err:
+        print(f"Unknown error with editing message. This message was unable to post for this reason: {err}\n")
 
 """
 On Member Join
@@ -311,7 +317,7 @@ async def on_reaction_remove(reaction: discord.Reaction, user: discord.Member):
     if user.bot:
         return
 
-    emoji_name = reaction.emoji if type(reaction.emoji) == str else reaction.emoji.name
+    emoji_name = reaction.emoji if isinstance(reaction.emoji, str) else reaction.emoji.name
     chan = client.get_channel(config.SYS_LOG)
     await chan.send(f":face_in_clouds: {str(user)} ({user.id}) removed the `{emoji_name}` emoji")
 
@@ -337,7 +343,7 @@ async def on_message(message: discord.Message):
             return
 
         # If bouncer detects a private DM sent to it
-        if type(message.channel) is discord.channel.DMChannel:
+        if isinstance(message.channel, discord.channel.DMChannel):
             # Store who the most recent user was, for $reply ^
             commands.am.set_recent_reply(message.author)
 
@@ -355,13 +361,13 @@ async def on_message(message: discord.Message):
                     mes = f"{str(message.author)} ({message.author.id}): {content}"
                     chan = client.get_channel(config.BAN_APPEAL)
 
-                logMes = await commonbot.utils.send_message(mes, chan)
+                log_mes = await commonbot.utils.send_message(mes, chan)
 
                 # Send them a message so they know something actually happened
                 await message.channel.send("Your message has been forwarded!")
 
                 # Lets also add/update them in answering machine
-                mes_entry = AnsweringMachineEntry(f"{str(message.author)}", message.created_at, content, logMes.jump_url)
+                mes_entry = AnsweringMachineEntry(f"{str(message.author)}", message.created_at, content, log_mes.jump_url)
                 commands.am.update_entry(message.author.id, mes_entry)
             return
 
@@ -399,13 +405,9 @@ async def on_message(message: discord.Message):
                     func = FUNC_DICT[cmd][0]
                     arg = FUNC_DICT[cmd][1]
                     await func(message, arg)
-    except discord.errors.Forbidden as e:
-        if e.code == 50007:
+    except discord.errors.Forbidden as err:
+        if err.code == 50007:
             chan = client.get_channel(config.MAILBOX)
-            logMes = await chan.send("Unable to send message - Can't send messages to that user")
-        else:
-            print(traceback.format_exc())
-    except discord.errors.HTTPException as e:
-        print(traceback.format_exc())
+            await chan.send("Unable to send message - Can't send messages to that user")
 
 client.run(config.DISCORD_KEY)

@@ -5,8 +5,8 @@ class BlockedUsers:
         self.populate_blocklist()
 
     def populate_blocklist(self):
-        blockDB = db.get_blocklist()
-        self.blocklist = [x[0] for x in blockDB]
+        block_db = db.get_blocklist()
+        self.blocklist = [x[0] for x in block_db]
 
     def block_user(self, userid: int):
         db.add_block(userid)

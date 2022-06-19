@@ -1,10 +1,12 @@
-import discord, db
-from client import client
-from config import CENSOR_LIST, CENSOR_SPAM, CENSOR_WATCH, CENSOR_CHAN, SYS_LOG, WATCHLIST_CHAN, VALID_ROLES
 from re import search, IGNORECASE
+import discord
 from commonbot.utils import check_roles
 
-async def listCensor(message: discord.Message, _):
+import db
+from client import client
+from config import CENSOR_LIST, CENSOR_SPAM, CENSOR_WATCH, CENSOR_CHAN, SYS_LOG, WATCHLIST_CHAN, VALID_ROLES
+
+async def list_censor(message: discord.Message, _):
     delete_items = '\n'.join(CENSOR_LIST)
     watch_items = '\n'.join(CENSOR_WATCH)
     spam_items = '\n'.join(CENSOR_SPAM)

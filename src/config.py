@@ -1,4 +1,4 @@
-import discord, json
+import json
 from enum import Enum, unique
 
 DATABASE_PATH = "/private/bouncer.db"
@@ -17,12 +17,12 @@ class LogTypes(Enum):
     WARN = 1
 
 # Read values from config file
-config_path = "/private/config.json"
-with open(config_path) as config_file:
+CONFIG_PATH = "/private/config.json"
+with open(CONFIG_PATH) as config_file:
     cfg = json.load(config_file)
 
-censor_path = "/private/censor.json"
-with open(censor_path) as censor_file:
+CENSOR_PATH = "/private/censor.json"
+with open(CENSOR_PATH) as censor_file:
     censor = json.load(censor_file)
 
 # Set values from config file as constants
@@ -53,4 +53,3 @@ SPAM_CHAN = cfg['channels']['spam']
 
 USER_PLOT = "/private/user_plot.png"
 MONTH_PLOT = "/private/month_plot.png"
-

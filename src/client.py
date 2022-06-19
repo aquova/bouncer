@@ -9,5 +9,5 @@ class DiscordClient(discord.Client):
         self.tree.copy_global_to(guild=guild)
         await self.tree.sync(guild=guild)
 
-intents = discord.Intents.all()
-client = DiscordClient(intents=intents)
+my_intents = discord.Intents.all()
+client = DiscordClient(intents=my_intents)

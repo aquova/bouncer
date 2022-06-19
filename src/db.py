@@ -1,9 +1,11 @@
-import sqlite3
 from dataclasses import dataclass
-from config import DATABASE_PATH, LogTypes
-from commonbot.utils import format_time
 from datetime import datetime, timezone
+import sqlite3
 from typing import Optional
+
+from commonbot.utils import format_time
+
+from config import DATABASE_PATH, LogTypes
 
 @dataclass
 class UserLogEntry:
@@ -17,19 +19,19 @@ class UserLogEntry:
     message_id: Optional[int]
 
     def __str__(self):
-        logWord = ""
+        log_word = ""
         if self.log_type == LogTypes.BAN.value or self.log_type == LogTypes.SCAM.value:
-            logWord = "Banned"
+            log_word = "Banned"
         elif self.log_type == LogTypes.NOTE.value:
-            logWord = "Note"
+            log_word = "Note"
         elif self.log_type == LogTypes.KICK.value:
-            logWord = "Kicked"
+            log_word = "Kicked"
         elif self.log_type == LogTypes.UNBAN.value:
-            logWord = "Unbanned"
+            log_word = "Unbanned"
         else: # LogTypes.WARN
-            logWord = f"Warning #{self.log_type}"
+            log_word = f"Warning #{self.log_type}"
 
-        return f"[{format_time(self.timestamp)}] **{self.name}** - {logWord} by {self.staff} - {self.log_message}\n"
+        return f"[{format_time(self.timestamp)}] **{self.name}** - {log_word} by {self.staff} - {self.log_message}\n"
 
     def as_list(self):
         return [
@@ -86,24 +88,24 @@ def search(user_id: int) -> list[UserLogEntry]:
 
 def fetch_id_by_username(username: str) -> Optional[str]:
     query = ("SELECT id FROM badeggs WHERE username=?", [username])
-    searchResults = _db_read(query)
+    search_results = _db_read(query)
 
-    if searchResults != []:
-        return searchResults[0][0]
+    if search_results:
+        return search_results[0][0]
     else:
         return None
 
 def get_warn_count(userid: int) -> int:
     query = ("SELECT COUNT(*) FROM badeggs WHERE id=? AND num > 0", [userid])
-    searchResults = _db_read(query)
+    search_results = _db_read(query)
 
-    return searchResults[0][0] + 1
+    return search_results[0][0] + 1
 
 def get_note_count(userid: int) -> int:
     query = ("SELECT COUNT(*) FROM badeggs WHERE id=? AND num = -1", [userid])
-    searchResults = _db_read(query)
+    search_results = _db_read(query)
 
-    return searchResults[0][0] + 1
+    return search_results[0][0] + 1
 
 def add_log(log_entry: UserLogEntry):
     query = ("INSERT OR REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", log_entry.as_list())
@@ -120,18 +122,18 @@ def clear_user_logs(userid: int):
 
 def get_censor_count(userid: int) -> Optional[tuple[int, datetime]]:
     query = ("SELECT * FROM censored WHERE id=?", [userid])
-    searchResults = _db_read(query)
-    if searchResults != []:
-        return (searchResults[0][1], searchResults[0][2])
+    search_results = _db_read(query)
+    if search_results:
+        return (search_results[0][1], search_results[0][2])
     else:
         return None
 
 def add_censor_count(userid: int):
     read_query = ("SELECT logs FROM censored WHERE id=?", [userid])
-    searchResults = _db_read(read_query)
+    search_results = _db_read(read_query)
     num_censors = 1
-    if searchResults != []:
-        num_censors = searchResults[0][0] + 1
+    if search_results:
+        num_censors = search_results[0][0] + 1
 
     write_query = ("INSERT OR REPLACE INTO censored (id, logs, last) VALUES (?, ?, ?)", [userid, num_censors, datetime.now(timezone.utc)])
     _db_write(write_query)

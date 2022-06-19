@@ -1,14 +1,16 @@
-import discord
 from datetime import timedelta
 from re import search, IGNORECASE
-from client import client
-from config import SPAM_CHAN, CENSOR_SPAM, VALID_ROLES
+
+import discord
+
 from commonbot.user import UserLookup
 from commonbot.utils import check_roles
-from typing import Union
+
+from client import client
+from config import SPAM_CHAN, CENSOR_SPAM, VALID_ROLES
 
 SPAM_MES_THRESHOLD = 3
-URL_REGEX = "https?:\/\/.+\..+"
+URL_REGEX = r"https?:\/\/.+\..+"
 TIMEOUT_HRS = 1
 
 ul = UserLookup()
@@ -70,7 +72,7 @@ class Spammers:
 
         return False
 
-    async def mark_spammer(self, user: Union[discord.Member, discord.User]):
+    async def mark_spammer(self, user: discord.Member):
         uid = user.id
 
         spammer = self.spammers[uid]
@@ -100,8 +102,8 @@ class Spammers:
                 dm_chan = await client.create_dm(user)
 
             await user.dm_channel.send(f"Hi there! This is an automated courtesy message informing you that your recent posts have been deleted for spamming '{txt}'. You have been muted from speaking in the server until a moderator can verify your message. If you have any questions, please reply to this bot.")
-        except discord.errors.HTTPException as e:
-            if e.code == 50007:
+        except discord.errors.HTTPException as err:
+            if err.code == 50007:
                 pass
 
     async def unmute(self, message: discord.Message, _):

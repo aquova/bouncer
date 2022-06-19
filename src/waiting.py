@@ -1,8 +1,10 @@
-import discord
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from commonbot.utils import get_time_delta
 from typing import Optional
+
+import discord
+
+from commonbot.utils import get_time_delta
 
 @dataclass
 class AnsweringMachineEntry:
@@ -23,7 +25,7 @@ class AnsweringMachine:
         return self.recent_reply
 
     def recent_reply_exists(self) -> bool:
-        return self.recent_reply != None
+        return self.recent_reply is not None
 
     def remove_entry(self, user_id: int):
         if user_id in self.waiting_list:
@@ -46,7 +48,7 @@ class AnsweringMachine:
 
         waiting_list = self.get_entries().copy()
         for key, item in waiting_list.items():
-            days, hours, minutes, seconds = get_time_delta(curr_time, item.timestamp)
+            days, hours, minutes, _ = get_time_delta(curr_time, item.timestamp)
             # Purge items that are older than one day
             if days > 0:
                 self.remove_entry(key)

@@ -1,7 +1,9 @@
 import discord
+
+from commonbot.user import UserLookup
+
 import db
 from client import client
-from commonbot.user import UserLookup
 
 class Watcher:
     def __init__(self):

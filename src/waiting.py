@@ -29,10 +29,10 @@ class AnsweringMachine:
         if user_id in self.waiting_list:
             del self.waiting_list[user_id]
 
-    def get_entries(self) -> dict[int, discord.Member]:
+    def get_entries(self) -> dict[int, AnsweringMachineEntry]:
         return self.waiting_list
 
-    def update_entry(self, user_id: int, user_entry: discord.Member):
+    def update_entry(self, user_id: int, user_entry: AnsweringMachineEntry):
         self.waiting_list[user_id] = user_entry
 
     async def clear_entries(self, message: discord.Message, _):

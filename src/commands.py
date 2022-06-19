@@ -174,12 +174,9 @@ async def logUser(m: discord.Message, state: LogTypes):
     # If we aren't noting, need to also write to log channel
     if state != LogTypes.NOTE:
         # Post to channel, keep track of message ID
-        try:
-            chan = discord.utils.get(m.guild.channels, id=config.LOG_CHAN)
-            logMes = await chan.send(logMessage)
-            logMesID = logMes.id
-        except discord.errors.InvalidArgument:
-            await m.channel.send("The logging channel has not been set up in `config.json`. In order to have a visual record, please specify a channel ID.")
+        chan = discord.utils.get(m.guild.channels, id=config.LOG_CHAN)
+        logMes = await chan.send(logMessage)
+        logMesID = logMes.id
 
         try:
             # Send a DM to the user
@@ -429,7 +426,7 @@ async def reply(m: discord.Message, _):
         DMchan = u.dm_channel
         # If first DMing, need to create DM channel
         if not DMchan:
-            DMchan = await u.create_dm()
+            DMchan = await client.create_dm(u)
         # Message sent to user
         await DMchan.send(f"A message from the SDV staff: {mes}")
         # Notification of sent message to the senders

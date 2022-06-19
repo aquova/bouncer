@@ -5,7 +5,7 @@ class DiscordClient(discord.Client):
         super().__init__(intents=intents)
         self.tree = discord.app_commands.CommandTree(self)
 
-    async def setup_guild(self, guild: discord.Guild):
+    async def setup_guild(self, guild: discord.abc.Snowflake):
         self.tree.copy_global_to(guild=guild)
         await self.tree.sync(guild=guild)
 

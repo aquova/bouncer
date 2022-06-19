@@ -5,6 +5,7 @@ from client import client
 from config import SPAM_CHAN, CENSOR_SPAM, VALID_ROLES
 from commonbot.user import UserLookup
 from commonbot.utils import check_roles
+from typing import Union
 
 SPAM_MES_THRESHOLD = 3
 URL_REGEX = "https?:\/\/.+\..+"
@@ -69,7 +70,7 @@ class Spammers:
 
         return False
 
-    async def mark_spammer(self, user: discord.Member):
+    async def mark_spammer(self, user: Union[discord.Member, discord.User]):
         uid = user.id
 
         spammer = self.spammers[uid]
@@ -96,17 +97,20 @@ class Spammers:
         try:
             dm_chan = user.dm_channel
             if not dm_chan:
-                dm_chan = await user.create_dm()
+                dm_chan = await client.create_dm(user)
 
-            await dm_chan.send(f"Hi there! This is an automated courtesy message informing you that your recent posts have been deleted for spamming '{txt}'. You have been muted from speaking in the server until a moderator can verify your message. If you have any questions, please reply to this bot.")
+            await user.dm_channel.send(f"Hi there! This is an automated courtesy message informing you that your recent posts have been deleted for spamming '{txt}'. You have been muted from speaking in the server until a moderator can verify your message. If you have any questions, please reply to this bot.")
         except discord.errors.HTTPException as e:
-            if e.code != 50007:
-                raise discord.errors.HTTPException
+            if e.code == 50007:
+                pass
 
     async def unmute(self, message: discord.Message, _):
         uid = ul.parse_id(message)
         if not uid:
             await message.channel.send("I wasn't able to find a user in that message")
+            return
+
+        if not message.guild:
             return
 
         try:

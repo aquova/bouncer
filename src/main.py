@@ -108,18 +108,6 @@ async def on_ready():
             await chan.send(file=discord.File(db_file, filename=filename))
 
 """
-On Guild Available
-
-Runs when the bot is initialized within each Guild
-"""
-@client.event
-async def on_guild_available(guild: discord.Guild):
-    if not dbg.is_debug_bot():
-        # Only let live bot import context menu items
-        import context
-        await client.setup_guild(guild)
-
-"""
 On Member Update
 
 Occurs when a user updates an attribute (nickname, roles, timeout)

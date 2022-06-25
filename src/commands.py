@@ -162,6 +162,7 @@ async def log_user(mes: discord.Message, state: LogTypes):
     elif state == LogTypes.UNBAN:
         await mes.channel.send("Removing all old logs for unbanning")
         db.clear_user_logs(userid)
+        db.reset_censor_count(userid)
 
     # Generate message for log channel
     globalcount = db.get_dbid()

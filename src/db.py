@@ -138,6 +138,10 @@ def add_censor_count(userid: int):
     write_query = ("INSERT OR REPLACE INTO censored (id, logs, last) VALUES (?, ?, ?)", [userid, num_censors, datetime.now(timezone.utc)])
     _db_write(write_query)
 
+def reset_censor_count(userid: int):
+    query = ("DELETE FROM censored WHERE ID=?", [userid])
+    _db_write(query)
+
 def get_dbid() -> int:
     query = ("SELECT COUNT(*) FROM badeggs",)
     globalcount = _db_read(query)

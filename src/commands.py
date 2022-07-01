@@ -10,13 +10,14 @@ import config
 import db
 from blocks import BlockedUsers
 from client import client
-from config import LogTypes, CMD_PREFIX
+from config import LogTypes, CMD_PREFIX, BAN_APPEAL
 import visualize
 from waiting import AnsweringMachine
 
 ul = UserLookup()
 bu = BlockedUsers()
-am = AnsweringMachine()
+reply_am = AnsweringMachine()
+ban_am = AnsweringMachine()
 
 BAN_KICK_MES = "Hi there! You've been {type} from the Stardew Valley Discord for violating the rules: `{mes}`. If you have any questions, and for information on appeals, you can join <https://discord.gg/uz6KPaCPhf>."
 SCAM_MES = "Hi there! You've been banned from the Stardew Valley Discord for posting scam links. If your account was compromised, please change your password, enable 2FA, and join <https://discord.gg/uz6KPaCPhf> to appeal."
@@ -72,6 +73,22 @@ def lookup_username(uid: int) -> Optional[str]:
             return None
 
     return username
+
+async def clear_am(message: discord.Message, _):
+    if message.channel.id == BAN_APPEAL:
+        ban_am.clear_entries()
+    else:
+        reply_am.clear_entries()
+
+async def list_waiting(message: discord.Message, _):
+    mes_list = []
+    if message.channel.id == BAN_APPEAL:
+        mes_list = ban_am.gen_waiting_list()
+    else:
+        mes_list = reply_am.gen_waiting_list()
+
+    for mes in mes_list:
+        await message.channel.send(mes)
 
 """
 User Search

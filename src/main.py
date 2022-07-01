@@ -17,9 +17,8 @@ from censor import check_censor, list_censor
 from client import client
 from config import LogTypes
 from spam import Spammers
-from waiting import AnsweringMachineEntry
+from waiting import AnsweringMachineEntry, is_in_home_server
 from watcher import Watcher
-
 
 # Initialize helper classes
 db.initialize()
@@ -32,7 +31,7 @@ FUNC_DICT = {
     "ban":         [commands.log_user,             LogTypes.BAN],
     "block":       [commands.block_user,           True],
     "censor":      [list_censor,                   None],
-    "clear":       [commands.am.clear_entries,     None],
+    "clear":       [commands.clear_am,             None],
     "edit":        [commands.remove_error,         True],
     "graph":       [visualize.post_plots,          None],
     "help":        [commands.send_help_mes,        None],
@@ -48,7 +47,7 @@ FUNC_DICT = {
     "unblock":     [commands.block_user,           False],
     "uptime":      [tk.uptime,                     None],
     "unmute":      [spam.unmute,                   None],
-    "waiting":     [commands.am.gen_waiting_list,  None],
+    "waiting":     [commands.list_waiting,         None],
     "warn":        [commands.log_user,             LogTypes.WARN],
     "watch":       [watch.watch_user,              None],
     "watchlist":   [watch.get_watchlist,           None],
@@ -174,7 +173,8 @@ async def on_member_ban(server: discord.Guild, member: discord.Member):
         return
 
     # We can remove banned user from our answering machine and watch list (if they exist)
-    commands.am.remove_entry(member.id)
+    commands.reply_am.remove_entry(member.id)
+    commands.ban_am.remove_entry(member.id)
     watch.remove_user(member.id)
 
     # Keep a record of their banning, in case the log is made after they're no longer here
@@ -195,7 +195,8 @@ async def on_member_remove(member: discord.Member):
         return
 
     # We can remove left users from our answering machine
-    commands.am.remove_entry(member.id)
+    commands.reply_am.remove_entry(member.id)
+    commands.ban_am.remove_entry(member.id)
 
     # Remember that the user has left, in case we want to log after they're gone
     username = f"{str(member)}"
@@ -332,20 +333,20 @@ async def on_message(message: discord.Message):
 
         # If bouncer detects a private DM sent to it
         if isinstance(message.channel, discord.channel.DMChannel):
-            # Store who the most recent user was, for $reply ^
-            commands.am.set_recent_reply(message.author)
-
             content = commonbot.utils.combine_message(message)
             # If not blocked, send message along to specified mod channel
             if not commands.bu.is_in_blocklist(message.author.id):
                 mes = ""
                 chan = None
+                is_home = is_in_home_server(message.author)
                 # If we share the main server, treat that as a DM
-                if config.HOME_SERVER in [x.id for x in message.author.mutual_guilds]:
+                if is_home:
+                    commands.reply_am.set_recent_reply(message.author)
                     mes = f"<@{message.author.id}>: {content}"
                     chan = client.get_channel(config.MAILBOX)
                 # The only other server we should share is the ban appeal server
                 else:
+                    commands.ban_am.set_recent_reply(message.author)
                     mes = f"{str(message.author)} ({message.author.id}): {content}"
                     chan = client.get_channel(config.BAN_APPEAL)
 
@@ -356,7 +357,10 @@ async def on_message(message: discord.Message):
 
                 # Lets also add/update them in answering machine
                 mes_entry = AnsweringMachineEntry(f"{str(message.author)}", message.created_at, content, log_mes.jump_url)
-                commands.am.update_entry(message.author.id, mes_entry)
+                if is_home:
+                    commands.reply_am.update_entry(message.author.id, mes_entry)
+                else:
+                    commands.ban_am.update_entry(message.author.id, mes_entry)
             return
 
         # Remove spam

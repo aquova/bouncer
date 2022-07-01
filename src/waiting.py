@@ -6,6 +6,8 @@ import discord
 
 from commonbot.utils import get_time_delta
 
+from config import HOME_SERVER, MAILBOX
+
 @dataclass
 class AnsweringMachineEntry:
     name: str
@@ -37,16 +39,13 @@ class AnsweringMachine:
     def update_entry(self, user_id: int, user_entry: AnsweringMachineEntry):
         self.waiting_list[user_id] = user_entry
 
-    async def clear_entries(self, message: discord.Message, _):
+    def clear_entries(self):
         self.waiting_list.clear()
-        await message.channel.send("Waiting queue has been cleared")
 
-    async def gen_waiting_list(self, message: discord.Message, _):
+    def gen_waiting_list(self) -> list[str]:
         curr_time = datetime.now(timezone.utc)
-        # Assume there are no messages in the queue
-        found = False
-
         waiting_list = self.get_entries().copy()
+        output_list = []
         for key, item in waiting_list.items():
             days, hours, minutes, _ = get_time_delta(curr_time, item.timestamp)
             # Purge items that are older than one day
@@ -55,7 +54,9 @@ class AnsweringMachine:
             else:
                 found = True
                 out = f"{item.name} ({key}) said `{item.last_message}` | {hours}h{minutes}m ago\n{item.message_url}\n"
-                await message.channel.send(out)
+                output_list.append(out)
+        return output_list
 
-        if not found:
-            await message.channel.send("There are no users awaiting replies")
+def is_in_home_server(author: discord.Member) -> bool:
+    return HOME_SERVER in [x.id for x in author.mutual_guilds]
+

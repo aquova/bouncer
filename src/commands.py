@@ -406,8 +406,11 @@ async def reply(mes: discord.Message, _):
         # If given '^' instead of user, message the last person to DM bouncer
         # Uses whoever DMed last since last startup, don't bother keeping in database or anything like that
         if mes.content.split()[1] == "^":
-            if am.recent_reply_exists():
-                user = am.get_recent_reply()
+            if mes.channel.id == BAN_APPEAL and ban_am.recent_reply_exists():
+                user = ban_am.get_recent_reply()
+                metadata_words = 2
+            elif mes.channel.id != BAN_APPEAL and reply_am.recent_reply_exists():
+                user = reply_am.get_recent_reply()
                 metadata_words = 2
             else:
                 await mes.channel.send("Sorry, I have no previous user stored. Gotta do it the old fashioned way.")
@@ -448,7 +451,10 @@ async def reply(mes: discord.Message, _):
         await mes.channel.send(f"Message sent to {str(user)}.")
 
         # If they were in our answering machine, they have been replied to, and can be removed
-        am.remove_entry(user.id)
+        if mes.channel.id == BAN_APPEAL:
+            ban_am.remove_entry(user.id)
+        else:
+            reply_am.remove_entry(user.id)
 
     # Exception handling
     except discord.errors.HTTPException as err:

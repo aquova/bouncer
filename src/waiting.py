@@ -6,7 +6,7 @@ import discord
 
 from commonbot.utils import get_time_delta
 
-from config import HOME_SERVER, MAILBOX
+from config import HOME_SERVER
 
 @dataclass
 class AnsweringMachineEntry:
@@ -52,7 +52,6 @@ class AnsweringMachine:
             if days > 0:
                 self.remove_entry(key)
             else:
-                found = True
                 out = f"{item.name} ({key}) said `{item.last_message}` | {hours}h{minutes}m ago\n{item.message_url}\n"
                 output_list.append(out)
         return output_list

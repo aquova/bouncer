@@ -278,7 +278,7 @@ async def on_member_join(member: discord.Member):
     await chan.send(mes)
 
     with open(USERID_LOG_PATH, 'a') as uid_file:
-        uid_file.write(member.id)
+        uid_file.write(str(member.id))
 
 """
 On Voice State Update

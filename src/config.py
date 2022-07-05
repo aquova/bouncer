@@ -2,6 +2,7 @@ import json
 from enum import Enum, unique
 
 DATABASE_PATH = "/private/bouncer.db"
+USERID_LOG_PATH = "/private/uid.txt"
 # Discord has a 2000 message character limit
 CHAR_LIMIT = 2000
 # Add extra message if more than threshold number of warns

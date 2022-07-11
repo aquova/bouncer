@@ -4,6 +4,7 @@
 from datetime import datetime, timezone
 
 import discord
+import humanize
 
 import commonbot.utils
 from commonbot.debug import Debug
@@ -60,11 +61,14 @@ Delete message
 A helper function that deletes and logs the given message
 """
 async def delete_message_helper(message: discord.Message):
-    mes = f":no_mobile_phones: **{str(message.author)}** deleted in <#{message.channel.id}>: `{message.content}`"
+    timedelta = datetime.now(timezone.utc) - message.created_at
+    mes = f":no_mobile_phones: **{str(message.author)}** deleted " \
+          f"in <#{message.channel.id}>: `{message.content}` \n" \
+          f":timer: This message was visible for {humanize.precisedelta(timedelta)}."
     chan = client.get_channel(config.SYS_LOG)
     # Adds URLs for any attachments that were included in deleted message
     # These will likely become invalid, but it's nice to note them anyway
-    if message.attachments != []:
+    if message.attachments:
         for item in message.attachments:
             mes += '\n' + item.url
 
@@ -147,17 +151,9 @@ async def on_member_update(before: discord.Member, after: discord.Member):
     if before.timed_out_until != after.timed_out_until:
         chan = client.get_channel(config.SYS_LOG)
         if after.timed_out_until:
-            now = datetime.now(timezone.utc)
-            days, hours, minutes, seconds = commonbot.utils.get_time_delta(after.timed_out_until, now)
-            mes = f":zipper_mouth: {str(after)} has been timed out for "
-            if days > 0:
-                mes += f"{days} days "
-            if hours > 0:
-                mes += f"{hours} hours "
-            if minutes > 0:
-                mes += f"{minutes} minutes "
-            if seconds > 0:
-                mes += f"{seconds} seconds"
+            timedelta = after.timed_out_until - datetime.now(timezone.utc)
+            timeout_str = humanize.precisedelta(timedelta, minimum_unit="seconds", format="%d")
+            mes = f":zipper_mouth: {str(after)} has been timed out for {timeout_str}."
             await chan.send(mes)
         else:
             await chan.send(f":grin: {str(after)} is no longer timed out.")

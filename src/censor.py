@@ -57,7 +57,7 @@ async def censor_message(message: discord.Message):
         if not dm_chan:
             dm_chan = await client.create_dm(message.author)
 
-        await dm_chan.send(f"Hi there! This is an automated courtesy message informing you that your post was deleted for containing a censored word: `{message.content}`. This is not a warning. The staff team will examine the context and situation of the censor trip and you will be contacted later only if any disciplinary action is taken.")
+        await dm_chan.send(f"Hi there! This is an automated courtesy message informing you that your post was deleted for containing a censored word: `{message.content}`. This is not a warning. The staff team will examine the context and situation your message, and if any disciplinary action is taken, we will contact you.")
     except discord.errors.HTTPException as e:
         if e.code != 50007:
             raise discord.errors.HTTPException

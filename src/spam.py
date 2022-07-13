@@ -101,7 +101,7 @@ class Spammers:
             if not dm_chan:
                 dm_chan = await client.create_dm(user)
 
-            await user.dm_channel.send(f"Hi there! This is an automated courtesy message informing you that your recent posts have been deleted for spamming '{txt}'. You have been muted from speaking in the server until a moderator can verify your message. If you have any questions, please reply to this bot.")
+            await user.dm_channel.send(f"Hi there! This is an automated courtesy message informing you that your post(s) have been deleted either for spamming or attempting to ping everyone: '{txt}'. You have been temporarily muted from speaking in the server while the staff team reviews your message. If you have any questions, please reply to this bot.")
         except discord.errors.HTTPException as err:
             if err.code == 50007:
                 pass

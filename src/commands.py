@@ -87,8 +87,11 @@ async def list_waiting(message: discord.Message, _):
     else:
         mes_list = reply_am.gen_waiting_list()
 
-    for mes in mes_list:
-        await message.channel.send(mes)
+    if len(mes_list) == 0:
+        await message.channel.send("There are no messages waiting")
+    else:
+        for mes in mes_list:
+            await message.channel.send(mes)
 
 """
 User Search

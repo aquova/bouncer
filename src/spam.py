@@ -11,7 +11,8 @@ from config import SPAM_CHAN, CENSOR_SPAM, VALID_ROLES
 
 SPAM_MES_THRESHOLD = 3
 URL_REGEX = r"https?:\/\/.+\..+"
-TIMEOUT_HRS = 1
+NORMAL_TIMEOUT_MIN = 10
+URL_TIMEOUT_MIN = 60
 
 ul = UserLookup()
 
@@ -43,7 +44,7 @@ class Spammers:
         for item in CENSOR_SPAM:
             if bool(search(item, message.content, IGNORECASE)):
                 self.spammers[message.author.id] = Spammer(message)
-                await self.mark_spammer(message.author)
+                await self.mark_spammer(message.author, False)
                 return True
         return False
 
@@ -63,28 +64,33 @@ class Spammers:
         if uid not in self.spammers:
             self.spammers[uid] = Spammer(message)
             return False
-        else:
-            self.spammers[uid].add(message)
 
-        if len(self.spammers[uid]) >= SPAM_MES_THRESHOLD and bool(search(URL_REGEX, str(self.spammers[uid]), IGNORECASE)):
-            await self.mark_spammer(message.author)
+        self.spammers[uid].add(message)
+
+        if len(self.spammers[uid]) >= SPAM_MES_THRESHOLD:
+            url_spam = bool(search(URL_REGEX, str(self.spammers[uid]), IGNORECASE))
+            await self.mark_spammer(message.author, url_spam)
             return True
 
         return False
 
-    async def mark_spammer(self, user: discord.Member):
+    async def mark_spammer(self, user: discord.Member, url: bool):
         uid = user.id
 
         spammer = self.spammers[uid]
+        timeout_len = NORMAL_TIMEOUT_MIN
+        if url:
+            timeout_len = URL_TIMEOUT_MIN
+
         txt = str(spammer)
         if not user.is_timed_out():
             try:
-                await user.timeout(timedelta(hours=TIMEOUT_HRS))
+                await user.timeout(timedelta(minutes=timeout_len))
             # Can't timeout roles higher in hierarchy
             except discord.errors.Forbidden:
                 pass
 
-        await self.notification.send(f"<@{uid}> has been timed out for {TIMEOUT_HRS} hours for spamming the message: `{txt}`")
+        await self.notification.send(f"<@{uid}> has been timed out for {timeout_len} minutes for spamming the message: `{txt}`")
 
         for message in spammer.messages:
             try:

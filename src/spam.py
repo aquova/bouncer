@@ -9,7 +9,7 @@ from commonbot.utils import check_roles
 from client import client
 from config import SPAM_CHAN, CENSOR_SPAM, VALID_ROLES
 
-SPAM_MES_THRESHOLD = 3
+SPAM_MES_THRESHOLD = 5
 URL_REGEX = r"https?:\/\/.+\..+"
 NORMAL_TIMEOUT_MIN = 10
 URL_TIMEOUT_MIN = 60

@@ -4,7 +4,7 @@ from commonbot.utils import check_roles
 
 import db
 from client import client
-from config import CENSOR_LIST, CENSOR_SPAM, CENSOR_WATCH, CENSOR_CHAN, SYS_LOG, WATCHLIST_CHAN, VALID_ROLES
+from config import CENSOR_LIST, CENSOR_SPAM, CENSOR_WATCH, MAILBOX, SYS_LOG, WATCHLIST_CHAN, VALID_ROLES
 
 async def list_censor(message: discord.Message, _):
     delete_items = '\n'.join(CENSOR_LIST)
@@ -46,7 +46,7 @@ async def censor_message(message: discord.Message):
     log_message = await syslog_chan.send(censor_mes)
 
     mod_mes = f"Uh oh, looks like <@{message.author.id}> tripped the censor.\n{log_message.jump_url}"
-    chan = discord.utils.get(message.guild.channels, id=CENSOR_CHAN)
+    chan = discord.utils.get(message.guild.channels, id=MAILBOX)
     await chan.send(mod_mes)
 
     db.add_censor_count(message.author.id)

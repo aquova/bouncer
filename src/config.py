@@ -49,7 +49,7 @@ DEBUG_BOT = (cfg['debug'].upper() == "TRUE")
 CENSOR_LIST = censor['regex']
 CENSOR_WATCH = censor['watch_regex']
 CENSOR_SPAM = censor['spam_regex']
-CENSOR_CHAN = censor['notify_chan']
+IGNORE_SPAM = cfg['channels']['ignore_spam']
 SPAM_CHAN = cfg['channels']['spam']
 
 USER_PLOT = "/private/user_plot.png"

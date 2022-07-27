@@ -111,6 +111,15 @@ async def on_ready():
             await chan.send(file=discord.File(db_file, filename=filename))
 
 """
+On Thread Create
+
+Occurs when a new thread is created in the server
+"""
+@client.event
+async def on_thread_create(thread: discord.Thread):
+    await thread.join()
+
+"""
 On Member Update
 
 Occurs when a user updates an attribute (nickname, roles, timeout)

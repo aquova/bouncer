@@ -118,6 +118,7 @@ Occurs when a new thread is created in the server
 @client.event
 async def on_thread_create(thread: discord.Thread):
     await thread.join()
+    await thread.edit(auto_archive_duration=10080) # Set all new threads to maximum timeout
 
 """
 On Member Update

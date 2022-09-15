@@ -387,13 +387,13 @@ async def on_message(message: discord.Message):
         if watching:
             chan = client.get_channel(config.WATCHLIST_CHAN)
             content = commonbot.utils.combine_message(message)
-            mes = f"**{str(message.author)}** (ID: {message.author.id}) said in <#{message.channel.id}>: {content}"
+            mes = f"<@{str(message.author.id)}> said in <#{message.channel.id}>: {content}"
             await commonbot.utils.send_message(mes, chan)
 
         # If a user pings bouncer, log into mod channel, unless it's us
         if client.user in message.mentions and message.channel.category_id not in config.INPUT_CATEGORIES:
             content = commonbot.utils.combine_message(message)
-            mes = f"**{str(message.author)}** (ID: {message.author.id}) pinged me in <#{message.channel.id}>: {content}\n{message.jump_url}"
+            mes = f"<@{str(message.author.id)}> pinged me in <#{message.channel.id}>: {content}\n{message.jump_url}"
             chan = client.get_channel(config.MAILBOX)
             await commonbot.utils.send_message(mes, chan)
 

@@ -42,8 +42,9 @@ FUNC_DICT = {
     "remove":      [commands.remove_error,         False],
     "reply":       [commands.reply,                None],
     "say":         [commands.say,                  None],
-    "search":      [commands.search_command,       None],
     "scam":        [commands.log_user,             LogTypes.SCAM],
+    "search":      [commands.search_command,       None],
+    "sync":        [commands.sync,                 None],
     "unban":       [commands.log_user,             LogTypes.UNBAN],
     "unblock":     [commands.block_user,           False],
     "uptime":      [tk.uptime,                     None],
@@ -109,6 +110,16 @@ async def on_ready():
         filename = f"bouncer_backup_{commonbot.utils.format_time(current_time)}.db"
         with open(config.DATABASE_PATH, 'rb') as db_file:
             await chan.send(file=discord.File(db_file, filename=filename))
+
+"""
+On Guild Available
+
+Runs when a guild (server) becomes available to the bot
+"""
+@client.event
+async def on_guild_available(guild: discord.Guild):
+    if not dbg.is_debug_bot():
+        await client.sync_guild(guild)
 
 """
 On Thread Create

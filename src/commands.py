@@ -45,6 +45,7 @@ async def send_help_mes(mes: discord.Message, _):
         f"View users waiting for a reply: `{CMD_PREFIX}waiting`. Clear the list with `{CMD_PREFIX}clear`\n"
         f"Stop a user from sending DMs to us: `{CMD_PREFIX}block/{CMD_PREFIX}unblock <user>`\n"
         "\n"
+        f"Sync bot commands to the server: `{CMD_PREFIX}sync`\n"
         f"Remove a user's 'Muted' role: `{CMD_PREFIX}unmute <user>`\n"
         f"Say a message as the bot: `{CMD_PREFIX}say <channel> <message>`\n"
         "\n"
@@ -92,6 +93,10 @@ async def list_waiting(message: discord.Message, _):
     else:
         for mes in mes_list:
             await message.channel.send(mes)
+
+async def sync(message: discord.Message, _):
+    await client.sync_guild(message.guild)
+    await message.channel.send("Server synced")
 
 """
 User Search

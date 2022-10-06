@@ -31,7 +31,7 @@ class UserLogEntry:
         else: # LogTypes.WARN
             log_word = f"Warning #{self.log_type}"
 
-        return f"[{format_time(self.timestamp)}] **{self.name}** - {log_word} by {self.staff} - {self.log_message}\n"
+        return f"[{format_time(self.timestamp)}] `{self.name}` - {log_word} by {self.staff} - {self.log_message}\n"
 
     def as_list(self):
         return [

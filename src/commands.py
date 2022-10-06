@@ -125,7 +125,7 @@ async def search_helper(uid: int) -> str:
             return "That user was not found in the database or the server\n"
     else:
         # Format output message
-        out = f"User {username} (ID: {uid}) was found with the following infractions\n"
+        out = f"User `{username}` (ID: {uid}) was found with the following infractions\n"
         for index, item in enumerate(search_results):
             out += f"{index + 1}. {str(item)}"
         ret += out
@@ -456,7 +456,7 @@ async def reply(mes: discord.Message, _):
         # Message sent to user
         await dm_chan.send(f"A message from the SDV staff: {output}")
         # Notification of sent message to the senders
-        await mes.channel.send(f"Message sent to {str(user)}.")
+        await mes.channel.send(f"Message sent to `{str(user)}`.")
 
         # If they were in our answering machine, they have been replied to, and can be removed
         if mes.channel.id == BAN_APPEAL:

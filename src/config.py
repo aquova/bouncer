@@ -44,3 +44,7 @@ DEBUG_BOT = (cfg['debug'].upper() == "TRUE")
 
 USER_PLOT = "./private/user_plot.png"
 MONTH_PLOT = "./private/month_plot.png"
+
+# bool: whether to create and forward user dms to per-user threads under the mailbox channel
+#       instead of posting messages to directly to the mailbox channel
+FORWARDING_CREATE_THREADS = cfg['messageForwarding']['createThreads']

@@ -11,6 +11,7 @@ import db
 from blocks import BlockedUsers
 from client import client
 from config import LogTypes, CMD_PREFIX, BAN_APPEAL
+from forwarder import MessageForwarder
 import visualize
 from waiting import AnsweringMachine
 
@@ -26,6 +27,7 @@ WARN_MES = "Hi there! You've received warning #{count} in the Stardew Valley Dis
 async def send_help_mes(mes: discord.Message, _):
     dm_warns = "On" if config.DM_WARN else "Off"
     dm_bans = "On" if config.DM_BAN else "Off"
+    reply_threads = "On" if config.FORWARDING_CREATE_THREADS else "Off"
     help_mes = (
         f"Issue a warning: `{CMD_PREFIX}warn <user> <message>`\n"
         f"Log a ban: `{CMD_PREFIX}ban <user> <reason>`\n"
@@ -44,6 +46,7 @@ async def send_help_mes(mes: discord.Message, _):
         f" - You can also Discord reply to a DM with `{CMD_PREFIX}reply <message>`\n"
         f"View users waiting for a reply: `{CMD_PREFIX}waiting`. Clear the list with `{CMD_PREFIX}clear`\n"
         f"Stop a user from sending DMs to us: `{CMD_PREFIX}block/{CMD_PREFIX}unblock <user>`\n"
+        f"Creating/using threads for new user DMs is `{reply_threads}`\n"
         "\n"
         f"Sync bot commands to the server: `{CMD_PREFIX}sync`\n"
         f"Remove a user's 'Muted' role: `{CMD_PREFIX}unmute <user>`\n"
@@ -392,38 +395,12 @@ Reply
 
 Sends a private message to the specified user
 """
-async def reply(mes: discord.Message, _):
-    user = None
-    metadata_words = 0
-    # Check if we are replying via a Discord reply to a Bouncer message
-    if mes.reference:
-        user_reply = mes.reference.cached_message
-        if user_reply:
-            if user_reply.author == client.user and len(user_reply.mentions) == 1:
-                user = user_reply.mentions[0]
-                metadata_words = 1
-    else:
-        # If given '^' instead of user, message the last person to DM bouncer
-        # Uses whoever DMed last since last startup, don't bother keeping in database or anything like that
-        if mes.content.split()[1] == "^":
-            if mes.channel.id == BAN_APPEAL and ban_am.recent_reply_exists():
-                user = ban_am.get_recent_reply()
-                metadata_words = 2
-            elif mes.channel.id != BAN_APPEAL and reply_am.recent_reply_exists():
-                user = reply_am.get_recent_reply()
-                metadata_words = 2
-            else:
-                await mes.channel.send("Sorry, I have no previous user stored. Gotta do it the old fashioned way.")
-                return
-        else:
-            # Otherwise, attempt to get object for the specified user
-            userid = ul.parse_id(mes)
-            if not userid:
-                await mes.channel.send(f"I wasn't able to understand that message: `{CMD_PREFIX}reply USER`")
-                return
-
-            user = client.get_user(userid)
-            metadata_words = 2
+async def reply(mes: discord.Message, message_forwarder: MessageForwarder):
+    try:
+        user, metadata_words = _get_user_for_reply(mes, message_forwarder)
+    except GetUserForReplyException as err:
+        await mes.channel.send(str(err))
+        return
 
     # If we couldn't find anyone, then they aren't in the server, and can't be DMed
     if not user:
@@ -432,6 +409,7 @@ async def reply(mes: discord.Message, _):
         else:
             await mes.channel.send("Sorry, but they need to be in the server for me to message them")
         return
+
     try:
         content = commonbot.utils.combine_message(mes)
         output = commonbot.utils.strip_words(content, metadata_words)
@@ -462,6 +440,74 @@ async def reply(mes: discord.Message, _):
             await mes.channel.send("Cannot send messages to this user. It is likely they have DM closed or I am blocked.")
         else:
             await mes.channel.send(f"ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {err}")
+
+
+class GetUserForReplyException(Exception):
+    """
+    Helper exception to make _get_user_for_reply easier to write.
+
+    By raising this the function can bail out early, so fewer levels of if/else nesting are needed.
+    """
+    pass
+
+
+"""
+_get_user_for_reply
+
+Gets the user to reply to for a reply command.
+
+Based on the reply command staff wrote, and the channel it was sent in, this figures out who to DM.
+
+Returns a user (or None, if staff mentioned a user not in the server) and the number of words to strip from the reply command.
+"""
+def _get_user_for_reply(message: discord.Message, message_forwarder: MessageForwarder) -> (discord.User | None, int):
+    # If it's a Discord reply to a Bouncer message, use the mention in the message
+    if message.reference:
+        user_reply = message.reference.cached_message
+        if user_reply:
+            if user_reply.author == client.user and len(user_reply.mentions) == 1:
+                return user_reply.mentions[0], 1
+
+    # If it's a reply thread, the user the reply thread is for, otherwise None
+    thread_user = message_forwarder.get_userid_for_user_reply_thread(message)
+
+    # If given '^' instead of user, message the last person to DM bouncer
+    # Uses whoever DMed last since last startup, don't bother keeping in database or anything like that
+    if message.content.split()[1] == "^":
+        # Disable '^' if reply threads are on
+        if config.FORWARDING_CREATE_THREADS:
+            raise GetUserForReplyException(f"Reply threads for user DMs are on, so `^` is disabled. Use `{CMD_PREFIX}reply MSG` in a thread to reply to the user the thread is for (or mention any user outside a thread).")
+
+        # If reply threads are off but staff is messaging in an old reply thread, so take '^' to mean the user the thread is for
+        if thread_user is not None:
+            return client.get_user(thread_user), 2
+        elif message.channel.id == BAN_APPEAL and ban_am.recent_reply_exists():
+            return ban_am.get_recent_reply(), 2
+        elif message.channel.id != BAN_APPEAL and reply_am.recent_reply_exists():
+            return reply_am.get_recent_reply(), 2
+        else:
+            raise GetUserForReplyException("Sorry, I have no previous user stored. Gotta do it the old fashioned way.")
+
+    # The mentioned user, or None if no user is mentioned
+    userid = ul.parse_id(message)
+
+    # Otherwise, we pick the user to reply to based on the following table
+    # |                     | User Mention                                                    | No User Mention                |
+    # |---------------------|-----------------------------------------------------------------|--------------------------------|
+    # | Not In Reply Thread | Use the mentioned user                                          | Error - Unknown who to message |
+    # | In Reply Thread     | Error - Users are not supposed to be mentioned in reply threads | Use the reply thread user      |
+
+    if userid:
+        if thread_user is None:  # User mentioned, not a thread -> use the mentioned user
+            return client.get_user(userid), 2
+        else:  # User mentioned, reply thread -> error, users are not supposed to be mentioned in reply threads
+            raise GetUserForReplyException(f"In user reply threads, mentioning users is disabled. Use `{CMD_PREFIX}reply MSG` to reply to the user the thread is for (or mention any user outside a thread).")
+    else:
+        if thread_user is None:  # No user mentioned, not a reply thread -> error, unknown who to message
+            raise GetUserForReplyException(f"I wasn't able to understand that message: `{CMD_PREFIX}reply USER`")
+        else:  # No user mentioned, reply thread -> use reply thread user
+            return client.get_user(thread_user), 1
+
 
 """
 Say

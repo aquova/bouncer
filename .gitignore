@@ -1,6 +1,6 @@
 # Private files
 config.json
-private/*
+**/private/*
 *.db
 
 # Editor files

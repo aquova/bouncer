@@ -60,6 +60,7 @@ def gen_user_plot():
     warns = [staff_data[x][1] for x in sorted_totals]
     width = 0.5
 
+    plt.subplots(figsize=(20, 10))
     ind = np.arange(len(staff_data.keys()))
     plot1 = plt.bar(ind, bans, width, zorder=5)
     plot2 = plt.bar(ind, warns, width, bottom=bans, zorder=5)
@@ -68,12 +69,11 @@ def gen_user_plot():
     plt.title("Warns/Bans per User")
     plt.xticks(ind, sorted_totals)
     plt.xticks(rotation=-90)
-    plt.yticks(np.arange(0, get_max(list(staff_data.values())), 20))
+    plt.yticks(np.arange(0, get_max(list(staff_data.values())), 100))
     plt.legend((plot1[0], plot2[0]), ("Bans", "Warns"))
-    plt.tight_layout()
     plt.grid(True, axis="y")
 
-    plt.savefig(USER_PLOT)
+    plt.savefig(USER_PLOT, bbox_inches='tight')
 
 def gen_monthly_plot():
     plt.clf()
@@ -94,9 +94,9 @@ def gen_monthly_plot():
     plt.ylabel("Logs")
     plt.xlabel("Month")
     plt.title("Warns/Bans per Month")
-    plt.xticks(ind, labels)
+    plt.xticks(ind[::6], labels[::6])
     plt.xticks(rotation=-90)
-    plt.yticks(np.arange(0, get_max(list(month_data.values())), 10))
+    plt.yticks(np.arange(0, get_max(list(month_data.values())), 50))
     plt.legend((plot1[0], plot2[0]), ("Bans", "Warns"))
     plt.tight_layout()
     plt.grid(True, axis="y")

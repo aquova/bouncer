@@ -53,7 +53,6 @@ async def send_help_mes(mes: discord.Message, _):
         f"Remove user from watch list: `{CMD_PREFIX}unwatch <user>`\n"
         f"List watched users: `{CMD_PREFIX}watchlist`\n"
         "\n"
-        f"List what we censor: `{CMD_PREFIX}censor`\n"
         f"Plot warn/ban stats: `{CMD_PREFIX}graph`\n"
         f"View bot uptime: `{CMD_PREFIX}uptime`\n"
         "\n"
@@ -130,12 +129,6 @@ async def search_helper(uid: int) -> str:
             out += f"{index + 1}. {str(item)}"
         ret += out
 
-    censored = db.get_censor_count(uid)
-    if not censored:
-        ret += "They have never tripped the censor"
-    else:
-        ret += f"They have tripped the censor {censored[0]} times, most recently on {commonbot.utils.format_time(censored[1])}"
-
     return ret
 
 """
@@ -187,7 +180,6 @@ async def log_user(mes: discord.Message, state: LogTypes):
     elif state == LogTypes.UNBAN:
         await mes.channel.send("Removing all old logs for unbanning")
         db.clear_user_logs(userid)
-        db.reset_censor_count(userid)
 
     # Generate message for log channel
     globalcount = db.get_dbid()

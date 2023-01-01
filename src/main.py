@@ -14,24 +14,20 @@ import commands
 import config
 import db
 import visualize
-from censor import check_censor, list_censor
 from client import client
 from config import LogTypes, USERID_LOG_PATH
-from spam import Spammers
 from waiting import AnsweringMachineEntry, is_in_home_server
 from watcher import Watcher
 
 # Initialize helper classes
 db.initialize()
 dbg = Debug(config.OWNER, config.CMD_PREFIX, config.DEBUG_BOT)
-spam = Spammers()
 tk = Timekeeper()
 watch = Watcher()
 
 FUNC_DICT = {
     "ban":         [commands.log_user,             LogTypes.BAN],
     "block":       [commands.block_user,           True],
-    "censor":      [list_censor,                   None],
     "clear":       [commands.clear_am,             None],
     "edit":        [commands.remove_error,         True],
     "graph":       [visualize.post_plots,          None],
@@ -48,7 +44,6 @@ FUNC_DICT = {
     "unban":       [commands.log_user,             LogTypes.UNBAN],
     "unblock":     [commands.block_user,           False],
     "uptime":      [tk.uptime,                     None],
-    "unmute":      [spam.unmute,                   None],
     "waiting":     [commands.list_waiting,         None],
     "warn":        [commands.log_user,             LogTypes.WARN],
     "watch":       [watch.watch_user,              None],
@@ -100,8 +95,6 @@ async def on_ready():
     # Set Bouncer's activity status
     activity_object = discord.Activity(name="for your reports!", type=discord.ActivityType.watching)
     await client.change_presence(activity=activity_object)
-
-    spam.set_channel()
 
     if not dbg.is_debug_bot():
         # Upload our DB file to a private channel as a backup
@@ -257,11 +250,6 @@ async def on_message_edit(before: discord.Message, after: discord.Message):
     if not should_log(before.guild) or before.author.bot:
         return
 
-    # Run edited message against censor.
-    bad_message = await check_censor(after)
-    if bad_message:
-        return
-
     # Prevent embedding of content from triggering the log
     if before.content == after.content:
         return
@@ -381,16 +369,6 @@ async def on_message(message: discord.Message):
                     commands.reply_am.update_entry(message.author.id, mes_entry)
                 else:
                     commands.ban_am.update_entry(message.author.id, mes_entry)
-            return
-
-        # Remove spam
-        spam_message = await spam.check_spammer(message)
-        if spam_message:
-            return
-
-        # Run message against censor
-        bad_message = await check_censor(message)
-        if bad_message:
             return
 
         # Check if user is on watchlist, and should be tracked

@@ -22,10 +22,6 @@ CONFIG_PATH = "./private/config.json"
 with open(CONFIG_PATH) as config_file:
     cfg = json.load(config_file)
 
-CENSOR_PATH = "./private/censor.json"
-with open(CENSOR_PATH) as censor_file:
-    censor = json.load(censor_file)
-
 # Set values from config file as constants
 DISCORD_KEY = cfg['discord']
 OWNER = cfg['owner']
@@ -45,12 +41,6 @@ VALID_ROLES = cfg['roles']['admin']
 DM_BAN = cfg['DM']['ban']
 DM_WARN = cfg['DM']['warn']
 DEBUG_BOT = (cfg['debug'].upper() == "TRUE")
-
-CENSOR_LIST = censor['regex']
-CENSOR_WATCH = censor['watch_regex']
-CENSOR_SPAM = censor['spam_regex']
-IGNORE_SPAM = cfg['channels']['ignore_spam']
-SPAM_CHAN = cfg['channels']['spam']
 
 USER_PLOT = "./private/user_plot.png"
 MONTH_PLOT = "./private/month_plot.png"

@@ -20,7 +20,7 @@ class MessageForwarder:
 
     We could move reply command functionality into this class, but I left it as is.
     """
-    def __init__(self, create_threads: bool, mailbox_channel: int, ban_appeal_channel: int, home_server: int):
+    def __init__(self, create_threads: bool, mailbox_channel: int, ban_appeal_channel: int, home_server: int, staff_roles: list[int]):
         """
         Creates a new message forwarder.
 
@@ -30,12 +30,14 @@ class MessageForwarder:
         :param mailbox_channel: The channel to forward regular DMs to.
         :param ban_appeal_channel: The channel to forward ban appeal DMs to.
         :param home_server: Bouncer's home server, used to make thread names nice.
+        :param staff_roles: The roles containing members to add to created threads.
         """
         # Configuration
         self._create_threads = create_threads
         self._mailbox_channel = mailbox_channel
         self._ban_appeal_channel = ban_appeal_channel
         self._home_server = home_server
+        self._staff_roles = staff_roles
 
         # Maps user ids to reply thread ids - used when receiving a DM to know which thread to forward it to (if create_threads is true)
         self._user_id_to_thread_id = LRUCache(lambda user_id: db.get_user_reply_thread_id(user_id), maxsize=50)
@@ -152,7 +154,25 @@ class MessageForwarder:
         self._user_id_to_thread_id.set(thread.id, user.id)
         self._thread_id_to_user_id.set(user.id, thread.id)
 
+        # Add staff to the thread
+        await self._add_staff_to_thread(thread)
+
         return thread
+
+    async def _add_staff_to_thread(self, thread: discord.Thread):
+        """
+        Adds all staff members to a thread.
+
+        :param thread: The thread to add staff to.
+        """
+        content = "This is a mention to add staff to this thread: "
+
+        message = await thread.send(content)
+
+        content += ', '.join([f"<@&{role_id}>" for role_id in self._staff_roles])
+
+        # By editing in a mention, we add staff to the thread without pinging them
+        await message.edit(content=content)
 
     async def _update_reply_thread(self, user: discord.User, thread: discord.Thread):
         """

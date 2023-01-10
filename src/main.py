@@ -27,7 +27,7 @@ from forwarder import MessageForwarder
 dbg = Debug(config.OWNER, config.CMD_PREFIX, config.DEBUG_BOT)
 tk = Timekeeper()
 watch = Watcher()
-frwrdr = MessageForwarder(config.FORWARDING_CREATE_THREADS, config.MAILBOX, config.BAN_APPEAL, config.HOME_SERVER)
+frwrdr = MessageForwarder(config.FORWARDING_CREATE_THREADS, config.MAILBOX, config.BAN_APPEAL, config.HOME_SERVER, config.THREAD_ROLES)
 
 FUNC_DICT = {
     "ban":         [commands.log_user,             LogTypes.BAN],

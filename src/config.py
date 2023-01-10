@@ -48,3 +48,7 @@ MONTH_PLOT = "./private/month_plot.png"
 # bool: whether to create and forward user dms to per-user threads under the mailbox channel
 #       instead of posting messages to directly to the mailbox channel
 FORWARDING_CREATE_THREADS = cfg['messageForwarding']['createThreads']
+
+# list of int: the ids of roles to invite to new forwarded threads
+#              each role must have less than 100 members for the addition to work
+THREAD_ROLES = cfg['messageForwarding']['rolesToAddToThreads']

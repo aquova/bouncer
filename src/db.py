@@ -57,6 +57,8 @@ def initialize():
     sqlconn.execute("CREATE TABLE IF NOT EXISTS staffLogs (staff TEXT PRIMARY KEY, bans INT, warns INT);")
     sqlconn.execute("CREATE TABLE IF NOT EXISTS monthLogs (month TEXT PRIMARY KEY, bans INT, warns INT);")
     sqlconn.execute("CREATE TABLE IF NOT EXISTS watching (id INT PRIMARY KEY);")
+    sqlconn.execute("CREATE TABLE IF NOT EXISTS userReplyThreads (userid INT PRIMARY KEY, threadid INT);")
+    sqlconn.execute("CREATE UNIQUE INDEX IF NOT EXISTS threadidIndex on userReplyThreads (threadid);")
     sqlconn.commit()
     sqlconn.close()
 
@@ -84,6 +86,50 @@ def search(user_id: int) -> list[UserLogEntry]:
         entries.append(entry)
 
     return entries
+
+
+def get_user_reply_thread_id(user_id: int) -> int | None:
+    """
+    Retrieves the user reply thread id associated with a user id from the db.
+
+    :param user_id: The user id to query.
+    :return: The thread id, or None if not present.
+    """
+    query = ("SELECT threadid from userReplyThreads WHERE userid=?", [user_id])
+    search_results = _db_read(query)
+
+    if len(search_results) == 0:
+        return None
+
+    return search_results[0][0]
+
+
+def get_user_reply_thread_user_id(thread_id: int) -> int | None:
+    """
+    Retrieves the user id associated with a user reply thread id from the db.
+
+    :param thread_id: The thread id to query.
+    :return: The user id, or None if not present.
+    """
+    query = ("SELECT userid from userReplyThreads WHERE threadid=?", [thread_id])
+    search_results = _db_read(query)
+
+    if len(search_results) == 0:
+        return None
+
+    return search_results[0][0]
+
+
+def set_user_reply_thread(user_id: int, thread_id: int):
+    """
+    Stores the user reply thread id associated with a user id.
+
+    :param user_id: The user id.
+    :param thread_id: The thread id.
+    """
+    query = ("REPLACE into userReplyThreads (userid, threadid) VALUES (?, ?)", [user_id, thread_id])
+    _db_write(query)
+
 
 def fetch_id_by_username(username: str) -> Optional[str]:
     query = ("SELECT id FROM badeggs WHERE username=?", [username])

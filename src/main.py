@@ -10,20 +10,24 @@ import commonbot.utils
 from commonbot.debug import Debug
 from commonbot.timekeep import Timekeeper
 
+# Needs to happen before other imports that cause db to be queried
+import db
+db.initialize()
+
 import commands
 import config
-import db
 import visualize
 from client import client
 from config import LogTypes, USERID_LOG_PATH
 from waiting import AnsweringMachineEntry, is_in_home_server
 from watcher import Watcher
+from forwarder import MessageForwarder
 
 # Initialize helper classes
-db.initialize()
 dbg = Debug(config.OWNER, config.CMD_PREFIX, config.DEBUG_BOT)
 tk = Timekeeper()
 watch = Watcher()
+frwrdr = MessageForwarder(config.FORWARDING_CREATE_THREADS, config.MAILBOX, config.BAN_APPEAL, config.HOME_SERVER, config.THREAD_ROLES)
 
 FUNC_DICT = {
     "ban":         [commands.log_user,             LogTypes.BAN],
@@ -36,7 +40,7 @@ FUNC_DICT = {
     "note":        [commands.log_user,             LogTypes.NOTE],
     "preview":     [commands.preview,              None],
     "remove":      [commands.remove_error,         False],
-    "reply":       [commands.reply,                None],
+    "reply":       [commands.reply,                frwrdr],
     "say":         [commands.say,                  None],
     "scam":        [commands.log_user,             LogTypes.SCAM],
     "search":      [commands.search_command,       None],
@@ -339,36 +343,9 @@ async def on_message(message: discord.Message):
         if dbg.should_ignore_message(message):
             return
 
-        # If bouncer detects a private DM sent to it
+        # If bouncer detects a private DM sent to it, forward it to staff
         if isinstance(message.channel, discord.channel.DMChannel):
-            content = commonbot.utils.combine_message(message)
-            # If not blocked, send message along to specified mod channel
-            if not commands.bu.is_in_blocklist(message.author.id):
-                mes = ""
-                chan = None
-                is_home = is_in_home_server(message.author)
-                # If we share the main server, treat that as a DM
-                if is_home:
-                    commands.reply_am.set_recent_reply(message.author)
-                    mes = f"<@{message.author.id}>: {content}"
-                    chan = client.get_channel(config.MAILBOX)
-                # The only other server we should share is the ban appeal server
-                else:
-                    commands.ban_am.set_recent_reply(message.author)
-                    mes = f"{str(message.author)} ({message.author.id}): {content}"
-                    chan = client.get_channel(config.BAN_APPEAL)
-
-                log_mes = await commonbot.utils.send_message(mes, chan)
-
-                # Send them a message so they know something actually happened
-                await message.channel.send("Your message has been forwarded!")
-
-                # Lets also add/update them in answering machine
-                mes_entry = AnsweringMachineEntry(f"{str(message.author)}", message.created_at, content, log_mes.jump_url)
-                if is_home:
-                    commands.reply_am.update_entry(message.author.id, mes_entry)
-                else:
-                    commands.ban_am.update_entry(message.author.id, mes_entry)
+            await frwrdr.on_dm(message)
             return
 
         # Check if user is on watchlist, and should be tracked

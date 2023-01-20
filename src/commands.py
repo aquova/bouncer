@@ -388,13 +388,13 @@ async def block_user(mes: discord.Message, block: bool):
             await mes.channel.send("Um... That user was already blocked...")
         else:
             bu.block_user(userid)
-            await mes.channel.send(f"I have now blocked {username}. Their messages will no longer display in chat, but they will be logged for later review.")
+            await mes.channel.send(f"I have now blocked {username}. Their DMs will no longer be forwarded.")
     else:
         if not bu.is_in_blocklist(userid):
             await mes.channel.send("That user hasn't been blocked...")
         else:
             bu.unblock_user(userid)
-            await mes.channel.send(f"I have now unblocked {username}. You will once again be able to hear their dumb bullshit in chat.")
+            await mes.channel.send(f"I have now unblocked {username}. Their DMs will now be forwarded.")
 
 """
 Reply

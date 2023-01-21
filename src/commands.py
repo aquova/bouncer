@@ -562,9 +562,9 @@ async def _get_am(channel: discord.TextChannel | discord.Thread) -> AnsweringMac
         return reply_am
 
     # Otherwise it depends on the channel (or existing thread created before threads were turned off) where the command is used
-    if channel.id == BAN_APPEAL or (isinstance(channel, discord.Thread) and channel.parent.id) == BAN_APPEAL:
+    if channel.id == BAN_APPEAL or (isinstance(channel, discord.Thread) and channel.parent.id == BAN_APPEAL):
         return ban_am
-    elif channel.id == MAILBOX or (isinstance(channel, discord.Thread) and channel.parent.id) == MAILBOX:
+    elif channel.id == MAILBOX or (isinstance(channel, discord.Thread) and channel.parent.id == MAILBOX):
         return reply_am
     else:
         await channel.send("This command only works in either mailbox or the ban appeal channel.")

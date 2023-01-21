@@ -25,10 +25,10 @@ class MessageForwarder:
         Creates a new message forwarder.
 
         :param create_threads: Whether to forward messages into threads or not.
-                               If true, threads are created under either the mailbox/ban appeal channel as appropriate.
+                               If true, threads are created under the mailbox channel.
                                If false, messages are sent directly to either the mailbox/ban appeal channel as appropriate.
         :param mailbox_channel: The channel to forward regular DMs to.
-        :param ban_appeal_channel: The channel to forward ban appeal DMs to.
+        :param ban_appeal_channel: The channel to forward ban appeal DMs to. Used only if threads are disabled.
         :param home_server: Bouncer's home server, used to make thread names nice.
         :param staff_roles: The roles containing members to add to created threads.
         """
@@ -58,13 +58,15 @@ class MessageForwarder:
         if commands.bu.is_in_blocklist(message.author.id):
             return
 
-        # Figure out what message to send, which channel to send in, etc based on which server the sender is in
-        if is_in_home_server(message.author):  # If the user is in the home server, treat it as a regular DM
+        # Figure out what message to send
+        # If reply threads are on, everything goes to mailbox
+        # Otherwise, it depends on whether it's a ban appeal or not
+        if self._create_threads or is_in_home_server(message.author):  # If the user is in the home server, treat it as a regular DM
             reply_message = f"<@{message.author.id}>"
             answering_machine = commands.reply_am
             reply_channel = client.get_channel(self._mailbox_channel)
         else:  # Otherwise, assume it's a ban appeal (users must have a mutual server to message bouncer, they should only be able to join those two)
-            reply_message = f"{str(message.author)} ({message.author.id})"  # Can't ping user, so show username details
+            reply_message = f"{str(message.author)} ({message.author.id}) (banned)"  # Can't ping user, so show username details
             answering_machine = commands.ban_am
             reply_channel = client.get_channel(self._ban_appeal_channel)
 

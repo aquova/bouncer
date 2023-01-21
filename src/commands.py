@@ -10,7 +10,7 @@ import config
 import db
 from blocks import BlockedUsers
 from client import client
-from config import LogTypes, CMD_PREFIX, BAN_APPEAL
+from config import LogTypes, CMD_PREFIX, BAN_APPEAL, FORWARDING_CREATE_THREADS, MAILBOX
 from forwarder import MessageForwarder
 import visualize
 from waiting import AnsweringMachine
@@ -78,23 +78,29 @@ def lookup_username(uid: int) -> Optional[str]:
     return username
 
 async def clear_am(message: discord.Message, _):
-    if message.channel.id == BAN_APPEAL:
-        ban_am.clear_entries()
-    else:
-        reply_am.clear_entries()
+    am = await _get_am(message.channel)
+
+    if am is None:
+        return
+
+    am.clear_entries()
+    await message.channel.send("Cleared waiting messages!")
+
 
 async def list_waiting(message: discord.Message, _):
-    mes_list = []
-    if message.channel.id == BAN_APPEAL:
-        mes_list = ban_am.gen_waiting_list()
-    else:
-        mes_list = reply_am.gen_waiting_list()
+    am = await _get_am(message.channel)
+
+    if am is None:
+        return
+
+    mes_list = am.gen_waiting_list()
 
     if len(mes_list) == 0:
         await message.channel.send("There are no messages waiting")
     else:
         for mes in mes_list:
             await message.channel.send(mes)
+
 
 async def sync(message: discord.Message, _):
     await client.sync_guild(message.guild)
@@ -382,13 +388,13 @@ async def block_user(mes: discord.Message, block: bool):
             await mes.channel.send("Um... That user was already blocked...")
         else:
             bu.block_user(userid)
-            await mes.channel.send(f"I have now blocked {username}. Their messages will no longer display in chat, but they will be logged for later review.")
+            await mes.channel.send(f"I have now blocked {username}. Their DMs will no longer be forwarded.")
     else:
         if not bu.is_in_blocklist(userid):
             await mes.channel.send("That user hasn't been blocked...")
         else:
             bu.unblock_user(userid)
-            await mes.channel.send(f"I have now unblocked {username}. You will once again be able to hear their dumb bullshit in chat.")
+            await mes.channel.send(f"I have now unblocked {username}. Their DMs will now be forwarded.")
 
 """
 Reply
@@ -396,8 +402,12 @@ Reply
 Sends a private message to the specified user
 """
 async def reply(mes: discord.Message, message_forwarder: MessageForwarder):
+    am = await _get_am(mes.channel)
+    if am is None:
+        return
+
     try:
-        user, metadata_words = _get_user_for_reply(mes, message_forwarder)
+        user, metadata_words = _get_user_for_reply(mes, message_forwarder, am)
     except GetUserForReplyException as err:
         await mes.channel.send(str(err))
         return
@@ -429,10 +439,7 @@ async def reply(mes: discord.Message, message_forwarder: MessageForwarder):
         await mes.channel.send(f"Message sent to `{str(user)}`.")
 
         # If they were in our answering machine, they have been replied to, and can be removed
-        if mes.channel.id == BAN_APPEAL:
-            ban_am.remove_entry(user.id)
-        else:
-            reply_am.remove_entry(user.id)
+        am.remove_entry(user.id)
 
     # Exception handling
     except discord.errors.HTTPException as err:
@@ -460,7 +467,7 @@ Based on the reply command staff wrote, and the channel it was sent in, this fig
 
 Returns a user (or None, if staff mentioned a user not in the server) and the number of words to strip from the reply command.
 """
-def _get_user_for_reply(message: discord.Message, message_forwarder: MessageForwarder) -> (discord.User | None, int):
+def _get_user_for_reply(message: discord.Message, message_forwarder: MessageForwarder, am: AnsweringMachine) -> (discord.User | None, int):
     # If it's a Discord reply to a Bouncer message, use the mention in the message
     if message.reference:
         user_reply = message.reference.cached_message
@@ -481,10 +488,8 @@ def _get_user_for_reply(message: discord.Message, message_forwarder: MessageForw
         # If reply threads are off but staff is messaging in an old reply thread, so take '^' to mean the user the thread is for
         if thread_user is not None:
             return client.get_user(thread_user), 2
-        elif message.channel.id == BAN_APPEAL and ban_am.recent_reply_exists():
-            return ban_am.get_recent_reply(), 2
-        elif message.channel.id != BAN_APPEAL and reply_am.recent_reply_exists():
-            return reply_am.get_recent_reply(), 2
+        elif am.recent_reply_exists():
+            return am.get_recent_reply(), 2
         else:
             raise GetUserForReplyException("Sorry, I have no previous user stored. Gotta do it the old fashioned way.")
 
@@ -540,3 +545,27 @@ async def say(message: discord.Message, _):
             await message.channel.send("You do not have permissions to post in that channel.")
         else:
             await message.channel.send(f"Oh god something went wrong, everyone panic! {str(err)}")
+
+
+"""
+_get_am
+
+Returns the answering machine to use for a command.
+
+Figures out which one to use given whether threads are on and the channel the message was sent in.
+
+If the option to turn off reply threads is removed, this isn't needed and we can just use the reply_am/delete the ban_am.
+"""
+async def _get_am(channel: discord.TextChannel | discord.Thread) -> AnsweringMachine | None:
+    # If reply threads are on, everything goes under mailbox using the regular answering machine
+    if FORWARDING_CREATE_THREADS:
+        return reply_am
+
+    # Otherwise it depends on the channel (or existing thread created before threads were turned off) where the command is used
+    if channel.id == BAN_APPEAL or (isinstance(channel, discord.Thread) and channel.parent.id == BAN_APPEAL):
+        return ban_am
+    elif channel.id == MAILBOX or (isinstance(channel, discord.Thread) and channel.parent.id == MAILBOX):
+        return reply_am
+    else:
+        await channel.send("This command only works in either mailbox or the ban appeal channel.")
+        return None

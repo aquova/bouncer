@@ -58,17 +58,27 @@ class MessageForwarder:
         if commands.bu.is_in_blocklist(message.author.id):
             return
 
-        # Figure out what message to send
-        # If reply threads are on, everything goes to mailbox
-        # Otherwise, it depends on whether it's a ban appeal or not
-        if self._create_threads or is_in_home_server(message.author):  # If the user is in the home server, treat it as a regular DM
-            reply_message = f"<@{message.author.id}>"
-            answering_machine = commands.reply_am
-            reply_channel = client.get_channel(self._mailbox_channel)
-        else:  # Otherwise, assume it's a ban appeal (users must have a mutual server to message bouncer, they should only be able to join those two)
-            reply_message = f"{str(message.author)} ({message.author.id}) (banned)"  # Can't ping user, so show username details
-            answering_machine = commands.ban_am
-            reply_channel = client.get_channel(self._ban_appeal_channel)
+        # If the user is in the home server, treat it as a regular DM
+        # Otherwise, assume it's a ban appeal (users must have a mutual server to message bouncer, they should only be able to join those two)
+        is_ban_appeal = not is_in_home_server(message.author)
+
+        # If it's not a ban appeal they can be pinged b/c they're in the server where we're forwarding the message
+        # Otherwise they can't, so we show username details instead
+        reply_message = f"<@{message.author.id}>" if not is_ban_appeal else f"{str(message.author)} ({message.author.id})"
+
+        # Default to sending messages to mailbox
+        answering_machine = commands.reply_am
+        reply_channel = client.get_channel(self._mailbox_channel)
+
+        # Handle ban appeals
+        if is_ban_appeal:
+            if self._create_threads:
+                # If threads are on, add an extra disambiguator to the message but still send everything to mailbox
+                reply_message += " (banned)"
+            else:
+                # If threads are off, send to the ban appeal channel instead
+                answering_machine = commands.ban_am
+                reply_channel = client.get_channel(self._ban_appeal_channel)
 
         # Set latest received reply so '^' works when sending the reply command
         answering_machine.set_recent_reply(message.author)

@@ -10,15 +10,14 @@ import config
 import db
 from blocks import BlockedUsers
 from client import client
-from config import LogTypes, CMD_PREFIX, BAN_APPEAL, FORWARDING_CREATE_THREADS, MAILBOX
+from config import LogTypes, CMD_PREFIX, MAILBOX
 from forwarder import MessageForwarder
 import visualize
 from waiting import AnsweringMachine
 
 ul = UserLookup()
 bu = BlockedUsers()
-reply_am = AnsweringMachine()
-ban_am = AnsweringMachine()
+am = AnsweringMachine()
 
 BAN_KICK_MES = "Hi there! You've been {type} from the Stardew Valley Discord for violating the rules: `{mes}`. If you have any questions, and for information on appeals, you can join <https://discord.gg/uz6KPaCPhf>."
 SCAM_MES = "Hi there! You've been banned from the Stardew Valley Discord for posting scam links. If your account was compromised, please change your password, enable 2FA, and join <https://discord.gg/uz6KPaCPhf> to appeal."
@@ -27,7 +26,6 @@ WARN_MES = "Hi there! You've received warning #{count} in the Stardew Valley Dis
 async def send_help_mes(mes: discord.Message, _):
     dm_warns = "On" if config.DM_WARN else "Off"
     dm_bans = "On" if config.DM_BAN else "Off"
-    reply_threads = "On" if config.FORWARDING_CREATE_THREADS else "Off"
     help_mes = (
         f"Issue a warning: `{CMD_PREFIX}warn <user> <message>`\n"
         f"Log a ban: `{CMD_PREFIX}ban <user> <reason>`\n"
@@ -42,11 +40,9 @@ async def send_help_mes(mes: discord.Message, _):
         f"Edit a user's note: `{CMD_PREFIX}edit <user> <index(optional)> <new_message>`\n"
         "\n"
         f"Reply to a user in DMs: `{CMD_PREFIX}reply <user> <message>`\n"
-        f" - To reply to the most recent DM: `{CMD_PREFIX}reply ^ <message>`\n"
         f" - You can also Discord reply to a DM with `{CMD_PREFIX}reply <message>`\n"
         f"View users waiting for a reply: `{CMD_PREFIX}waiting`. Clear the list with `{CMD_PREFIX}clear`\n"
         f"Stop a user from sending DMs to us: `{CMD_PREFIX}block/{CMD_PREFIX}unblock <user>`\n"
-        f"Creating/using threads for new user DMs is `{reply_threads}`\n"
         "\n"
         f"Sync bot commands to the server: `{CMD_PREFIX}sync`\n"
         f"Remove a user's 'Muted' role: `{CMD_PREFIX}unmute <user>`\n"
@@ -78,8 +74,6 @@ def lookup_username(uid: int) -> Optional[str]:
     return username
 
 async def clear_am(message: discord.Message, _):
-    am = await _get_am(message.channel)
-
     if am is None:
         return
 
@@ -88,8 +82,6 @@ async def clear_am(message: discord.Message, _):
 
 
 async def list_waiting(message: discord.Message, _):
-    am = await _get_am(message.channel)
-
     if am is None:
         return
 
@@ -402,7 +394,6 @@ Reply
 Sends a private message to the specified user
 """
 async def reply(mes: discord.Message, message_forwarder: MessageForwarder):
-    am = await _get_am(mes.channel)
     if am is None:
         return
 
@@ -478,25 +469,10 @@ def _get_user_for_reply(message: discord.Message, message_forwarder: MessageForw
     # If it's a reply thread, the user the reply thread is for, otherwise None
     thread_user = message_forwarder.get_userid_for_user_reply_thread(message)
 
-    # If given '^' instead of user, message the last person to DM bouncer
-    # Uses whoever DMed last since last startup, don't bother keeping in database or anything like that
-    if message.content.split()[1] == "^":
-        # Disable '^' if reply threads are on
-        if config.FORWARDING_CREATE_THREADS:
-            raise GetUserForReplyException(f"Reply threads for user DMs are on, so `^` is disabled. Use `{CMD_PREFIX}reply MSG` in a thread to reply to the user the thread is for (or mention any user outside a thread).")
-
-        # If reply threads are off but staff is messaging in an old reply thread, so take '^' to mean the user the thread is for
-        if thread_user is not None:
-            return client.get_user(thread_user), 2
-        elif am.recent_reply_exists():
-            return am.get_recent_reply(), 2
-        else:
-            raise GetUserForReplyException("Sorry, I have no previous user stored. Gotta do it the old fashioned way.")
-
     # The mentioned user, or None if no user is mentioned
     userid = ul.parse_id(message)
 
-    # Otherwise, we pick the user to reply to based on the following table
+    # We pick the user to reply to based on the following table
     # |                     | User Mention                                                    | No User Mention                |
     # |---------------------|-----------------------------------------------------------------|--------------------------------|
     # | Not In Reply Thread | Use the mentioned user                                          | Error - Unknown who to message |
@@ -545,27 +521,3 @@ async def say(message: discord.Message, _):
             await message.channel.send("You do not have permissions to post in that channel.")
         else:
             await message.channel.send(f"Oh god something went wrong, everyone panic! {str(err)}")
-
-
-"""
-_get_am
-
-Returns the answering machine to use for a command.
-
-Figures out which one to use given whether threads are on and the channel the message was sent in.
-
-If the option to turn off reply threads is removed, this isn't needed and we can just use the reply_am/delete the ban_am.
-"""
-async def _get_am(channel: discord.TextChannel | discord.Thread) -> AnsweringMachine | None:
-    # If reply threads are on, everything goes under mailbox using the regular answering machine
-    if FORWARDING_CREATE_THREADS:
-        return reply_am
-
-    # Otherwise it depends on the channel (or existing thread created before threads were turned off) where the command is used
-    if channel.id == BAN_APPEAL or (isinstance(channel, discord.Thread) and channel.parent.id == BAN_APPEAL):
-        return ban_am
-    elif channel.id == MAILBOX or (isinstance(channel, discord.Thread) and channel.parent.id == MAILBOX):
-        return reply_am
-    else:
-        await channel.send("This command only works in either mailbox or the ban appeal channel.")
-        return None

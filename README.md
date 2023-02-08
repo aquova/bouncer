@@ -2,9 +2,9 @@
 
 A Discord moderator bot, designed to be used with the Stardew Valley server
 
-Written by aquova, et. al, 2018-2022
+Written by aquova, et. al, 2018-2023
 
-https://github.com/StardewValleyDiscord/bouncer
+https://github.com/aquova/bouncer
 
 https://discord.gg/stardewvalley
 

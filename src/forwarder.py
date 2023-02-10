@@ -60,8 +60,6 @@ class MessageForwarder:
         # Otherwise they can't, so we show username details instead
         reply_message = f"<@{message.author.id}>" if not is_ban_appeal else f"{str(message.author)} ({message.author.id})"
 
-        # Default to sending messages to mailbox
-        answering_machine = commands.am
         reply_channel = client.get_channel(self._mailbox_channel)
 
         # Handle ban appeals
@@ -89,7 +87,7 @@ class MessageForwarder:
 
         # Record that the user is waiting for a reply
         mes_entry = AnsweringMachineEntry(f"{str(message.author)}", message.created_at, content, log_mes.jump_url)
-        answering_machine.update_entry(message.author.id, mes_entry)
+        commands.am.update_entry(message.author.id, mes_entry)
 
     def get_userid_for_user_reply_thread(self, message: discord.Message) -> int | None:
         """
@@ -194,10 +192,10 @@ class MessageForwarder:
         # Try to get their SDV nickname (will be None if they're not in the SDV server, or not in the member cache) for a nicer thread name
         member = client.get_guild(self._home_server).get_member(user.id)
         if member is not None:
-            return f"{member.display_name} ({str(user)}) ({user.id})"
+            return f"{member.display_name} ({str(user)})"
 
         # If that didn't work, use their non-SDV name
-        return f"{str(user)} ({user.id})"
+        return f"{str(user)}"
 
 
 class LRUCache:

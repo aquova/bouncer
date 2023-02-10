@@ -74,17 +74,11 @@ def lookup_username(uid: int) -> Optional[str]:
     return username
 
 async def clear_am(message: discord.Message, _):
-    if am is None:
-        return
-
     am.clear_entries()
     await message.channel.send("Cleared waiting messages!")
 
 
 async def list_waiting(message: discord.Message, _):
-    if am is None:
-        return
-
     mes_list = am.gen_waiting_list()
 
     if len(mes_list) == 0:
@@ -394,11 +388,8 @@ Reply
 Sends a private message to the specified user
 """
 async def reply(mes: discord.Message, message_forwarder: MessageForwarder):
-    if am is None:
-        return
-
     try:
-        user, metadata_words = _get_user_for_reply(mes, message_forwarder, am)
+        user, metadata_words = _get_user_for_reply(mes, message_forwarder)
     except GetUserForReplyException as err:
         await mes.channel.send(str(err))
         return
@@ -458,7 +449,7 @@ Based on the reply command staff wrote, and the channel it was sent in, this fig
 
 Returns a user (or None, if staff mentioned a user not in the server) and the number of words to strip from the reply command.
 """
-def _get_user_for_reply(message: discord.Message, message_forwarder: MessageForwarder, am: AnsweringMachine) -> (discord.User | None, int):
+def _get_user_for_reply(message: discord.Message, message_forwarder: MessageForwarder) -> (discord.User | None, int):
     # If it's a Discord reply to a Bouncer message, use the mention in the message
     if message.reference:
         user_reply = message.reference.cached_message
@@ -468,6 +459,10 @@ def _get_user_for_reply(message: discord.Message, message_forwarder: MessageForw
 
     # If it's a reply thread, the user the reply thread is for, otherwise None
     thread_user = message_forwarder.get_userid_for_user_reply_thread(message)
+
+    # Replying to a user with '^' is no longer supported, but some people might need a reminder
+    if message.content.split()[1] == "^":
+        raise GetUserForReplyException("Replying to a user with '^' is no longer supported.")
 
     # The mentioned user, or None if no user is mentioned
     userid = ul.parse_id(message)

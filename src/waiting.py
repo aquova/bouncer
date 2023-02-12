@@ -18,16 +18,6 @@ class AnsweringMachineEntry:
 class AnsweringMachine:
     def __init__(self):
         self.waiting_list = {}
-        self.recent_reply = None
-
-    def set_recent_reply(self, user: discord.Member):
-        self.recent_reply = user
-
-    def get_recent_reply(self) -> Optional[discord.Member]:
-        return self.recent_reply
-
-    def recent_reply_exists(self) -> bool:
-        return self.recent_reply is not None
 
     def remove_entry(self, user_id: int):
         if user_id in self.waiting_list:

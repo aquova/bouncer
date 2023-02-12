@@ -1,5 +1,5 @@
 # Bouncer
-# https://github.com/StardewValleyDiscord/bouncer
+# https://github.com/aquova/bouncer
 
 from datetime import datetime, timezone
 
@@ -27,7 +27,7 @@ from forwarder import MessageForwarder
 dbg = Debug(config.OWNER, config.CMD_PREFIX, config.DEBUG_BOT)
 tk = Timekeeper()
 watch = Watcher()
-frwrdr = MessageForwarder(config.FORWARDING_CREATE_THREADS, config.MAILBOX, config.BAN_APPEAL, config.HOME_SERVER, config.THREAD_ROLES)
+frwrdr = MessageForwarder(config.MAILBOX, config.HOME_SERVER, config.THREAD_ROLES)
 
 FUNC_DICT = {
     "ban":         [commands.log_user,             LogTypes.BAN],
@@ -187,8 +187,7 @@ async def on_member_ban(server: discord.Guild, member: discord.Member):
         return
 
     # We can remove banned user from our answering machine and watch list (if they exist)
-    commands.reply_am.remove_entry(member.id)
-    commands.ban_am.remove_entry(member.id)
+    commands.am.remove_entry(member.id)
     watch.remove_user(member.id)
 
     # Keep a record of their banning, in case the log is made after they're no longer here
@@ -209,8 +208,7 @@ async def on_member_remove(member: discord.Member):
         return
 
     # We can remove left users from our answering machine
-    commands.reply_am.remove_entry(member.id)
-    commands.ban_am.remove_entry(member.id)
+    commands.am.remove_entry(member.id)
 
     # Remember that the user has left, in case we want to log after they're gone
     username = f"{str(member)}"

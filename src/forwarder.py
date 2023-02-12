@@ -20,29 +20,23 @@ class MessageForwarder:
 
     We could move reply command functionality into this class, but I left it as is.
     """
-    def __init__(self, create_threads: bool, mailbox_channel: int, ban_appeal_channel: int, home_server: int, staff_roles: list[int]):
+    def __init__(self, mailbox_channel: int, home_server: int, staff_roles: list[int]):
         """
         Creates a new message forwarder.
 
-        :param create_threads: Whether to forward messages into threads or not.
-                               If true, threads are created under the mailbox channel.
-                               If false, messages are sent directly to either the mailbox/ban appeal channel as appropriate.
         :param mailbox_channel: The channel to forward regular DMs to.
-        :param ban_appeal_channel: The channel to forward ban appeal DMs to. Used only if threads are disabled.
         :param home_server: Bouncer's home server, used to make thread names nice.
         :param staff_roles: The roles containing members to add to created threads.
         """
         # Configuration
-        self._create_threads = create_threads
         self._mailbox_channel = mailbox_channel
-        self._ban_appeal_channel = ban_appeal_channel
         self._home_server = home_server
         self._staff_roles = staff_roles
 
-        # Maps user ids to reply thread ids - used when receiving a DM to know which thread to forward it to (if create_threads is true)
+        # Maps user ids to reply thread ids - used when receiving a DM to know which thread to forward it to
         self._user_id_to_thread_id = LRUCache(lambda user_id: db.get_user_reply_thread_id(user_id), maxsize=50)
 
-        # Maps user reply thread ids to user ids - used when staff replies in a thread to know which user to send the reply to (this will work for existing threads even if create_threads is false)
+        # Maps user reply thread ids to user ids - used when staff replies in a thread to know which user to send the reply to
         self._thread_id_to_user_id = LRUCache(lambda thread_id: db.get_user_reply_thread_user_id(thread_id), maxsize=50)
 
         # Both of the above use an LRU cache wrapper around accessing the DB so that every DM/reply does not trigger DB access
@@ -66,30 +60,18 @@ class MessageForwarder:
         # Otherwise they can't, so we show username details instead
         reply_message = f"<@{message.author.id}>" if not is_ban_appeal else f"{str(message.author)} ({message.author.id})"
 
-        # Default to sending messages to mailbox
-        answering_machine = commands.reply_am
         reply_channel = client.get_channel(self._mailbox_channel)
 
         # Handle ban appeals
         if is_ban_appeal:
-            if self._create_threads:
-                # If threads are on, add an extra disambiguator to the message but still send everything to mailbox
-                reply_message += " (banned)"
-            else:
-                # If threads are off, send to the ban appeal channel instead
-                answering_machine = commands.ban_am
-                reply_channel = client.get_channel(self._ban_appeal_channel)
-
-        # Set latest received reply so '^' works when sending the reply command
-        answering_machine.set_recent_reply(message.author)
+            reply_message += " (banned)"
 
         # Fill in the rest of the message with what the user said
         content = commonbot.utils.combine_message(message)
         reply_message += f": {content}"
 
-        # If forwarded messages should be grouped into threads, get or create the appropriate thread for the message user
-        if self._create_threads:
-            reply_channel = await self._get_or_create_user_reply_thread(message.author, reply_channel)
+        # Get or create the appropriate thread for the message user
+        reply_channel = await self._get_or_create_user_reply_thread(message.author, reply_channel)
 
         # Forward the message to the channel/thread
         log_mes = await commonbot.utils.send_message(reply_message, reply_channel)
@@ -105,7 +87,7 @@ class MessageForwarder:
 
         # Record that the user is waiting for a reply
         mes_entry = AnsweringMachineEntry(f"{str(message.author)}", message.created_at, content, log_mes.jump_url)
-        answering_machine.update_entry(message.author.id, mes_entry)
+        commands.am.update_entry(message.author.id, mes_entry)
 
     def get_userid_for_user_reply_thread(self, message: discord.Message) -> int | None:
         """
@@ -210,10 +192,10 @@ class MessageForwarder:
         # Try to get their SDV nickname (will be None if they're not in the SDV server, or not in the member cache) for a nicer thread name
         member = client.get_guild(self._home_server).get_member(user.id)
         if member is not None:
-            return f"{member.display_name} ({str(user)}) ({user.id})"
+            return f"{member.display_name} ({str(user)})"
 
         # If that didn't work, use their non-SDV name
-        return f"{str(user)} ({user.id})"
+        return f"{str(user)}"
 
 
 class LRUCache:

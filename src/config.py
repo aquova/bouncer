@@ -34,7 +34,6 @@ MAILBOX = cfg['channels']['mailbox']
 LOG_CHAN = cfg['channels']['log']
 SYS_LOG = cfg['channels']['syslog']
 WATCHLIST_CHAN = cfg['channels']['watchlist']
-BAN_APPEAL = cfg['channels']['ban_appeal']
 
 VALID_ROLES = cfg['roles']['admin']
 
@@ -44,10 +43,6 @@ DEBUG_BOT = (cfg['debug'].upper() == "TRUE")
 
 USER_PLOT = "./private/user_plot.png"
 MONTH_PLOT = "./private/month_plot.png"
-
-# bool: whether to create and forward user dms to per-user threads under the mailbox channel
-#       instead of posting messages to directly to the mailbox channel
-FORWARDING_CREATE_THREADS = cfg['messageForwarding']['createThreads']
 
 # list of int: the ids of roles to invite to new forwarded threads
 #              each role must have less than 100 members for the addition to work

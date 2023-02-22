@@ -10,5 +10,4 @@ ADD requirements.txt /bouncer/requirements.txt
 RUN pip3 install -r /bouncer/requirements.txt
 
 WORKDIR /bouncer
-CMD ["git", "submodule", "update", "--init"]
 CMD ["python3", "-u", "main.py"]

@@ -45,9 +45,6 @@ The bot has several moderation features:
 - Debugging
     - A bot instance can be specified as a debugging instance.
     - Non-debugging instances will ignore owner commands when debugging enabled, allowing development work while other instances remain live in the server.
-- Censor
-    - A regex-based blacklist of banned words can be specified in `config.json`.
-    - When a user makes a post with a match, the offending message is deleted and moderators are notified of the infraction.
 - Watchlist
     - Possibly problematic users can be added to a 'watchlist', where all their messages are posted for easy viewing.
     - Makes it easy to quickly see if a possibly troll is continuing to post, rather than relying on Discord search.

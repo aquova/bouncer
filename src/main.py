@@ -19,12 +19,14 @@ import config
 import visualize
 from client import client
 from config import LogTypes, USERID_LOG_PATH
+from spam import Spammers
 from waiting import AnsweringMachineEntry, is_in_home_server
 from watcher import Watcher
 from forwarder import MessageForwarder
 
 # Initialize helper classes
 dbg = Debug(config.OWNER, config.CMD_PREFIX, config.DEBUG_BOT)
+spam = Spammers()
 tk = Timekeeper()
 watch = Watcher()
 frwrdr = MessageForwarder(config.MAILBOX, config.HOME_SERVER, config.THREAD_ROLES)
@@ -52,6 +54,7 @@ FUNC_DICT = {
     "warn":        [commands.log_user,             LogTypes.WARN],
     "watch":       [watch.watch_user,              None],
     "watchlist":   [watch.get_watchlist,           None],
+    "unmute":      [spam.unmute,                   None],
     "unwatch":     [watch.unwatch_user,            None],
 }
 
@@ -99,6 +102,8 @@ async def on_ready():
     # Set Bouncer's activity status
     activity_object = discord.Activity(name="for your reports!", type=discord.ActivityType.watching)
     await client.change_presence(activity=activity_object)
+
+    spam.set_channel()
 
     if not dbg.is_debug_bot():
         # Upload our DB file to a private channel as a backup
@@ -344,6 +349,10 @@ async def on_message(message: discord.Message):
         # If bouncer detects a private DM sent to it, forward it to staff
         if isinstance(message.channel, discord.channel.DMChannel):
             await frwrdr.on_dm(message)
+            return
+
+        spam_message = await spam.check_spammer(message)
+        if spam_message:
             return
 
         # Check if user is on watchlist, and should be tracked

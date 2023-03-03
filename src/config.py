@@ -35,6 +35,7 @@ LOG_CHAN = cfg['channels']['log']
 SYS_LOG = cfg['channels']['syslog']
 WATCHLIST_CHAN = cfg['channels']['watchlist']
 SPAM_CHAN = cfg['channels']['spam']
+IGNORE_SPAM = cfg['channels']['ignore_spam']
 
 VALID_ROLES = cfg['roles']['admin']
 

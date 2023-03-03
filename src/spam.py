@@ -7,7 +7,7 @@ from commonbot.user import UserLookup
 from commonbot.utils import check_roles
 
 from client import client
-from config import SPAM_CHAN, VALID_ROLES
+from config import SPAM_CHAN, VALID_ROLES, IGNORE_SPAM
 
 SPAM_MES_THRESHOLD = 5
 URL_REGEX = r"https?:\/\/.+\..+"
@@ -42,6 +42,9 @@ class Spammers:
 
     async def check_spammer(self, message: discord.Message) -> bool:
         if message.author.bot or message.content == "":
+            return False
+
+        if message.channel.id in IGNORE_SPAM:
             return False
 
         # Don't censor admins

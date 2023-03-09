@@ -97,11 +97,18 @@ User Search
 
 Searches the database for the specified user, given a message
 """
-async def search_command(mes: discord.Message, _):
+async def search_command(mes: discord.Message, message_forwarder: MessageForwarder):
+    # First check mention
     userid = ul.parse_id(mes)
     if not userid:
-        await mes.channel.send(f"I wasn't able to find a user anywhere based on that message. `{CMD_PREFIX}search USER`")
-        return
+        # If no mention, check if it's a reply thread
+        thread_user = message_forwarder.get_userid_for_user_reply_thread(mes)
+        if thread_user is not None:
+            userid = thread_user
+        else:
+            # Otherwise send an error
+            await mes.channel.send(f"I wasn't able to find a user anywhere based on that message. `{CMD_PREFIX}search USER` or `{CMD_PREFIX}search` in a reply thread")
+            return
 
     output = await search_helper(userid)
     await commonbot.utils.send_message(output, mes.channel)

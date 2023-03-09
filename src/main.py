@@ -45,7 +45,7 @@ FUNC_DICT = {
     "reply":       [commands.reply,                frwrdr],
     "say":         [commands.say,                  None],
     "scam":        [commands.log_user,             LogTypes.SCAM],
-    "search":      [commands.search_command,       None],
+    "search":      [commands.search_command,       frwrdr],
     "sync":        [commands.sync,                 None],
     "unban":       [commands.log_user,             LogTypes.UNBAN],
     "unblock":     [commands.block_user,           False],

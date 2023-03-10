@@ -11,8 +11,9 @@ import db
 from blocks import BlockedUsers
 from client import client
 from config import LogTypes, CMD_PREFIX, MAILBOX
-from forwarder import MessageForwarder
+from forwarder import message_forwarder
 import visualize
+from utils import get_userid as utils_get_userid
 from waiting import AnsweringMachine
 
 ul = UserLookup()
@@ -97,21 +98,18 @@ User Search
 
 Searches the database for the specified user, given a message
 """
-async def search_command(mes: discord.Message, message_forwarder: MessageForwarder):
-    # First check mention
-    userid = ul.parse_id(mes)
+async def search_command(mes: discord.Message, _):
+    userid, _ = await get_userid(mes, "search")
     if not userid:
-        # If no mention, check if it's a reply thread
-        thread_user = message_forwarder.get_userid_for_user_reply_thread(mes)
-        if thread_user is not None:
-            userid = thread_user
-        else:
-            # Otherwise send an error
-            await mes.channel.send(f"I wasn't able to find a user anywhere based on that message. `{CMD_PREFIX}search USER` or `{CMD_PREFIX}search` in a reply thread")
-            return
+        return
 
     output = await search_helper(userid)
     await commonbot.utils.send_message(output, mes.channel)
+
+
+async def get_userid(mes: discord.Message, cmd: str, args: str = "") -> (int | None, bool):
+    return await utils_get_userid(ul, mes, cmd, args)
+
 
 async def search_helper(uid: int) -> str:
     ret = ""
@@ -140,12 +138,8 @@ Notes an infraction for a user
 """
 async def log_user(mes: discord.Message, state: LogTypes):
     # Attempt to generate user object
-    userid = ul.parse_id(mes)
+    userid, userid_from_message = await get_userid(mes, "note" if state == LogTypes.NOTE else "log")
     if not userid:
-        if state == LogTypes.NOTE:
-            await mes.channel.send(f"I wasn't able to understand that message: `{CMD_PREFIX}note USER`")
-        else:
-            await mes.channel.send(f"I wasn't able to understand that message: `{CMD_PREFIX}log USER`")
         return
 
     # Calculate value for 'num' category in database
@@ -164,7 +158,7 @@ async def log_user(mes: discord.Message, state: LogTypes):
 
     # Generate log message, adding URLs of any attachments
     content = commonbot.utils.combine_message(mes)
-    output = commonbot.utils.parse_message(content, username)
+    output = commonbot.utils.parse_message(content, username, userid_from_message)
 
     if state == LogTypes.SCAM:
         output = "Banned for sending scam in chat."
@@ -286,12 +280,8 @@ Remove Error
 Removes last database entry for specified user
 """
 async def remove_error(mes: discord.Message, edit: bool):
-    userid = ul.parse_id(mes)
+    userid, userid_from_message = await get_userid(mes, "edit" if edit else "remove", "[num] new_message" if edit else "[num]")
     if not userid:
-        if edit:
-            await mes.channel.send(f"I wasn't able to understand that message: `{CMD_PREFIX}remove USER [num] new_message`")
-        else:
-            await mes.channel.send(f"I wasn't able to understand that message: `{CMD_PREFIX}remove USER [num]`")
         return
 
     username = lookup_username(userid)
@@ -299,7 +289,7 @@ async def remove_error(mes: discord.Message, edit: bool):
         username = str(userid)
 
     # If editing, and no message specified, abort.
-    output = commonbot.utils.parse_message(mes.content, username)
+    output = commonbot.utils.parse_message(mes.content, username, userid_from_message)
     if output == "":
         if edit:
             await mes.channel.send("You need to specify an edit message")
@@ -362,12 +352,8 @@ Block User
 Prevents DMs from a given user from being forwarded
 """
 async def block_user(mes: discord.Message, block: bool):
-    userid = ul.parse_id(mes)
+    userid, _ = await get_userid(mes, "block" if block else "unblock")
     if not userid:
-        if block:
-            await mes.channel.send(f"I wasn't able to understand that message: `{CMD_PREFIX}block USER`")
-        else:
-            await mes.channel.send(f"I wasn't able to understand that message: `{CMD_PREFIX}unblock USER`")
         return
 
     username = lookup_username(userid)
@@ -394,9 +380,9 @@ Reply
 
 Sends a private message to the specified user
 """
-async def reply(mes: discord.Message, message_forwarder: MessageForwarder):
+async def reply(mes: discord.Message, _):
     try:
-        user, metadata_words = _get_user_for_reply(mes, message_forwarder)
+        user, metadata_words = _get_user_for_reply(mes)
     except GetUserForReplyException as err:
         await mes.channel.send(str(err))
         return
@@ -456,7 +442,7 @@ Based on the reply command staff wrote, and the channel it was sent in, this fig
 
 Returns a user (or None, if staff mentioned a user not in the server) and the number of words to strip from the reply command.
 """
-def _get_user_for_reply(message: discord.Message, message_forwarder: MessageForwarder) -> (discord.User | None, int):
+def _get_user_for_reply(message: discord.Message) -> (discord.User | None, int):
     # If it's a Discord reply to a Bouncer message, use the mention in the message
     if message.reference:
         user_reply = message.reference.cached_message

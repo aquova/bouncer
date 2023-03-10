@@ -12,6 +12,7 @@ from commonbot.timekeep import Timekeeper
 
 # Needs to happen before other imports that cause db to be queried
 import db
+
 db.initialize()
 
 import commands
@@ -19,17 +20,16 @@ import config
 import visualize
 from client import client
 from config import LogTypes, USERID_LOG_PATH
+from forwarder import message_forwarder
 from spam import Spammers
 from waiting import AnsweringMachineEntry, is_in_home_server
 from watcher import Watcher
-from forwarder import MessageForwarder
 
 # Initialize helper classes
 dbg = Debug(config.OWNER, config.CMD_PREFIX, config.DEBUG_BOT)
 spam = Spammers()
 tk = Timekeeper()
 watch = Watcher()
-frwrdr = MessageForwarder(config.MAILBOX, config.HOME_SERVER, config.THREAD_ROLES)
 
 FUNC_DICT = {
     "ban":         [commands.log_user,             LogTypes.BAN],
@@ -42,10 +42,10 @@ FUNC_DICT = {
     "note":        [commands.log_user,             LogTypes.NOTE],
     "preview":     [commands.preview,              None],
     "remove":      [commands.remove_error,         False],
-    "reply":       [commands.reply,                frwrdr],
+    "reply":       [commands.reply,                None],
     "say":         [commands.say,                  None],
     "scam":        [commands.log_user,             LogTypes.SCAM],
-    "search":      [commands.search_command,       frwrdr],
+    "search":      [commands.search_command,       None],
     "sync":        [commands.sync,                 None],
     "unban":       [commands.log_user,             LogTypes.UNBAN],
     "unblock":     [commands.block_user,           False],
@@ -348,7 +348,7 @@ async def on_message(message: discord.Message):
 
         # If bouncer detects a private DM sent to it, forward it to staff
         if isinstance(message.channel, discord.channel.DMChannel):
-            await frwrdr.on_dm(message)
+            await message_forwarder.on_dm(message)
             return
 
         spam_message = await spam.check_spammer(message)

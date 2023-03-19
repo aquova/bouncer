@@ -1,6 +1,7 @@
 import discord
 from client import client
 import db
+from config import MAILBOX, HOME_SERVER, THREAD_ROLES
 from waiting import AnsweringMachineEntry, is_in_home_server
 import commands
 import commonbot
@@ -20,19 +21,10 @@ class MessageForwarder:
 
     We could move reply command functionality into this class, but I left it as is.
     """
-    def __init__(self, mailbox_channel: int, home_server: int, staff_roles: list[int]):
+    def __init__(self):
         """
         Creates a new message forwarder.
-
-        :param mailbox_channel: The channel to forward regular DMs to.
-        :param home_server: Bouncer's home server, used to make thread names nice.
-        :param staff_roles: The roles containing members to add to created threads.
         """
-        # Configuration
-        self._mailbox_channel = mailbox_channel
-        self._home_server = home_server
-        self._staff_roles = staff_roles
-
         # Maps user ids to reply thread ids - used when receiving a DM to know which thread to forward it to
         self._user_id_to_thread_id = LRUCache(lambda user_id: db.get_user_reply_thread_id(user_id), maxsize=50)
 
@@ -60,7 +52,7 @@ class MessageForwarder:
         # Otherwise they can't, so we show username details instead
         reply_message = f"<@{message.author.id}>" if not is_ban_appeal else f"{str(message.author)} ({message.author.id})"
 
-        reply_channel = client.get_channel(self._mailbox_channel)
+        reply_channel = client.get_channel(MAILBOX)
 
         # Handle ban appeals
         if is_ban_appeal:
@@ -163,7 +155,7 @@ class MessageForwarder:
 
         message = await thread.send(content)
 
-        content += ', '.join([f"<@&{role_id}>" for role_id in self._staff_roles])
+        content += ', '.join([f"<@&{role_id}>" for role_id in THREAD_ROLES])
 
         # By editing in a mention, we add staff to the thread without pinging them
         await message.edit(content=content)
@@ -190,7 +182,7 @@ class MessageForwarder:
         :return: The thread name.
         """
         # Try to get their SDV nickname (will be None if they're not in the SDV server, or not in the member cache) for a nicer thread name
-        member = client.get_guild(self._home_server).get_member(user.id)
+        member = client.get_guild(HOME_SERVER).get_member(user.id)
         if member is not None:
             return f"{member.display_name} ({str(user)})"
 
@@ -255,3 +247,6 @@ class LRUCache:
 
     def debug_print(self):
         print(self._cache)
+
+
+message_forwarder = MessageForwarder()

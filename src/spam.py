@@ -9,6 +9,8 @@ from commonbot.utils import check_roles
 from client import client
 from config import SPAM_CHAN, VALID_ROLES, IGNORE_SPAM
 
+from utils import get_userid
+
 SPAM_MES_THRESHOLD = 5
 URL_REGEX = r"https?:\/\/.+\..+"
 NORMAL_TIMEOUT_MIN = 10
@@ -104,9 +106,8 @@ class Spammers:
                 pass
 
     async def unmute(self, message: discord.Message, _):
-        uid = ul.parse_id(message)
+        uid, _ = await get_userid(ul, message, "unmute")
         if not uid:
-            await message.channel.send("I wasn't able to find a user in that message")
             return
 
         if not message.guild:

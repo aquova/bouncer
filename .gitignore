@@ -13,3 +13,6 @@ config.json
 .DS_Store
 __pycache__
 *.whl
+
+# Don't ignore the example config file
+!**/private/config_example.json

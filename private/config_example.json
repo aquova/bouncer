@@ -1,0 +1,34 @@
+{
+    "discord": "<discord_key>",
+    "owner": "<owner>",
+    "command_prefix": "<command_prefix>",
+    "servers": {
+        "home": "<home_server>"
+    },
+    "categories": {
+        "listening": "<input_categories>"
+    },
+    "channels": {
+        "mailbox": "<mailbox>",
+        "log": "<log_chan>",
+        "syslog": "<sys_log>",
+        "watchlist": "<watchlist_chan>",
+        "spam": "<spam_chan>",
+        "ignore_spam": "<ignore_spam>"
+    },
+    "roles": {
+        "admin": "<valid_roles>"
+    },
+    "DM": {
+        "ban": "<DM_ban>",
+        "warn": "<DM_warn>"
+    },
+    "debug": "<debug_bot>",
+    "user_plot": "<user_plot>",
+    "month_plot": "<month_plot>",
+    "messageForwarding": {
+        "rolesToAddToThreads": [
+            "<this should be an array of integers (role IDs)>"
+        ]
+    }
+}

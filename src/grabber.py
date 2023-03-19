@@ -1,0 +1,72 @@
+LOGGER_DOMAINS = [
+    "02ip.ru",
+    "2no.co",
+    "bathtub.pics",
+    "bmwforum.co",
+    "catsnthing.com",
+    "catsnthings.fun",
+    "cheapcinema.club",
+    "dateing.club",
+    "ezstat.ru",
+    "foot.wiki",
+    "fortnight.space",
+    "fortnitechat.site",
+    "gamergirl.pro",
+    "gamertag.shop",
+    "gaming-at-my.best",
+    "gamingfun.me",
+    "grabify.link",
+    "grabify.world",
+    "headshot.monster",
+    "imagehost.pics",
+    "imghost.pics",
+    "ipgrabber.ru",
+    "ipgraber.ru",
+    "iplis.ru",
+    "iplogger.co",
+    "iplogger.com",
+    "iplogger.info",
+    "iplogger.org",
+    "iplogger.ru",
+    "ipv6.grabify.link",
+    "joinmy.site",
+    "leancoding.co",
+    "locations.quest",
+    "lovebird.guru",
+    "maper.info",
+    "minecräft.com",
+    "myprivate.pics",
+    "noodshare.pics",
+    "otherhalf.life",
+    "partpicker.shop",
+    "photovault.pics",
+    "pichost.pics",
+    "picshost.pics",
+    "progaming.monster",
+    "screenshare.pics",
+    "screenshot.best",
+    "shhh.lol",
+    "shrekis.life",
+    "sportshub.bar",
+    "stopify.co",
+    "thisdomainislong.lol",
+    "toldyouso.lol",
+    "toldyouso.pics",
+    "trulove.guru",
+    "yip.su",
+    "yourmy.monster",
+    "wl.gl",
+    "ed.tc",
+    "bc.ax",
+]
+
+def check_grabber(message):
+    print(message.content)
+    if message.author.bot:
+        return False
+    
+    for domain in LOGGER_DOMAINS:
+        if domain in message.content:
+            return True
+        
+    return False

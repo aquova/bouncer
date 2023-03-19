@@ -25,7 +25,7 @@
         "ban": "<DM_ban:bool>",
         "warn": "<DM_warn:bool>"
     },
-    "debug": "<debug_bot>",
+    "debug": "<bool as string>",
     "messageForwarding": {
         "rolesToAddToThreads": [
             "<this should be an array of integers (role IDs)>"

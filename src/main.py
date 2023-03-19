@@ -23,6 +23,7 @@ from spam import Spammers
 from waiting import AnsweringMachineEntry, is_in_home_server
 from watcher import Watcher
 from forwarder import MessageForwarder
+from grabber import check_grabber
 
 # Initialize helper classes
 dbg = Debug(config.OWNER, config.CMD_PREFIX, config.DEBUG_BOT)
@@ -338,6 +339,9 @@ async def on_message(message: discord.Message):
         return
 
     try:
+        if check_grabber(message):
+            await message.delete()
+        
         # Allows the owner to enable debug mode
         if dbg.check_toggle(message):
             await dbg.toggle_debug(message)

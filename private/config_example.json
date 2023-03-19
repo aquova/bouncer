@@ -6,7 +6,9 @@
         "home": "<home_server>"
     },
     "categories": {
-        "listening": "<input_categories>"
+        "listening": [
+            "<this should be an array of integers (category IDs)>"
+        ]
     },
     "channels": {
         "mailbox": "<mailbox>",
@@ -20,12 +22,10 @@
         "admin": "<valid_roles>"
     },
     "DM": {
-        "ban": "<DM_ban>",
-        "warn": "<DM_warn>"
+        "ban": "<DM_ban:bool>",
+        "warn": "<DM_warn:bool>"
     },
     "debug": "<debug_bot>",
-    "user_plot": "<user_plot>",
-    "month_plot": "<month_plot>",
     "messageForwarding": {
         "rolesToAddToThreads": [
             "<this should be an array of integers (role IDs)>"

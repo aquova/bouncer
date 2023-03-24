@@ -34,11 +34,12 @@ class MessageForwarder:
         # Both of the above use an LRU cache wrapper around accessing the DB so that every DM/reply does not trigger DB access
         # The chosen cache size should be equal to the number of concurrent/active conversations we expect users to have with bouncer
 
-    async def on_dm(self, message: discord.Message):
+    async def on_dm(self, message: discord.Message, edit: bool = False):
         """
         On a DM, forward the message to staff.
 
         :param message: The message that was sent.
+        :param edit: Whether this message was an edit
         """
         # Ignore blocked users
         if commands.bu.is_in_blocklist(message.author.id):
@@ -58,6 +59,9 @@ class MessageForwarder:
         if is_ban_appeal:
             reply_message += " (banned)"
 
+        if edit:
+            reply_message += " (edited)"
+
         # Fill in the rest of the message with what the user said
         content = commonbot.utils.combine_message(message)
         reply_message += f": {content}"
@@ -70,7 +74,8 @@ class MessageForwarder:
 
         try:
             # Send the user a message so they know something actually happened
-            await message.channel.send("Your message has been forwarded!")
+            if not edit:
+                await message.channel.send("Your message has been forwarded!")
         except discord.errors.Forbidden as err:
             if err.code == 50007:
                 await reply_channel.send("Unable to send message forward notification to the above user - Can't send messages to that user")

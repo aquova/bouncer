@@ -261,6 +261,11 @@ async def on_message_edit(before: discord.Message, after: discord.Message):
     if before.content == after.content:
         return
 
+    # Forward an edit to a DM
+    if isinstance(after.channel, discord.channel.DMChannel):
+        await message_forwarder.on_dm(after, True)
+        return
+
     try:
         chan = client.get_channel(config.SYS_LOG)
         mes = f":pencil: **{str(before.author)}** modified in <#{before.channel.id}>: `{before.content}` to `{after.content}`"

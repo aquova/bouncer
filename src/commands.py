@@ -138,7 +138,7 @@ Notes an infraction for a user
 """
 async def log_user(mes: discord.Message, state: LogTypes):
     # Attempt to generate user object
-    userid, userid_from_message = await get_userid(mes, "note" if state == LogTypes.NOTE else "log")
+    userid, userid_from_message = await get_userid(mes, str(state))
     if not userid:
         return
 

@@ -17,6 +17,9 @@ class LogTypes(Enum):
     BAN = 0
     WARN = 1
 
+    def __str__(self):
+        return self.name.lower()
+
 # Read values from config file
 CONFIG_PATH = "./private/config.json"
 with open(CONFIG_PATH) as config_file:

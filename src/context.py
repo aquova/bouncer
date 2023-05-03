@@ -41,7 +41,7 @@ class ReportModal(discord.ui.Modal):
         ]
 
         log_chan = interaction.guild.get_channel(MAILBOX)
-        await send_message(message="", channel=log_chan, embed=embed)
+        await log_chan.send(embed=embed)
         await interaction.response.send_message(
             content="Your report has been forwarded to the server staff. Thanks!",
             ephemeral=True)

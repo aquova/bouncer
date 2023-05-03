@@ -187,6 +187,22 @@ async def log_user(mes: discord.Message, state: LogTypes):
     if (state == LogTypes.WARN and count >= config.WARN_THRESHOLD):
         await mes.channel.send(f"This user has received {config.WARN_THRESHOLD} warnings or more. It is recommended that they be banned.")
 
+    if state == LogTypes.SCAM or state == LogTypes.BAN:
+        action = "banned"
+    elif state == LogTypes.UNBAN:
+        action = "unbanned"
+    elif state == LogTypes.KICK:
+        action = "kicked"
+    elif state == LogTypes.NOTE:
+        action = "noted"
+    elif state == LogTypes.WARN:
+        action = "warned"
+
+    # Record this action in the user's reply thread
+    user = client.get_user(userid)
+    if user:
+        await _add_context_to_reply_thread(mes, user, f"`{str(user)}` was {action}", output)
+
     log_mes_id = 0
     # If we aren't noting, need to also write to log channel
     if state != LogTypes.NOTE:
@@ -416,12 +432,35 @@ async def reply(mes: discord.Message, _):
         # If they were in our answering machine, they have been replied to, and can be removed
         am.remove_entry(user.id)
 
+        # Add context in the user's reply thread
+        await _add_context_to_reply_thread(mes, user, f"Message sent to `{str(user)}`", output)
+
     # Exception handling
     except discord.errors.HTTPException as err:
         if err.code == 50007:
             await mes.channel.send("Cannot send messages to this user. It is likely they have DM closed or I am blocked.")
         else:
             await mes.channel.send(f"ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {err}")
+
+
+"""
+_add_context_to_reply_thread
+
+Adds information about a moderation action taken on a specific user to the user's reply thread.
+
+If the moderation action already happened in the user's reply thread, no more context is needed, so this does nothing.
+
+Otherwise, it posts a message in the reply thread with the details of the action and a link to the source message.
+"""
+async def _add_context_to_reply_thread(mes: discord.Message, user: discord.User, context: str, message: str):
+    reply_thread_id = message_forwarder.get_reply_thread_id_for_user(user)
+    if mes.channel.id == reply_thread_id:
+        return # Already in reply thread, nothing to do
+
+    reply_thread = await message_forwarder.get_or_create_user_reply_thread(user)
+
+    # Suppress embeds so the jump url doesn't show a useless 'Discord - A New Way to Chat....' embed
+    await reply_thread.send(f"{context} ({mes.jump_url}): {message}", suppress_embeds=True)
 
 
 class GetUserForReplyException(Exception):

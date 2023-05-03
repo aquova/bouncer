@@ -53,8 +53,6 @@ class MessageForwarder:
         # Otherwise they can't, so we show username details instead
         reply_message = f"<@{message.author.id}>" if not is_ban_appeal else f"{str(message.author)} ({message.author.id})"
 
-        reply_channel = client.get_channel(MAILBOX)
-
         # Handle ban appeals
         if is_ban_appeal:
             reply_message += " (banned)"
@@ -67,7 +65,7 @@ class MessageForwarder:
         reply_message += f": {content}"
 
         # Get or create the appropriate thread for the message user
-        reply_channel = await self._get_or_create_user_reply_thread(message.author, reply_channel)
+        reply_channel = await self.get_or_create_user_reply_thread(message.author, True)
 
         # Forward the message to the channel/thread
         log_mes = await commonbot.utils.send_message(reply_message, reply_channel)
@@ -95,18 +93,30 @@ class MessageForwarder:
         """
         return self._thread_id_to_user_id(message.channel.id)
 
-    async def _get_or_create_user_reply_thread(self, user: discord.User, parent_channel: discord.TextChannel) -> discord.Thread:
+    def get_reply_thread_id_for_user(self, user: discord.User) -> int | None:
+        """
+        Get the reply thread id for a user.
+
+        :param user: The user to get the reply thread id for.
+        :return: The reply thread id, or None if the reply thread doesn't exist.
+        """
+        return self._user_id_to_thread_id(user.id)
+
+    async def get_or_create_user_reply_thread(self, user: discord.User, from_user_message=False) -> discord.Thread:
         """
         Either retrieves the existing reply thread for a user, or creates a new one if they don't have one.
 
         :param user: The user to get or create the reply thread for.
-        :param parent_channel: The parent channel to create the reply thread in, if a new one is needed.
+        :param from_user_message: Whether user reply thread retrieval is motivated by the user sending bouncer a message (True) or staff moderation (False).
         :return: The existing/new thread.
         """
+        # Parent channel where reply threads will be created in
+        parent_channel = client.get_channel(MAILBOX)
+
         thread_id = self._user_id_to_thread_id(user.id)
 
         if thread_id is None:
-            # This is a first time user messaging bouncer -> create a reply thread for them
+            # This is a first time user messaging bouncer or staff moderating a user -> create a reply thread for them
             return await self._create_reply_thread(user, parent_channel)
 
         # Get thread from thread cache (holds active threads only)
@@ -121,8 +131,9 @@ class MessageForwarder:
         try:
             user_reply_thread = await client.fetch_channel(thread_id)
 
-            # It was archived -> send a message to notify mods someone is starting a new conversation
-            await parent_channel.send(f"User <@{user.id}> sent bouncer a new message (their reply thread has been un-archived), thread link: <#{thread_id}>.")
+            # It was archived -> send a message to notify mods someone is starting a new conversation or that there was moderation activity
+            reason = f"User <@{user.id}> sent bouncer a new message" if from_user_message else f"New moderation activity for <@{user.id}>"
+            await parent_channel.send(f"{reason}. Their reply thread has been un-archived: <#{thread_id}>.")
             await self._update_reply_thread(user, user_reply_thread)
             return user_reply_thread
         except discord.errors.NotFound:

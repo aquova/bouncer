@@ -95,7 +95,7 @@ class MessageForwarder:
         """
         return self._thread_id_to_user_id(message.channel.id)
 
-    async def _get_or_create_user_reply_thread(self, user: discord.User, parent_channel: discord.TextChannel) -> discord.Thread:
+    async def get_or_create_user_reply_thread(self, user: discord.User, parent_channel: discord.TextChannel) -> discord.Thread:
         """
         Either retrieves the existing reply thread for a user, or creates a new one if they don't have one.
 

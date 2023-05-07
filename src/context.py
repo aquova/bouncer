@@ -31,7 +31,7 @@ class ReportResolveButton(discord.ui.Button):
 
 
 class ReportThreadButton(discord.ui.Button):
-    def __init__(self, *, thread_url: str = None, reported_user: discord.User = None):
+    def __init__(self, *, reported_user: discord.User, thread_url: str = None):
         super().__init__(
             label="Thread",
             style=discord.ButtonStyle.link if thread_url else discord.ButtonStyle.secondary,
@@ -42,10 +42,8 @@ class ReportThreadButton(discord.ui.Button):
 
     async def callback(self, interaction: discord.Interaction):
         if self.url is None:
-            log_chan = interaction.guild.get_channel(MAILBOX)
             thread: discord.Thread = await message_forwarder.get_or_create_user_reply_thread(
-                user=self.reported_user,
-                parent_channel=log_chan
+                user=self.reported_user
             )
 
             view: discord.ui.View = self.view

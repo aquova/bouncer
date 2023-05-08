@@ -102,7 +102,7 @@ class ReportModal(discord.ui.Modal):
                 value=field[1] if len(field[1]) < len_max else f"{field[1][:len_max-1]}…",
                 inline=field[2])
             for field in [
-                ("Suspect", reported_user, True),
+                ("Suspect", reported_user.mention, True),
                 ("Reported by", interaction.user.mention, True),
                 (f"Sent <t:{int(self.message.created_at.timestamp())}:R>:", message_str, False),
                 ("Comments:", comments_str, False)

@@ -189,6 +189,7 @@ class MessageForwarder:
 
         if thread.name != thread_name or thread.archived:
             await thread.edit(name=thread_name, archived=False)
+            await self._add_staff_to_thread(thread)
 
     def _user_reply_thread_name(self, user: discord.User) -> str:
         """

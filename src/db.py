@@ -18,6 +18,9 @@ class UserLogEntry:
     message_id: Optional[int]
 
     def __str__(self):
+        return f"[{format_time(self.timestamp)}] {self.log_word()} by {self.staff} - {self.log_message}\n"
+
+    def log_word(self) -> str:
         log_word = ""
         if self.log_type == LogTypes.BAN.value or self.log_type == LogTypes.SCAM.value:
             log_word = "Banned"
@@ -29,8 +32,7 @@ class UserLogEntry:
             log_word = "Unbanned"
         else: # LogTypes.WARN
             log_word = f"Warning #{self.log_type}"
-
-        return f"[{format_time(self.timestamp)}] {log_word} by {self.staff} - {self.log_message}\n"
+        return log_word
 
     def as_list(self):
         return [

@@ -65,7 +65,7 @@ A helper function that deletes and logs the given message
 """
 async def delete_message_helper(message: discord.Message):
     timedelta = datetime.now(timezone.utc) - message.created_at
-    mes = f":no_mobile_phones: **{str(message.author)}** deleted " \
+    mes = f":no_mobile_phones: **{commonbot.utils.user_str(message.author)}** deleted " \
           f"in <#{message.channel.id}>: `{message.content}` \n" \
           f":timer: This message was visible for {humanize.precisedelta(timedelta)}."
     chan = client.get_channel(config.SYS_LOG)
@@ -147,9 +147,9 @@ async def on_member_update(before: discord.Member, after: discord.Member):
     if before.nick != after.nick:
         # If they don't have an ending nickname, they reset to their actual username
         if not after.nick:
-            mes = f"**:spy: {str(after)}** has reset their username"
+            mes = f"**:spy: {commonbot.utils.user_str(after)}** has reset their username"
         else:
-            mes = f"**:spy: {str(after)}** is now known as `{after.nick}`"
+            mes = f"**:spy: {commonbot.utils.user_str(after)}** is now known as `{after.nick}`"
         chan = client.get_channel(config.SYS_LOG)
         await chan.send(mes)
     # If role quantity has changed
@@ -160,11 +160,11 @@ async def on_member_update(before: discord.Member, after: discord.Member):
         mes = ""
         if removed:
             removed_str = ', '.join(removed)
-            mes += f":no_entry_sign: **{str(after)}** had the role(s) `{removed_str}` removed.\n"
+            mes += f":no_entry_sign: **{commonbot.utils.user_str(after)}** had the role(s) `{removed_str}` removed.\n"
 
         if added:
             added_str = ', '.join(added)
-            mes += f":new: **{str(after)}** had the role(s) `{added_str}` added."
+            mes += f":new: **{commonbot.utils.user_str(after)}** had the role(s) `{added_str}` added."
 
         chan = client.get_channel(config.SYS_LOG)
         if mes != "":
@@ -176,10 +176,10 @@ async def on_member_update(before: discord.Member, after: discord.Member):
         if after.timed_out_until:
             timedelta = after.timed_out_until - datetime.now(timezone.utc)
             timeout_str = humanize.precisedelta(timedelta, minimum_unit="seconds", format="%d")
-            mes = f":zipper_mouth: {str(after)} has been timed out for {timeout_str}."
+            mes = f":zipper_mouth: {commonbot.utils.user_str(after)} has been timed out for {timeout_str}."
             await chan.send(mes)
         else:
-            await chan.send(f":grin: {str(after)} is no longer timed out.")
+            await chan.send(f":grin: {commonbot.utils.user_str(after)} is no longer timed out.")
 
 """
 On Member Ban
@@ -196,7 +196,7 @@ async def on_member_ban(server: discord.Guild, member: discord.Member):
     watch.remove_user(member.id)
 
     # Keep a record of their banning, in case the log is made after they're no longer here
-    username = f"{str(member)}"
+    username = commonbot.utils.user_str(member)
     commands.ul.add_ban(member.id, username)
     mes = f":newspaper2: **{username} ({member.id})** has been banned."
     chan = client.get_channel(config.SYS_LOG)
@@ -216,7 +216,7 @@ async def on_member_remove(member: discord.Member):
     commands.am.remove_entry(member.id)
 
     # Remember that the user has left, in case we want to log after they're gone
-    username = f"{str(member)}"
+    username = commonbot.utils.user_str(member)
     commands.ul.add_ban(member.id, username)
     mes = f":wave: **{username} ({member.id})** has left"
     chan = client.get_channel(config.SYS_LOG)
@@ -268,7 +268,7 @@ async def on_message_edit(before: discord.Message, after: discord.Message):
 
     try:
         chan = client.get_channel(config.SYS_LOG)
-        mes = f":pencil: **{str(before.author)}** modified in <#{before.channel.id}>: `{before.content}` to `{after.content}`"
+        mes = f":pencil: **{commonbot.utils.user_str(before.author)}** modified in <#{before.channel.id}>: `{before.content}` to `{after.content}`"
         await commonbot.utils.send_message(mes, chan)
 
         # If user is on watchlist, then post it there as well
@@ -290,7 +290,7 @@ async def on_member_join(member: discord.Member):
     if not should_log(member.guild):
         return
 
-    mes = f":confetti_ball: **{str(member)} ({member.id})** has joined"
+    mes = f":confetti_ball: **{commonbot.utils.user_str(member)}** has joined"
     chan = client.get_channel(config.SYS_LOG)
     await chan.send(mes)
 
@@ -308,11 +308,11 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
         return
 
     if not after.channel:
-        mes = f":mute: **{str(member)}** has left voice channel {before.channel.name}"
+        mes = f":mute: **{commonbot.utils.user_str(member)}** has left voice channel {before.channel.name}"
         chan = client.get_channel(config.SYS_LOG)
         await chan.send(mes)
     elif not before.channel:
-        mes = f":loud_sound: **{str(member)}** has joined voice channel {after.channel.name}"
+        mes = f":loud_sound: **{commonbot.utils.user_str(member)}** has joined voice channel {after.channel.name}"
         chan = client.get_channel(config.SYS_LOG)
         await chan.send(mes)
 
@@ -328,7 +328,7 @@ async def on_reaction_remove(reaction: discord.Reaction, user: discord.Member):
 
     emoji_name = reaction.emoji if isinstance(reaction.emoji, str) else reaction.emoji.name
     chan = client.get_channel(config.SYS_LOG)
-    await chan.send(f":face_in_clouds: {str(user)} ({user.id}) removed the `{emoji_name}` emoji")
+    await chan.send(f":face_in_clouds: {commonbot.utils.user_str(user)} ({user.id}) removed the `{emoji_name}` emoji")
 
 """
 On Message

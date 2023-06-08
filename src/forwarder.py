@@ -51,7 +51,7 @@ class MessageForwarder:
 
         # If it's not a ban appeal they can be pinged b/c they're in the server where we're forwarding the message
         # Otherwise they can't, so we show username details instead
-        reply_message = f"<@{message.author.id}>" if not is_ban_appeal else f"{str(message.author)} ({message.author.id})"
+        reply_message = f"<@{message.author.id}>" if not is_ban_appeal else f"{commonbot.utils.user_str(message.author)} ({message.author.id})"
 
         # Handle ban appeals
         if is_ban_appeal:
@@ -81,7 +81,7 @@ class MessageForwarder:
                 await reply_channel.send(f"ERROR: While attempting to send message forward notification, there was an unexpected error. Tell aquova this: {err}")
 
         # Record that the user is waiting for a reply
-        mes_entry = AnsweringMachineEntry(f"{str(message.author)}", message.created_at, content, log_mes.jump_url)
+        mes_entry = AnsweringMachineEntry(commonbot.utils.user_str(message.author), message.created_at, content, log_mes.jump_url)
         commands.am.update_entry(message.author.id, mes_entry)
 
     def get_userid_for_user_reply_thread(self, message: discord.Message) -> int | None:
@@ -201,10 +201,10 @@ class MessageForwarder:
         # Try to get their SDV nickname (will be None if they're not in the SDV server, or not in the member cache) for a nicer thread name
         member = client.get_guild(HOME_SERVER).get_member(user.id)
         if member is not None:
-            return f"{member.display_name} ({str(user)})"
+            return f"{member.display_name} ({commonbot.utils.user_str(user)})"
 
         # If that didn't work, use their non-SDV name
-        return f"{str(user)}"
+        return commonbot.utils.user_str(user)
 
 
 class LRUCache:

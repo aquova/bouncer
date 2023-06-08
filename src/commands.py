@@ -201,7 +201,7 @@ async def log_user(mes: discord.Message, state: LogTypes):
     # Record this action in the user's reply thread
     user = client.get_user(userid)
     if user:
-        await _add_context_to_reply_thread(mes, user, f"`{str(user)}` was {action}", output)
+        await _add_context_to_reply_thread(mes, user, f"`{commonbot.utils.user_str(user)}` was {action}", output)
 
     log_mes_id = 0
     # If we aren't noting, need to also write to log channel
@@ -427,13 +427,13 @@ async def reply(mes: discord.Message, _):
         # Message sent to user
         await dm_chan.send(f"A message from the SDV staff: {output}")
         # Notification of sent message to the senders
-        await mes.channel.send(f"Message sent to `{str(user)}`.")
+        await mes.channel.send(f"Message sent to `{commonbot.utils.user_str(user)}`.")
 
         # If they were in our answering machine, they have been replied to, and can be removed
         am.remove_entry(user.id)
 
         # Add context in the user's reply thread
-        await _add_context_to_reply_thread(mes, user, f"Message sent to `{str(user)}`", output)
+        await _add_context_to_reply_thread(mes, user, f"Message sent to `{commonbot.utils.user_str(user)}`", output)
 
     # Exception handling
     except discord.errors.HTTPException as err:

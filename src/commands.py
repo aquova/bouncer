@@ -179,7 +179,7 @@ async def log_user(mes: discord.Message, state: LogTypes):
 
     # Generate message for log channel
     globalcount = db.get_dbid()
-    new_log = db.UserLogEntry(globalcount + 1, userid, username, count, current_time, output, mes.author.name, None)
+    new_log = db.UserLogEntry(globalcount + 1, userid, count, current_time, output, mes.author.name, None)
     log_message = str(new_log)
     await mes.channel.send(log_message)
 

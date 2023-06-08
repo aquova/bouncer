@@ -11,7 +11,6 @@ from config import DATABASE_PATH, LogTypes
 class UserLogEntry:
     dbid: int
     user_id: int
-    name: str
     log_type: int
     timestamp: datetime
     log_message: str
@@ -31,13 +30,12 @@ class UserLogEntry:
         else: # LogTypes.WARN
             log_word = f"Warning #{self.log_type}"
 
-        return f"[{format_time(self.timestamp)}] `{self.name}` - {log_word} by {self.staff} - {self.log_message}\n"
+        return f"[{format_time(self.timestamp)}] {log_word} by {self.staff} - {self.log_message}\n"
 
     def as_list(self):
         return [
             self.dbid,
             self.user_id,
-            self.name,
             self.log_type,
             self.timestamp,
             self.log_message,
@@ -77,12 +75,12 @@ def _db_write(query: tuple[str, list]):
     sqlconn.close()
 
 def search(user_id: int) -> list[UserLogEntry]:
-    query = ("SELECT dbid, id, username, num, date, message, staff, post FROM badeggs WHERE id=?", [user_id])
+    query = ("SELECT dbid, id, num, date, message, staff, post FROM badeggs WHERE id=?", [user_id])
     search_results = _db_read(query)
 
     entries = []
     for result in search_results:
-        entry = UserLogEntry(result[0], result[1], result[2], result[3], result[4], result[5], result[6], result[7])
+        entry = UserLogEntry(result[0], result[1], result[2], result[3], result[4], result[5], result[6])
         entries.append(entry)
 
     return entries
@@ -153,7 +151,7 @@ def get_note_count(userid: int) -> int:
     return search_results[0][0] + 1
 
 def add_log(log_entry: UserLogEntry):
-    query = ("INSERT OR REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", log_entry.as_list())
+    query = ("INSERT OR REPLACE INTO badeggs (dbid, id, num, date, message, staff, post) VALUES (?, ?, ?, ?, ?, ?, ?)", log_entry.as_list())
     _db_write(query)
 
 def remove_log(dbid: int):

@@ -290,7 +290,7 @@ async def on_member_join(member: discord.Member):
     if not should_log(member.guild):
         return
 
-    mes = f":confetti_ball: **{commonbot.utils.user_str(member)}** has joined"
+    mes = f":confetti_ball: **{commonbot.utils.user_str(member)} ({member.id})** has joined"
     chan = client.get_channel(config.SYS_LOG)
     await chan.send(mes)
 

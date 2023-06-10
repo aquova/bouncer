@@ -180,7 +180,7 @@ async def log_user(mes: discord.Message, state: LogTypes):
     # Generate message for log channel
     globalcount = db.get_dbid()
     new_log = db.UserLogEntry(globalcount + 1, userid, count, current_time, output, mes.author.name, None)
-    log_message = f"[{commonbot.utils.format_time(current_time)}] {new_log.log_word()} by {mes.author.name} - {output}"
+    log_message = f"[{commonbot.utils.format_time(current_time)}] `{username}` - {new_log.log_word()} by {mes.author.name} - {output}"
     await mes.channel.send(log_message)
 
     # Send ban recommendation, if needed

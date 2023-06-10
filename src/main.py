@@ -19,7 +19,7 @@ import commands
 import config
 import visualize
 from client import client
-from config import LogTypes, USERID_LOG_PATH
+from config import LogTypes
 from forwarder import message_forwarder
 from spam import Spammers
 from waiting import AnsweringMachineEntry, is_in_home_server
@@ -293,9 +293,6 @@ async def on_member_join(member: discord.Member):
     mes = f":confetti_ball: **{commonbot.utils.user_str(member)} ({member.id})** has joined"
     chan = client.get_channel(config.SYS_LOG)
     await chan.send(mes)
-
-    with open(USERID_LOG_PATH, 'a') as uid_file:
-        uid_file.write(f"{member.id}\n")
 
 """
 On Voice State Update

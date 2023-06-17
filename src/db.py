@@ -52,7 +52,7 @@ Generates database with needed tables if it doesn't exist
 """
 def initialize():
     sqlconn = sqlite3.connect(DATABASE_PATH)
-    sqlconn.execute("CREATE TABLE IF NOT EXISTS badeggs (dbid INT PRIMARY KEY, id INT, username TEXT, num INT, date DATE, message TEXT, staff TEXT, post INT);")
+    sqlconn.execute("CREATE TABLE IF NOT EXISTS badeggs (dbid INT PRIMARY KEY, id INT, num INT, date DATE, message TEXT, staff TEXT, post INT);")
     sqlconn.execute("CREATE TABLE IF NOT EXISTS blocks (id TEXT);")
     sqlconn.execute("CREATE TABLE IF NOT EXISTS staffLogs (staff TEXT PRIMARY KEY, bans INT, warns INT);")
     sqlconn.execute("CREATE TABLE IF NOT EXISTS monthLogs (month TEXT PRIMARY KEY, bans INT, warns INT);")
@@ -131,15 +131,6 @@ def set_user_reply_thread(user_id: int, thread_id: int):
     _db_write(query)
 
 
-def fetch_id_by_username(username: str) -> Optional[str]:
-    query = ("SELECT id FROM badeggs WHERE username=?", [username])
-    search_results = _db_read(query)
-
-    if search_results:
-        return search_results[0][0]
-    else:
-        return None
-
 def get_warn_count(userid: int) -> int:
     query = ("SELECT COUNT(*) FROM badeggs WHERE id=? AND num > 0", [userid])
     search_results = _db_read(query)
@@ -157,7 +148,7 @@ def add_log(log_entry: UserLogEntry):
     _db_write(query)
 
 def remove_log(dbid: int):
-    query = ("REPLACE INTO badeggs (dbid, id, username, num, date, message, staff, post) VALUES (?, NULL, NULL, NULL, NULL, NULL, NULL, NULL)", [dbid])
+    query = ("REPLACE INTO badeggs (dbid, id, num, date, message, staff, post) VALUES (?, NULL, NULL, NULL, NULL, NULL, NULL)", [dbid])
     _db_write(query)
 
 def clear_user_logs(userid: int):

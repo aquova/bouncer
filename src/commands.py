@@ -62,18 +62,6 @@ async def send_help_mes(mes: discord.Message, _):
 
     await mes.channel.send(help_mes)
 
-def lookup_username(uid: int) -> Optional[str]:
-    username = ul.fetch_username(client, uid)
-
-    if not username:
-        check_db =  db.search(uid)
-        if check_db:
-            username = check_db[-1].name
-        else:
-            return None
-
-    return username
-
 async def clear_am(message: discord.Message, _):
     am.clear_entries()
     await message.channel.send("Cleared waiting messages!")
@@ -115,7 +103,7 @@ async def search_helper(uid: int) -> str:
     ret = ""
     # Get database values for given user
     search_results = db.search(uid)
-    username = lookup_username(uid)
+    username = ul.fetch_username(client, uid)
 
     if not search_results:
         if username:
@@ -151,7 +139,7 @@ async def log_user(mes: discord.Message, state: LogTypes):
     current_time = datetime.now(timezone.utc)
 
     # Attempt to fetch the username for the user
-    username = lookup_username(userid)
+    username = ul.fetch_username(client, userid)
     if not username:
         username = "ID: " + str(userid)
         await mes.channel.send("I wasn't able to find a username for that user, but whatever, I'll do it anyway.")
@@ -300,7 +288,7 @@ async def remove_error(mes: discord.Message, edit: bool):
     if not userid:
         return
 
-    username = lookup_username(userid)
+    username = ul.fetch_username(client, userid)
     if not username:
         username = str(userid)
 
@@ -372,7 +360,7 @@ async def block_user(mes: discord.Message, block: bool):
     if not userid:
         return
 
-    username = lookup_username(userid)
+    username = ul.fetch_username(client, userid)
     if not username:
         username = str(userid)
 

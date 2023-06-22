@@ -6,7 +6,7 @@ from forwarder import message_forwarder
 from commonbot.user import UserLookup
 
 
-async def get_userid(ul: UserLookup, mes: discord.Message, cmd: str, args: str = "") -> (int | None, bool):
+async def get_userid(ul: UserLookup, mes: discord.Message, cmd: str, args: str = "") -> tuple[int | None, bool]:
     """
     Retrieves the user referenced in the given message.
 

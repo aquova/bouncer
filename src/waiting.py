@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Optional
 
 import discord
 
@@ -13,7 +12,7 @@ class AnsweringMachineEntry:
     name: str
     timestamp: datetime
     last_message: str
-    message_url: str
+    message_url: str | None
 
 class AnsweringMachine:
     def __init__(self):
@@ -46,6 +45,6 @@ class AnsweringMachine:
                 output_list.append(out)
         return output_list
 
-def is_in_home_server(author: discord.Member) -> bool:
+def is_in_home_server(author: discord.Member | discord.User) -> bool:
     return HOME_SERVER in [x.id for x in author.mutual_guilds]
 

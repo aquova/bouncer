@@ -15,6 +15,8 @@ class ReportResolveButton(discord.ui.Button):
         )
 
     async def callback(self, interaction: discord.Interaction):
+        if not interaction.message:
+            return
         embed: discord.Embed = interaction.message.embeds[0]
         embed.colour = discord.Colour.dark_green()
         embed.title = f"\N{WHITE HEAVY CHECK MARK}{embed.title[1:]}"
@@ -31,7 +33,7 @@ class ReportResolveButton(discord.ui.Button):
 
 
 class ReportThreadButton(discord.ui.Button):
-    def __init__(self, *, reported_user: discord.User, thread_url: str = None):
+    def __init__(self, *, reported_user: discord.User, thread_url: str | None = None):
         super().__init__(
             label="Thread",
             style=discord.ButtonStyle.link if thread_url else discord.ButtonStyle.secondary,

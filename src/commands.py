@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-from typing import Optional
 
 import discord
 
@@ -10,7 +9,7 @@ import config
 import db
 from blocks import BlockedUsers
 from client import client
-from config import LogTypes, CMD_PREFIX, MAILBOX
+from config import LogTypes, CMD_PREFIX
 from forwarder import message_forwarder
 import visualize
 from utils import get_userid as utils_get_userid
@@ -95,7 +94,7 @@ async def search_command(mes: discord.Message, _):
     await commonbot.utils.send_message(output, mes.channel)
 
 
-async def get_userid(mes: discord.Message, cmd: str, args: str = "") -> (int | None, bool):
+async def get_userid(mes: discord.Message, cmd: str, args: str = "") -> tuple[int | None, bool]:
     return await utils_get_userid(ul, mes, cmd, args)
 
 
@@ -440,7 +439,7 @@ If the moderation action already happened in the user's reply thread, no more co
 
 Otherwise, it posts a message in the reply thread with the details of the action and a link to the source message.
 """
-async def _add_context_to_reply_thread(mes: discord.Message, user: discord.User, context: str, message: str):
+async def _add_context_to_reply_thread(mes: discord.Message, user: discord.User | discord.Member, context: str, message: str):
     reply_thread_id = message_forwarder.get_reply_thread_id_for_user(user)
     if mes.channel.id == reply_thread_id:
         return # Already in reply thread, nothing to do
@@ -469,7 +468,7 @@ Based on the reply command staff wrote, and the channel it was sent in, this fig
 
 Returns a user (or None, if staff mentioned a user not in the server) and the number of words to strip from the reply command.
 """
-def _get_user_for_reply(message: discord.Message) -> (discord.User | None, int):
+def _get_user_for_reply(message: discord.Message) -> tuple[discord.User | discord.Member | None, int]:
     # If it's a Discord reply to a Bouncer message, use the mention in the message
     if message.reference:
         user_reply = message.reference.cached_message

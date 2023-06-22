@@ -4,7 +4,7 @@ import db
 from config import MAILBOX, HOME_SERVER, THREAD_ROLES
 from waiting import AnsweringMachineEntry, is_in_home_server
 import commands
-import commonbot
+import commonbot.utils
 from collections import OrderedDict
 from threading import Lock
 
@@ -81,7 +81,8 @@ class MessageForwarder:
                 await reply_channel.send(f"ERROR: While attempting to send message forward notification, there was an unexpected error. Tell aquova this: {err}")
 
         # Record that the user is waiting for a reply
-        mes_entry = AnsweringMachineEntry(commonbot.utils.user_str(message.author), message.created_at, content, log_mes.jump_url)
+        url = log_mes.jump_url if log_mes else None
+        mes_entry = AnsweringMachineEntry(commonbot.utils.user_str(message.author), message.created_at, content, url)
         commands.am.update_entry(message.author.id, mes_entry)
 
     def get_userid_for_user_reply_thread(self, message: discord.Message) -> int | None:
@@ -93,7 +94,7 @@ class MessageForwarder:
         """
         return self._thread_id_to_user_id(message.channel.id)
 
-    def get_reply_thread_id_for_user(self, user: discord.User) -> int | None:
+    def get_reply_thread_id_for_user(self, user: discord.User | discord.Member) -> int | None:
         """
         Get the reply thread id for a user.
 
@@ -102,7 +103,7 @@ class MessageForwarder:
         """
         return self._user_id_to_thread_id(user.id)
 
-    async def get_or_create_user_reply_thread(self, user: discord.User, from_user_message=False) -> discord.Thread:
+    async def get_or_create_user_reply_thread(self, user: discord.User | discord.Member, from_user_message=False) -> discord.Thread:
         """
         Either retrieves the existing reply thread for a user, or creates a new one if they don't have one.
 

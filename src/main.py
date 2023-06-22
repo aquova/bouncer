@@ -22,7 +22,6 @@ from client import client
 from config import LogTypes
 from forwarder import message_forwarder
 from spam import Spammers
-from waiting import AnsweringMachineEntry, is_in_home_server
 from watcher import Watcher
 
 # Initialize helper classes
@@ -96,8 +95,9 @@ Occurs when Discord bot is first brought online
 @client.event
 async def on_ready():
     print('Logged in as')
-    print(client.user.name)
-    print(client.user.id)
+    if client.user:
+        print(client.user.name)
+        print(client.user.id)
 
     # Set Bouncer's activity status
     activity_object = discord.Activity(name="for your reports!", type=discord.ActivityType.watching)
@@ -229,7 +229,7 @@ Occurs when a user's message is deleted
 """
 @client.event
 async def on_message_delete(message: discord.Message):
-    if not should_log(message.guild) or message.author.bot:
+    if message.guild and not should_log(message.guild) or message.author.bot:
         return
 
     await delete_message_helper(message)
@@ -241,7 +241,7 @@ Occurs when a user's messages are bulk deleted, such as ban or kick
 """
 @client.event
 async def on_bulk_message_delete(messages: list[discord.Message]):
-    if not should_log(messages[0].guild) or messages[0].author.bot:
+    if messages[0].guild and not should_log(messages[0].guild) or messages[0].author.bot:
         return
 
     for message in messages:
@@ -254,7 +254,7 @@ Occurs when a user edits a message
 """
 @client.event
 async def on_message_edit(before: discord.Message, after: discord.Message):
-    if not should_log(before.guild) or before.author.bot:
+    if before.guild and not should_log(before.guild) or before.author.bot:
         return
 
     # Prevent embedding of content from triggering the log

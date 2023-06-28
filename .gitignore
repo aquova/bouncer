@@ -8,6 +8,7 @@ config.json
 *.code-workspace
 **/.devcontainer/*
 .idea
+launch.json
 
 # Other junk
 .DS_Store

@@ -1,4 +1,4 @@
 discord.py==2.3.1
 humanize==4.2.3
-matplotlib==3.5.2
+matplotlib==3.7.1
 numpy==1.23.1

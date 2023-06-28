@@ -65,7 +65,7 @@ class MessageForwarder:
         reply_message += f": {content}"
 
         # Get or create the appropriate thread for the message user
-        reply_channel = await self.get_or_create_user_reply_thread(message.author, True, content=message)
+        reply_channel = await self.get_or_create_user_reply_thread(message.author, True, content=content)
 
         # Forward the message to the channel/thread
         log_mes = await commonbot.utils.send_message(reply_message, reply_channel)
@@ -103,7 +103,7 @@ class MessageForwarder:
         """
         return self._user_id_to_thread_id(user.id)
 
-    async def get_or_create_user_reply_thread(self, user: discord.User | discord.Member, from_user_message=False, content=None) -> discord.Thread:
+    async def get_or_create_user_reply_thread(self, user: discord.User | discord.Member, from_user_message=False, content: str | None=None) -> discord.Thread:
         """
         Either retrieves the existing reply thread for a user, or creates a new one if they don't have one.
 
@@ -134,7 +134,7 @@ class MessageForwarder:
 
             if from_user_message:
                 embed: discord.Embed = discord.Embed(
-                    title=f"\N{ENVELOPE} Mail from {user.global_name or user.author}",
+                    title=f"\N{ENVELOPE} Mail from {user.global_name or user}",
                     description=f"{content if len(content) <= 99 else content[:99] + '…'}" if content else None,
                     colour=discord.Colour.blue(),
                     url=user_reply_thread.jump_url)

@@ -65,7 +65,7 @@ class MessageForwarder:
         reply_message += f": {content}"
 
         # Get or create the appropriate thread for the message user
-        reply_channel = await self.get_or_create_user_reply_thread(message.author, True)
+        reply_channel = await self.get_or_create_user_reply_thread(message.author, True, content=message)
 
         # Forward the message to the channel/thread
         log_mes = await commonbot.utils.send_message(reply_message, reply_channel)
@@ -103,7 +103,7 @@ class MessageForwarder:
         """
         return self._user_id_to_thread_id(user.id)
 
-    async def get_or_create_user_reply_thread(self, user: discord.User | discord.Member, from_user_message=False) -> discord.Thread:
+    async def get_or_create_user_reply_thread(self, user: discord.User | discord.Member, from_user_message=False, content=None) -> discord.Thread:
         """
         Either retrieves the existing reply thread for a user, or creates a new one if they don't have one.
 
@@ -132,14 +132,22 @@ class MessageForwarder:
         try:
             user_reply_thread = await client.fetch_channel(thread_id)
 
-            # It was archived -> send a message to notify mods someone is starting a new conversation or that there was moderation activity
-            reason = f"User <@{user.id}> sent bouncer a new message" if from_user_message else f"New moderation activity for <@{user.id}>"
-            await parent_channel.send(f"{reason}. Their reply thread has been un-archived: <#{thread_id}>.")
+            if from_user_message:
+                embed: discord.Embed = discord.Embed(
+                    title=f"\N{ENVELOPE} Mail from {user.global_name or user.author}",
+                    description=f"{content if len(content) <= 99 else content[:99] + '…'}" if content else None,
+                    colour=discord.Colour.blue(),
+                    url=user_reply_thread.jump_url)
+                await parent_channel.send(embed=embed)
+            else:
+                # It was archived -> send a message to notify mods someone is starting a new conversation or that there was moderation activity
+                msg: str = f"New moderation activity for {user.mention}\nTheir reply thread has been un-archived: {user_reply_thread.mention}"
+                await parent_channel.send(content=msg)
             await self._update_reply_thread(user, user_reply_thread)
             return user_reply_thread
         except discord.errors.NotFound:
             # It was deleted
-            await parent_channel.send(f"Reply thread for user <@{user.id}> was not found (it was probably deleted), creating a new one.")
+            await parent_channel.send(f"Reply thread for user {user.mention} was not found (it was probably deleted), creating a new one.")
             return await self._create_reply_thread(user, parent_channel)
 
     async def _create_reply_thread(self, user: discord.User, parent_channel: discord.TextChannel) -> discord.Thread:

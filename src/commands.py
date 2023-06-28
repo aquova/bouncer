@@ -444,7 +444,7 @@ async def _add_context_to_reply_thread(mes: discord.Message, user: discord.User 
     if mes.channel.id == reply_thread_id:
         return # Already in reply thread, nothing to do
 
-    reply_thread = await message_forwarder.get_or_create_user_reply_thread(user)
+    reply_thread = await message_forwarder.get_or_create_user_reply_thread(user, content=message)
 
     # Suppress embeds so the jump url doesn't show a useless 'Discord - A New Way to Chat....' embed
     await reply_thread.send(f"{context} ({mes.jump_url}): {message}", suppress_embeds=True)

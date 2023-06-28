@@ -367,10 +367,13 @@ async def on_message(message: discord.Message):
 
         # If a user pings bouncer, log into mod channel, unless it's us
         if client.user in message.mentions and message.channel.category_id not in config.INPUT_CATEGORIES:
-            content = commonbot.utils.combine_message(message)
-            mes = f"<@{str(message.author.id)}> pinged me in <#{message.channel.id}>: {content}\n{message.jump_url}"
             chan = client.get_channel(config.MAILBOX)
-            await commonbot.utils.send_message(mes, chan)
+            embed: discord.Embed = discord.Embed(
+                title=f"\N{DIGIT ONE}\u20E3 Pinged by {message.author.global_name or message.author}",
+                description=f"{message.content if len(message.content) <= 99 else message.content[:99] + '…'}",
+                colour=discord.Colour.blue(),
+                url=message.jump_url)
+            await chan.send(embed=embed)
 
         # Only allow moderators to invoke commands, and only in staff category
         if message.content.startswith(config.CMD_PREFIX):

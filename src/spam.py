@@ -38,7 +38,6 @@ class Spammer:
 class Spammers:
     def __init__(self):
         self.spammers = {}
-        self.notification = None
 
     def set_channel(self):
         self.notification = cast(discord.TextChannel, client.get_channel(SPAM_CHAN))
@@ -48,6 +47,9 @@ class Spammers:
             return False
 
         if message.channel.id in IGNORE_SPAM:
+            return False
+
+        if isinstance(message.author, discord.User):
             return False
 
         # Don't censor admins
@@ -101,7 +103,7 @@ class Spammers:
             if not dm_chan:
                 dm_chan = await client.create_dm(user)
 
-            await user.dm_channel.send(f"Hi there! This is an automated courtesy message informing you that your post(s) have been deleted either for spamming or attempting to ping everyone: '{txt}'. You have been temporarily muted from speaking in the server while the staff team reviews your message. If you have any questions, please reply to this bot.")
+            await dm_chan.send(f"Hi there! This is an automated courtesy message informing you that your post(s) have been deleted either for spamming or attempting to ping everyone: '{txt}'. You have been temporarily muted from speaking in the server while the staff team reviews your message. If you have any questions, please reply to this bot.")
         except discord.errors.HTTPException as err:
             if err.code == 50007:
                 pass

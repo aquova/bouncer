@@ -5,6 +5,7 @@ import discord
 from client import client
 from commonbot.utils import combine_message
 from forwarder import message_forwarder
+from typing import cast
 
 class ReportResolveButton(discord.ui.Button):
     def __init__(self):
@@ -18,7 +19,8 @@ class ReportResolveButton(discord.ui.Button):
             return
         embed: discord.Embed = interaction.message.embeds[0]
         embed.colour = discord.Colour.dark_green()
-        embed.title = f"\N{WHITE HEAVY CHECK MARK}{embed.title[1:]}"
+        if embed.title is not None:
+            embed.title = f"\N{WHITE HEAVY CHECK MARK}{embed.title[1:]}"
         embed.add_field(
             name=f"Resolved <t:{int(datetime.now().timestamp())}:R> by",
             value=interaction.user.mention,
@@ -32,14 +34,14 @@ class ReportResolveButton(discord.ui.Button):
 
 
 class ReportThreadButton(discord.ui.Button):
-    def __init__(self, *, reported_user: discord.User, thread_url: str | None = None):
+    def __init__(self, *, reported_user: discord.User | discord.Member, thread_url: str | None = None):
         super().__init__(
             label="Thread",
             style=discord.ButtonStyle.link if thread_url else discord.ButtonStyle.secondary,
             emoji=None if thread_url else "\N{LEFT-POINTING MAGNIFYING GLASS}",
             url=thread_url
         )
-        self.reported_user: discord.User = reported_user
+        self.reported_user: discord.User | discord.Member = reported_user
 
     async def callback(self, interaction: discord.Interaction):
         if self.url is None:
@@ -53,16 +55,17 @@ class ReportThreadButton(discord.ui.Button):
                 reported_user=self.reported_user,
                 thread_url=thread.jump_url if thread else None)
             )
-            await interaction.message.edit(view=view)
+            if interaction.message is not None:
+                await interaction.message.edit(view=view)
             await interaction.response.defer()
 
 
 class ReportMailboxView(discord.ui.View):
-    def __init__(self, *, reported_user: discord.User):
+    def __init__(self, *, reported_user: discord.User | discord.Member):
         super().__init__(timeout=0)
 
         thread_id: int | None = message_forwarder.get_reply_thread_id_for_user(user=reported_user)
-        thread: discord.Thread | None = client.get_channel(thread_id) if thread_id else None
+        thread: discord.Thread | None = cast(discord.Thread, client.get_channel(thread_id)) if thread_id else None
         self.thread_button = ReportThreadButton(
             reported_user=reported_user,
             thread_url=thread.jump_url if thread else None)
@@ -90,7 +93,7 @@ class ReportModal(discord.ui.Modal):
             colour=discord.Colour.gold(),
             url=self.message.jump_url)
 
-        reported_user: discord.User = self.message.author
+        reported_user: discord.User | discord.Member = self.message.author
         message_str: str = combine_message(self.message)
         comments_str: str = self.comments_input.value
 

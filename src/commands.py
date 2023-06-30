@@ -77,8 +77,9 @@ async def list_waiting(message: discord.Message, _):
 
 
 async def sync(message: discord.Message, _):
-    await client.sync_guild(message.guild)
-    await message.channel.send("Server synced")
+    if message.guild is not None:
+        await client.sync_guild(message.guild)
+        await message.channel.send("Server synced")
 
 """
 User Search
@@ -194,8 +195,7 @@ async def log_user(mes: discord.Message, state: LogTypes):
     # If we aren't noting, need to also write to log channel
     if state != LogTypes.NOTE:
         # Post to channel, keep track of message ID
-        chan = discord.utils.get(mes.guild.channels, id=config.LOG_CHAN)
-        log_mes = await chan.send(log_message)
+        log_mes = await client.log.send(log_message)
         log_mes_id = log_mes.id
 
         try:
@@ -341,9 +341,8 @@ async def remove_error(mes: discord.Message, edit: bool):
 
         # Search logging channel for matching post, and remove it
         try:
-            if item.message_id != 0:
-                chan = discord.utils.get(mes.guild.channels, id=config.LOG_CHAN)
-                old_mes = await chan.fetch_message(item.message_id)
+            if item.message_id != 0 and item.message_id is not None:
+                old_mes = await client.log.fetch_message(item.message_id)
                 await old_mes.delete()
         # Print message if unable to find message to delete, but don't stop
         except discord.errors.HTTPException as err:
@@ -512,8 +511,16 @@ Speaks a message to the specified channel as the bot
 async def say(message: discord.Message, _):
     try:
         payload = commonbot.utils.strip_words(message.content, 1)
+        guild = message.guild
+        if guild is None:
+            return
         channel_id = commonbot.utils.get_first_word(payload)
-        channel = discord.utils.get(message.guild.channels, id=int(channel_id))
+        channel = discord.utils.get(guild.channels, id=int(channel_id))
+        if channel is None:
+            raise AttributeError
+        elif isinstance(channel, (discord.ForumChannel, discord.CategoryChannel)):
+            return
+
         output = commonbot.utils.strip_words(payload, 1)
         if output == "" and len(message.attachments) == 0:
             await message.channel.send("You cannot send empty messages.")

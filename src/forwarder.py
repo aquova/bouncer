@@ -7,6 +7,7 @@ import commands
 import commonbot.utils
 from collections import OrderedDict
 from threading import Lock
+from typing import cast
 
 
 class MessageForwarder:
@@ -119,7 +120,7 @@ class MessageForwarder:
 
         # Get thread from thread cache (holds active threads only)
         user_reply_thread = client.get_channel(thread_id)
-        if user_reply_thread is not None:
+        if user_reply_thread is not None and isinstance(user_reply_thread, discord.Thread):
             # Active thread -> update it and use it for the conversation
             await self._update_reply_thread(user, user_reply_thread)
             return user_reply_thread
@@ -127,7 +128,7 @@ class MessageForwarder:
         # The thread is either archived or deleted; use fetch channel to find out which
         # The order is important: fetch channel is an API call, so we want to avoid it if possible
         try:
-            user_reply_thread = await client.fetch_channel(thread_id)
+            user_reply_thread = cast(discord.Thread, await client.fetch_channel(thread_id))
 
             if from_user_message:
                 embed: discord.Embed = discord.Embed(
@@ -147,7 +148,7 @@ class MessageForwarder:
             await client.mailbox.send(f"Reply thread for user {user.mention} was not found (it was probably deleted), creating a new one.")
             return await self._create_reply_thread(user, client.mailbox)
 
-    async def _create_reply_thread(self, user: discord.User, parent_channel: discord.TextChannel) -> discord.Thread:
+    async def _create_reply_thread(self, user: discord.User | discord.Member, parent_channel: discord.TextChannel) -> discord.Thread:
         """
         Creates a reply thread for a user.
 
@@ -182,7 +183,7 @@ class MessageForwarder:
         # By editing in a mention, we add staff to the thread without pinging them
         await message.edit(content=content)
 
-    async def _update_reply_thread(self, user: discord.User, thread: discord.Thread):
+    async def _update_reply_thread(self, user: discord.User | discord.Member, thread: discord.Thread):
         """
         Update a reply thread for a user. That means:
           - change the thread name to match the user's current name
@@ -197,7 +198,7 @@ class MessageForwarder:
             await thread.edit(name=thread_name, archived=False)
             await self._add_staff_to_thread(thread)
 
-    def _user_reply_thread_name(self, user: discord.User) -> str:
+    def _user_reply_thread_name(self, user: discord.User | discord.Member) -> str:
         """
         Returns the name of a user reply thread for a user.
 
@@ -205,9 +206,11 @@ class MessageForwarder:
         :return: The thread name.
         """
         # Try to get their SDV nickname (will be None if they're not in the SDV server, or not in the member cache) for a nicer thread name
-        member = client.get_guild(HOME_SERVER).get_member(user.id)
-        if member is not None:
-            return f"{member.display_name} ({str(user)})"
+        home_guild = client.get_guild(HOME_SERVER)
+        if home_guild is not None:
+            member = home_guild.get_member(user.id)
+            if member is not None:
+                return f"{member.display_name} ({str(user)})"
 
         # If that didn't work, use their non-SDV name
         return str(user)

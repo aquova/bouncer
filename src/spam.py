@@ -1,5 +1,6 @@
 from datetime import timedelta
 from re import search, IGNORECASE
+from typing import cast
 
 import discord
 
@@ -40,7 +41,7 @@ class Spammers:
         self.notification = None
 
     def set_channel(self):
-        self.notification = client.get_channel(SPAM_CHAN)
+        self.notification = cast(discord.TextChannel, client.get_channel(SPAM_CHAN))
 
     async def check_spammer(self, message: discord.Message) -> bool:
         if message.author.bot or message.content == "":

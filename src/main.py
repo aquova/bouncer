@@ -67,14 +67,13 @@ async def delete_message_helper(message: discord.Message):
     mes = f":no_mobile_phones: **{str(message.author)}** deleted " \
           f"in <#{message.channel.id}>: `{message.content}` \n" \
           f":timer: This message was visible for {humanize.precisedelta(timedelta)}."
-    chan = client.get_channel(config.SYS_LOG)
     # Adds URLs for any attachments that were included in deleted message
     # These will likely become invalid, but it's nice to note them anyway
     if message.attachments:
         for item in message.attachments:
             mes += '\n' + item.url
 
-    await commonbot.utils.send_message(mes, chan)
+    await commonbot.utils.send_message(mes, client.syslog)
 
 """
 Should Log
@@ -103,15 +102,15 @@ async def on_ready():
     activity_object = discord.Activity(name="for your reports!", type=discord.ActivityType.watching)
     await client.change_presence(activity=activity_object)
 
+    client.set_channels()
     spam.set_channel()
 
     if not dbg.is_debug_bot():
         # Upload our DB file to a private channel as a backup
-        chan = client.get_channel(config.LOG_CHAN)
         current_time = datetime.now(timezone.utc)
         filename = f"bouncer_backup_{commonbot.utils.format_time(current_time)}.db"
         with open(config.DATABASE_PATH, 'rb') as db_file:
-            await chan.send(file=discord.File(db_file, filename=filename))
+            await client.log.send(file=discord.File(db_file, filename=filename))
 
 """
 On Guild Available
@@ -150,8 +149,7 @@ async def on_member_update(before: discord.Member, after: discord.Member):
             mes = f"**:spy: {str(after)}** has reset their username"
         else:
             mes = f"**:spy: {str(after)}** is now known as `{after.nick}`"
-        chan = client.get_channel(config.SYS_LOG)
-        await chan.send(mes)
+        await client.syslog.send(mes)
     # If role quantity has changed
     elif before.roles != after.roles:
         # Determine role difference, post about it
@@ -166,20 +164,18 @@ async def on_member_update(before: discord.Member, after: discord.Member):
             added_str = ', '.join(added)
             mes += f":new: **{str(after)}** had the role(s) `{added_str}` added."
 
-        chan = client.get_channel(config.SYS_LOG)
         if mes != "":
-            await chan.send(mes)
+            await client.syslog.send(mes)
     # If they were timed out
     # Note, this won't trip when the timeout wears off, due to a Discord limitation
     if before.timed_out_until != after.timed_out_until:
-        chan = client.get_channel(config.SYS_LOG)
         if after.timed_out_until:
             timedelta = after.timed_out_until - datetime.now(timezone.utc)
             timeout_str = humanize.precisedelta(timedelta, minimum_unit="seconds", format="%d")
             mes = f":zipper_mouth: {str(after)} has been timed out for {timeout_str}."
-            await chan.send(mes)
+            await client.syslog.send(mes)
         else:
-            await chan.send(f":grin: {str(after)} is no longer timed out.")
+            await client.syslog.send(f":grin: {str(after)} is no longer timed out.")
 
 """
 On Member Ban
@@ -199,8 +195,7 @@ async def on_member_ban(server: discord.Guild, member: discord.Member):
     username = str(member)
     commands.ul.add_ban(member.id, username)
     mes = f":newspaper2: **{username} ({member.id})** has been banned."
-    chan = client.get_channel(config.SYS_LOG)
-    await chan.send(mes)
+    await client.syslog.send(mes)
 
 """
 On Member Remove
@@ -219,8 +214,7 @@ async def on_member_remove(member: discord.Member):
     username = str(member)
     commands.ul.add_ban(member.id, username)
     mes = f":wave: **{username} ({member.id})** has left"
-    chan = client.get_channel(config.SYS_LOG)
-    await chan.send(mes)
+    await client.syslog.send(mes)
 
 """
 On Message Delete
@@ -267,15 +261,13 @@ async def on_message_edit(before: discord.Message, after: discord.Message):
         return
 
     try:
-        chan = client.get_channel(config.SYS_LOG)
         mes = f":pencil: **{str(before.author)}** modified in <#{before.channel.id}>: `{before.content}` to `{after.content}`"
-        await commonbot.utils.send_message(mes, chan)
+        await commonbot.utils.send_message(mes, client.syslog)
 
         # If user is on watchlist, then post it there as well
         watching = watch.should_note(after.author.id)
         if watching:
-            watchchan = client.get_channel(config.WATCHLIST_CHAN)
-            await commonbot.utils.send_message(mes, watchchan)
+            await commonbot.utils.send_message(mes, client.watchlist)
 
     except discord.errors.HTTPException as err:
         print(f"Unknown error with editing message. This message was unable to post for this reason: {err}\n")
@@ -291,8 +283,7 @@ async def on_member_join(member: discord.Member):
         return
 
     mes = f":confetti_ball: **{str(member)} ({member.id})** has joined"
-    chan = client.get_channel(config.SYS_LOG)
-    await chan.send(mes)
+    await client.syslog.send(mes)
 
 """
 On Voice State Update
@@ -306,12 +297,10 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
 
     if not after.channel:
         mes = f":mute: **{str(member)}** has left voice channel {before.channel.name}"
-        chan = client.get_channel(config.SYS_LOG)
-        await chan.send(mes)
+        await client.syslog.send(mes)
     elif not before.channel:
         mes = f":loud_sound: **{str(member)}** has joined voice channel {after.channel.name}"
-        chan = client.get_channel(config.SYS_LOG)
-        await chan.send(mes)
+        await client.syslog.send(mes)
 
 """
 On Reaction Remove
@@ -324,8 +313,7 @@ async def on_reaction_remove(reaction: discord.Reaction, user: discord.Member):
         return
 
     emoji_name = reaction.emoji if isinstance(reaction.emoji, str) else reaction.emoji.name
-    chan = client.get_channel(config.SYS_LOG)
-    await chan.send(f":face_in_clouds: {str(user)} ({user.id}) removed the `{emoji_name}` emoji")
+    await client.syslog.send(f":face_in_clouds: {str(user)} ({user.id}) removed the `{emoji_name}` emoji")
 
 """
 On Message
@@ -360,20 +348,18 @@ async def on_message(message: discord.Message):
         # Check if user is on watchlist, and should be tracked
         watching = watch.should_note(message.author.id)
         if watching:
-            chan = client.get_channel(config.WATCHLIST_CHAN)
             content = commonbot.utils.combine_message(message)
             mes = f"<@{str(message.author.id)}> said in <#{message.channel.id}>: {content}"
-            await commonbot.utils.send_message(mes, chan)
+            await commonbot.utils.send_message(mes, client.watchlist)
 
         # If a user pings bouncer, log into mod channel, unless it's us
         if client.user in message.mentions and message.channel.category_id not in config.INPUT_CATEGORIES:
-            chan = client.get_channel(config.MAILBOX)
             embed: discord.Embed = discord.Embed(
                 title=f"\N{DIGIT ONE}\u20E3 Pinged by {message.author.global_name or message.author}",
                 description=f"{message.content if len(message.content) <= 99 else message.content[:99] + '…'}",
                 colour=discord.Colour.blue(),
                 url=message.jump_url)
-            await chan.send(embed=embed)
+            await client.mailbox.send(embed=embed)
 
         # Only allow moderators to invoke commands, and only in staff category
         if message.content.startswith(config.CMD_PREFIX):
@@ -386,7 +372,6 @@ async def on_message(message: discord.Message):
                     await func(message, arg)
     except discord.errors.Forbidden as err:
         if err.code == 50007:
-            chan = client.get_channel(config.MAILBOX)
-            await chan.send("Unable to send message - Can't send messages to that user")
+            await client.mailbox.send("Unable to send message - Can't send messages to that user")
 
 client.run(config.DISCORD_KEY)

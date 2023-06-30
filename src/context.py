@@ -3,7 +3,6 @@ from datetime import datetime
 import discord
 
 from client import client
-from config import MAILBOX
 from commonbot.utils import combine_message
 from forwarder import message_forwarder
 
@@ -109,8 +108,7 @@ class ReportModal(discord.ui.Modal):
             ] if field[1]
         ]
 
-        log_chan = client.get_channel(MAILBOX)
-        await log_chan.send(embed=embed, view=ReportMailboxView(reported_user=reported_user))
+        await client.mailbox.send(embed=embed, view=ReportMailboxView(reported_user=reported_user))
         await interaction.response.send_message(
             content="Your report has been forwarded to the server staff. Thanks!",
             ephemeral=True)

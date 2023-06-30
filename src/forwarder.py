@@ -1,7 +1,7 @@
 import discord
 from client import client
 import db
-from config import MAILBOX, HOME_SERVER, THREAD_ROLES
+from config import HOME_SERVER, THREAD_ROLES
 from waiting import AnsweringMachineEntry, is_in_home_server
 import commands
 import commonbot.utils
@@ -111,14 +111,11 @@ class MessageForwarder:
         :param from_user_message: Whether user reply thread retrieval is motivated by the user sending bouncer a message (True) or staff moderation (False).
         :return: The existing/new thread.
         """
-        # Parent channel where reply threads will be created in
-        parent_channel = client.get_channel(MAILBOX)
-
         thread_id = self._user_id_to_thread_id(user.id)
 
         if thread_id is None:
             # This is a first time user messaging bouncer or staff moderating a user -> create a reply thread for them
-            return await self._create_reply_thread(user, parent_channel)
+            return await self._create_reply_thread(user, client.mailbox)
 
         # Get thread from thread cache (holds active threads only)
         user_reply_thread = client.get_channel(thread_id)
@@ -138,17 +135,17 @@ class MessageForwarder:
                     description=f"{content if len(content) <= 99 else content[:99] + '…'}" if content else None,
                     colour=discord.Colour.blue(),
                     url=user_reply_thread.jump_url)
-                await parent_channel.send(embed=embed)
+                await client.mailbox.send(embed=embed)
             else:
                 # It was archived -> send a message to notify mods someone is starting a new conversation or that there was moderation activity
                 msg: str = f"New moderation activity for {user.mention}\nTheir reply thread has been un-archived: {user_reply_thread.mention}"
-                await parent_channel.send(content=msg)
+                await client.mailbox.send(content=msg)
             await self._update_reply_thread(user, user_reply_thread)
             return user_reply_thread
         except discord.errors.NotFound:
             # It was deleted
-            await parent_channel.send(f"Reply thread for user {user.mention} was not found (it was probably deleted), creating a new one.")
-            return await self._create_reply_thread(user, parent_channel)
+            await client.mailbox.send(f"Reply thread for user {user.mention} was not found (it was probably deleted), creating a new one.")
+            return await self._create_reply_thread(user, client.mailbox)
 
     async def _create_reply_thread(self, user: discord.User, parent_channel: discord.TextChannel) -> discord.Thread:
         """

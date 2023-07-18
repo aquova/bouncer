@@ -3,7 +3,6 @@ FROM python:3.11-alpine
 RUN apk update && apk add \
     build-base \
     freetype-dev \
-    git \
     jpeg-dev
 
 ADD requirements.txt /bouncer/requirements.txt

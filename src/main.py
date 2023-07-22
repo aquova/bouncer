@@ -373,5 +373,7 @@ async def on_message(message: discord.Message):
     except discord.errors.Forbidden as err:
         if err.code == 50007:
             await client.mailbox.send("Unable to send message - Can't send messages to that user")
+            return
+        raise err
 
 client.run(config.DISCORD_KEY)

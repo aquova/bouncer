@@ -9,8 +9,9 @@ import config
 import db
 from blocks import BlockedUsers
 from client import client
-from config import LogTypes, CMD_PREFIX
+from config import CMD_PREFIX
 from forwarder import message_forwarder
+from logtypes import LogTypes, past_tense, present_tense
 import visualize
 from utils import get_userid as utils_get_userid
 from waiting import AnsweringMachine
@@ -114,8 +115,11 @@ async def search_helper(uid: int) -> str:
     else:
         # Format output message
         out = f"User `{username}` (ID: {uid}) was found with the following infractions\n"
+        warn_cnt = 0
         for index, item in enumerate(search_results):
-            out += f"{index + 1}. {str(item)}"
+            if item.log_type == LogTypes.WARN:
+                warn_cnt += 1
+            out += f"{index + 1}. {db.UserLogEntry.format(item, warn_cnt)}"
         ret += out
 
     return ret
@@ -127,18 +131,11 @@ Notes an infraction for a user
 """
 async def log_user(mes: discord.Message, state: LogTypes):
     # Attempt to generate user object
-    userid, userid_from_message = await get_userid(mes, str(state))
+    userid, userid_from_message = await get_userid(mes, present_tense(state))
     if not userid:
         return
 
-    # Calculate value for 'num' category in database
-    # For warns, it's the newest number of warns, otherwise it's a special value
-    if state == LogTypes.WARN:
-        count = db.get_warn_count(userid)
-    else:
-        count = state.value
     current_time = datetime.now(timezone.utc)
-
     # Attempt to fetch the username for the user
     username = ul.fetch_username(client, userid)
     if not username:
@@ -158,39 +155,29 @@ async def log_user(mes: discord.Message, state: LogTypes):
         return
 
     # Update records for graphing
-    if state == LogTypes.BAN or state == LogTypes.SCAM:
-        visualize.update_cache(mes.author.name, (1, 0), commonbot.utils.format_time(current_time))
-    elif state == LogTypes.WARN:
-        visualize.update_cache(mes.author.name, (0, 1), commonbot.utils.format_time(current_time))
-    elif state == LogTypes.UNBAN:
-        await mes.channel.send("Removing all old logs for unbanning")
-        db.clear_user_logs(userid)
+    match state:
+        case LogTypes.BAN | LogTypes.SCAM:
+            visualize.update_cache(mes.author.name, (1, 0), commonbot.utils.format_time(current_time))
+        case LogTypes.WARN:
+            visualize.update_cache(mes.author.name, (0, 1), commonbot.utils.format_time(current_time))
+        case LogTypes.UNBAN:
+            await mes.channel.send("Removing all old logs for unbanning")
+            db.clear_user_logs(userid)
 
     # Generate message for log channel
-    globalcount = db.get_dbid()
-    new_log = db.UserLogEntry(globalcount + 1, userid, count, current_time, output, mes.author.name, None)
+    new_log = db.UserLogEntry(None, userid, state, current_time, output, mes.author.name, None)
     log_message = f"[{commonbot.utils.format_time(current_time)}] `{username}` - {new_log.log_word()} by {mes.author.name} - {output}"
     await mes.channel.send(log_message)
 
     # Send ban recommendation, if needed
+    count = db.get_warn_count(userid)
     if (state == LogTypes.WARN and count >= config.WARN_THRESHOLD):
         await mes.channel.send(f"This user has received {config.WARN_THRESHOLD} warnings or more. It is recommended that they be banned.")
-
-    if state == LogTypes.SCAM or state == LogTypes.BAN:
-        action = "banned"
-    elif state == LogTypes.UNBAN:
-        action = "unbanned"
-    elif state == LogTypes.KICK:
-        action = "kicked"
-    elif state == LogTypes.NOTE:
-        action = "noted"
-    elif state == LogTypes.WARN:
-        action = "warned"
 
     # Record this action in the user's reply thread
     user = client.get_user(userid)
     if user:
-        await _add_context_to_reply_thread(mes, user, f"`{str(user)}` was {action}", output)
+        await _add_context_to_reply_thread(mes, user, f"`{str(user)}` was {past_tense(state)}", output)
 
     log_mes_id = 0
     # If we aren't noting, need to also write to log channel
@@ -257,26 +244,27 @@ async def preview(mes: discord.Message, _):
         await mes.channel.send("Please give a reason for why you want to log them.")
         return
 
-    if state == LogTypes.BAN:
-        if config.DM_BAN:
-            await mes.channel.send(BAN_KICK_MES.format(type="banned", mes=output))
-        else:
-            await mes.channel.send("DMing the user about their bans is currently off, they won't see any message")
-    elif state == LogTypes.WARN:
-        if config.DM_WARN:
-            await mes.channel.send(WARN_MES.format(count="X",mes=output))
-        else:
-            await mes.channel.send("DMing the user about their warns is currently off, they won't see any message")
-    elif state == LogTypes.KICK:
-        if config.DM_BAN:
-            await mes.channel.send(BAN_KICK_MES.format(type="kicked", mes=output))
-        else:
-            await mes.channel.send("DMing the user about their kicks is currently off, they won't see any message")
-    elif state == LogTypes.SCAM:
-        if config.DM_BAN:
-            await mes.channel.send(SCAM_MES)
-        else:
-            await mes.channel.send("DMing the user about their bans is currently off, they won't see any message")
+    match state:
+        case LogTypes.BAN:
+            if config.DM_BAN:
+                await mes.channel.send(BAN_KICK_MES.format(type="banned", mes=output))
+            else:
+                await mes.channel.send("DMing the user about their bans is currently off, they won't see any message")
+        case LogTypes.WARN:
+            if config.DM_WARN:
+                await mes.channel.send(WARN_MES.format(count="X",mes=output))
+            else:
+                await mes.channel.send("DMing the user about their warns is currently off, they won't see any message")
+        case LogTypes.KICK:
+            if config.DM_BAN:
+                await mes.channel.send(BAN_KICK_MES.format(type="kicked", mes=output))
+            else:
+                await mes.channel.send("DMing the user about their kicks is currently off, they won't see any message")
+        case LogTypes.SCAM:
+            if config.DM_BAN:
+                await mes.channel.send(SCAM_MES)
+            else:
+                await mes.channel.send("DMing the user about their bans is currently off, they won't see any message")
 
 """
 Remove Error
@@ -318,7 +306,7 @@ async def remove_error(mes: discord.Message, edit: bool):
     else:
         item = search_results[index]
         if edit:
-            if item.log_type == LogTypes.NOTE.value:
+            if item.log_type == LogTypes.NOTE:
                 item.timestamp = datetime.now(timezone.utc)
                 item.log_message = output
                 item.staff = mes.author.name
@@ -330,7 +318,8 @@ async def remove_error(mes: discord.Message, edit: bool):
             return
 
         # Everything after here is deletion
-        db.remove_log(item.dbid)
+        if item.dbid is not None:
+            db.remove_log(item.dbid)
         out = "The following log was deleted:\n"
         out += str(item)
 

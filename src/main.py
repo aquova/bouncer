@@ -19,8 +19,8 @@ import commands
 import config
 import visualize
 from client import client
-from config import LogTypes
 from forwarder import message_forwarder
+from logtypes import LogTypes
 from spam import Spammers
 from watcher import Watcher
 

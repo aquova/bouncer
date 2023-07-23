@@ -1,23 +1,10 @@
 import json
-from enum import Enum, unique
 
 DATABASE_PATH = "./private/bouncer.db"
 # Discord has a 2000 message character limit
 CHAR_LIMIT = 2000
 # Add extra message if more than threshold number of warns
 WARN_THRESHOLD = 3
-
-@unique
-class LogTypes(Enum):
-    SCAM = -4
-    UNBAN = -3
-    KICK = -2
-    NOTE = -1
-    BAN = 0
-    WARN = 1
-
-    def __str__(self):
-        return self.name.lower()
 
 # Read values from config file
 CONFIG_PATH = "./private/config.json"

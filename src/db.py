@@ -1,49 +1,36 @@
 from dataclasses import dataclass
 from datetime import datetime
 import sqlite3
-from typing import Optional
 
 from commonbot.utils import format_time
 
-from config import DATABASE_PATH, LogTypes
+from config import DATABASE_PATH
+from logtypes import LogTypes, past_tense
 
 @dataclass
 class UserLogEntry:
-    dbid: int
+    dbid: int | None
     user_id: int
-    log_type: int
+    log_type: LogTypes
     timestamp: datetime
     log_message: str
     staff: str
-    message_id: Optional[int]
+    message_id: int | None
 
-    def __str__(self):
-        return f"[{format_time(self.timestamp)}] {self.log_word()} by {self.staff} - {self.log_message}\n"
+    def format(self, warn_num: int|None=None):
+        return f"[{format_time(self.timestamp)}] {self.log_word(warn_num)} by {self.staff} - {self.log_message}\n"
 
-    def log_word(self) -> str:
-        log_word = ""
-        if self.log_type == LogTypes.BAN.value or self.log_type == LogTypes.SCAM.value:
-            log_word = "Banned"
-        elif self.log_type == LogTypes.NOTE.value:
-            log_word = "Note"
-        elif self.log_type == LogTypes.KICK.value:
-            log_word = "Kicked"
-        elif self.log_type == LogTypes.UNBAN.value:
-            log_word = "Unbanned"
-        else: # LogTypes.WARN
-            log_word = f"Warning #{self.log_type}"
-        return log_word
+    def log_word(self, warn_num: int | None=None) -> str:
+        if self.log_type == LogTypes.WARN:
+            return f"Warning #{warn_num}"
+        else:
+            return past_tense(self.log_type)
 
     def as_list(self):
-        return [
-            self.dbid,
-            self.user_id,
-            self.log_type,
-            self.timestamp,
-            self.log_message,
-            self.staff,
-            self.message_id
-        ]
+        if self.dbid is not None:
+            return [self.dbid, self.user_id, self.log_type, self.timestamp, self.log_message, self.staff, self.message_id]
+        else:
+            return [self.user_id, self.log_type, self.timestamp, self.log_message, self.staff, self.message_id]
 
 """
 Initialize database
@@ -52,7 +39,7 @@ Generates database with needed tables if it doesn't exist
 """
 def initialize():
     sqlconn = sqlite3.connect(DATABASE_PATH)
-    sqlconn.execute("CREATE TABLE IF NOT EXISTS badeggs (dbid INT PRIMARY KEY, id INT, num INT, date DATE, message TEXT, staff TEXT, post INT);")
+    sqlconn.execute("CREATE TABLE IF NOT EXISTS badeggs (dbid INTEGER PRIMARY KEY AUTOINCREMENT, id INTEGER, log INTEGER, date DATE, message TEXT, staff TEXT, post INTEGER);")
     sqlconn.execute("CREATE TABLE IF NOT EXISTS blocks (id TEXT);")
     sqlconn.execute("CREATE TABLE IF NOT EXISTS staffLogs (staff TEXT PRIMARY KEY, bans INT, warns INT);")
     sqlconn.execute("CREATE TABLE IF NOT EXISTS monthLogs (month TEXT PRIMARY KEY, bans INT, warns INT);")
@@ -77,7 +64,7 @@ def _db_write(query: tuple[str, list]):
     sqlconn.close()
 
 def search(user_id: int) -> list[UserLogEntry]:
-    query = ("SELECT dbid, id, num, date, message, staff, post FROM badeggs WHERE id=?", [user_id])
+    query = ("SELECT dbid, id, log, date, message, staff, post FROM badeggs WHERE id=?", [user_id])
     search_results = _db_read(query)
 
     entries = []
@@ -132,35 +119,33 @@ def set_user_reply_thread(user_id: int, thread_id: int):
 
 
 def get_warn_count(userid: int) -> int:
-    query = ("SELECT COUNT(*) FROM badeggs WHERE id=? AND num > 0", [userid])
+    query = ("SELECT COUNT(*) FROM badeggs WHERE id=? AND log = 1", [userid])
     search_results = _db_read(query)
 
     return search_results[0][0] + 1
 
 def get_note_count(userid: int) -> int:
-    query = ("SELECT COUNT(*) FROM badeggs WHERE id=? AND num = -1", [userid])
+    query = ("SELECT COUNT(*) FROM badeggs WHERE id=? AND log = 2", [userid])
     search_results = _db_read(query)
 
     return search_results[0][0] + 1
 
 def add_log(log_entry: UserLogEntry):
-    query = ("INSERT OR REPLACE INTO badeggs (dbid, id, num, date, message, staff, post) VALUES (?, ?, ?, ?, ?, ?, ?)", log_entry.as_list())
+    if log_entry.dbid is None:
+        query = ("INSERT INTO badeggs (id, log, date, message, staff, post) VALUES (?, ?, ?, ?, ?, ?)", log_entry.as_list())
+    else:
+        query = ("INSERT OR REPLACE INTO badeggs (dbid, id, log, date, message, staff, post) VALUES (?, ?, ?, ?, ?, ?, ?)", log_entry.as_list())
     _db_write(query)
 
 def remove_log(dbid: int):
-    query = ("REPLACE INTO badeggs (dbid, id, num, date, message, staff, post) VALUES (?, NULL, NULL, NULL, NULL, NULL, NULL)", [dbid])
+    query = ("DELETE FROM badeggs WHERE dbid=?", [dbid])
     _db_write(query)
 
 def clear_user_logs(userid: int):
     logs = search(userid)
     for log in logs:
-        remove_log(log.dbid)
-
-def get_dbid() -> int:
-    query = ("SELECT COUNT(*) FROM badeggs",)
-    globalcount = _db_read(query)
-
-    return globalcount[0][0]
+        if log.dbid is not None:
+            remove_log(log.dbid)
 
 def get_watch_list() -> list[tuple]:
     query = ("SELECT * FROM watching",)
@@ -177,10 +162,9 @@ def del_watch(userid: int):
 def get_staffdata(staff: str) -> list[tuple]:
     if not staff:
         query = ("SELECT * FROM staffLogs",)
-        return _db_read(query)
     else:
-        squery = ("SELECT * FROM staffLogs WHERE staff=?", [staff])
-        return _db_read(squery)
+        query = ("SELECT * FROM staffLogs WHERE staff=?", [staff])
+    return _db_read(query)
 
 def add_staffdata(staff: str, bans: int, warns: int, is_replace: bool):
     if is_replace:
@@ -193,10 +177,9 @@ def add_staffdata(staff: str, bans: int, warns: int, is_replace: bool):
 def get_monthdata(month: str) -> list[tuple]:
     if not month:
         query = ("SELECT * FROM monthLogs",)
-        return _db_read(query)
     else:
-        mquery = ("SELECT * FROM monthLogs WHERE month=?", [month])
-        return _db_read(mquery)
+        query = ("SELECT * FROM monthLogs WHERE month=?", [month])
+    return _db_read(query)
 
 def add_monthdata(month: str, bans: int, warns: int, is_replace: bool):
     if is_replace:

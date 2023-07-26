@@ -21,7 +21,7 @@ class UserLogEntry:
         return f"[{format_time(self.timestamp)}] {self.log_word(warn_num)} by {self.staff} - {self.log_message}\n"
 
     def log_word(self, warn_num: int | None=None) -> str:
-        if self.log_type == LogTypes.WARN:
+        if warn_num is not None:
             return f"Warning #{warn_num}"
         else:
             return past_tense(self.log_type)

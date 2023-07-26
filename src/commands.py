@@ -311,7 +311,7 @@ async def remove_error(mes: discord.Message, edit: bool):
                 item.log_message = output
                 item.staff = mes.author.name
                 db.add_log(item)
-                out = f"The log now reads as follows:\n{str(item)}\n"
+                out = f"The log now reads as follows:\n{format(item)}\n"
                 await mes.channel.send(out)
             else:
                 await mes.channel.send("You can only edit notes for now")
@@ -321,7 +321,7 @@ async def remove_error(mes: discord.Message, edit: bool):
         if item.dbid is not None:
             db.remove_log(item.dbid)
         out = "The following log was deleted:\n"
-        out += str(item)
+        out += format(item)
 
         if item.log_type == LogTypes.BAN:
             visualize.update_cache(item.staff, (-1, 0), commonbot.utils.format_time(item.timestamp))

@@ -119,7 +119,9 @@ async def search_helper(uid: int) -> str:
         for index, item in enumerate(search_results):
             if item.log_type == LogTypes.WARN:
                 warn_cnt += 1
-            out += f"{index + 1}. {db.UserLogEntry.format(item, warn_cnt)}"
+                out += f"{index + 1}. {db.UserLogEntry.format(item, warn_cnt)}"
+            else:
+                out += f"{index + 1}. {db.UserLogEntry.format(item, None)}"
         ret += out
 
     return ret

@@ -2,11 +2,11 @@
 import math
 
 import discord
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from config import USER_PLOT, MONTH_PLOT
 import db
+from config import MONTH_PLOT, USER_PLOT
 
 months = ["", "Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"]
 

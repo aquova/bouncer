@@ -1,9 +1,8 @@
 import discord
 
-from commonbot.user import UserLookup
-
 import db
 from client import client
+from commonbot.user import UserLookup
 from utils import get_userid
 
 

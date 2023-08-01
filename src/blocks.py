@@ -1,5 +1,6 @@
 import db
 
+
 class BlockedUsers:
     def __init__(self):
         self.populate_blocklist()

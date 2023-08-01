@@ -4,8 +4,8 @@ from datetime import datetime, timezone
 import discord
 
 from commonbot.utils import get_time_delta
-
 from config import HOME_SERVER
+
 
 @dataclass
 class AnsweringMachineEntry:

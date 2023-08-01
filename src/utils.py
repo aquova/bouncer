@@ -1,9 +1,8 @@
 import discord
 
+from commonbot.user import UserLookup
 from config import CMD_PREFIX
 from forwarder import message_forwarder
-
-from commonbot.user import UserLookup
 
 
 async def get_userid(ul: UserLookup, mes: discord.Message, cmd: str, args: str = "") -> tuple[int | None, bool]:

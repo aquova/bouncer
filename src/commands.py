@@ -3,16 +3,15 @@ from datetime import datetime, timezone
 import discord
 
 import commonbot.utils
-from commonbot.user import UserLookup
-
 import config
 import db
+import visualize
 from blocks import BlockedUsers
 from client import client
+from commonbot.user import UserLookup
 from config import CMD_PREFIX
 from forwarder import message_forwarder
 from logtypes import LogTypes, past_tense, present_tense
-import visualize
 from utils import get_userid as utils_get_userid
 from waiting import AnsweringMachine
 

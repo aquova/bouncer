@@ -7,11 +7,10 @@ import discord
 import humanize
 
 import commonbot.utils
-from commonbot.debug import Debug
-from commonbot.timekeep import Timekeeper
-
 # Needs to happen before other imports that cause db to be queried
 import db
+from commonbot.debug import Debug
+from commonbot.timekeep import Timekeeper
 
 db.initialize()
 

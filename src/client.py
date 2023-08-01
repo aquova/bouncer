@@ -1,8 +1,9 @@
-import discord
-
 from typing import cast
 
+import discord
+
 from config import LOG_CHAN, MAILBOX, SYS_LOG, WATCHLIST_CHAN
+
 
 class DiscordClient(discord.Client):
     def __init__(self, *, intents: discord.Intents):

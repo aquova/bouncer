@@ -1,13 +1,15 @@
-import discord
-from client import client
-import db
-from config import HOME_SERVER, THREAD_ROLES
-from waiting import AnsweringMachineEntry, is_in_home_server
-import commands
-import commonbot.utils
 from collections import OrderedDict
 from threading import Lock
 from typing import cast
+
+import discord
+
+import commands
+import commonbot.utils
+import db
+from client import client
+from config import HOME_SERVER, THREAD_ROLES
+from waiting import AnsweringMachineEntry, is_in_home_server
 
 
 class MessageForwarder:

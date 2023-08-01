@@ -1,15 +1,13 @@
 from datetime import timedelta
-from re import search, IGNORECASE
+from re import IGNORECASE, search
 from typing import cast
 
 import discord
 
+from client import client
 from commonbot.user import UserLookup
 from commonbot.utils import check_roles
-
-from client import client
-from config import SPAM_CHAN, VALID_ROLES, IGNORE_SPAM
-
+from config import IGNORE_SPAM, SPAM_CHAN, VALID_ROLES
 from utils import get_userid
 
 SPAM_MES_THRESHOLD = 5

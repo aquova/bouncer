@@ -1,11 +1,12 @@
 from datetime import datetime
+from typing import cast
 
 import discord
 
 from client import client
 from commonbot.utils import combine_message
 from forwarder import message_forwarder
-from typing import cast
+
 
 class ReportResolveButton(discord.ui.Button):
     def __init__(self):

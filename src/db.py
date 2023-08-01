@@ -1,11 +1,11 @@
+import sqlite3
 from dataclasses import dataclass
 from datetime import datetime
-import sqlite3
 
 from commonbot.utils import format_time
-
 from config import DATABASE_PATH
 from logtypes import LogTypes, past_tense
+
 
 @dataclass
 class UserLogEntry:

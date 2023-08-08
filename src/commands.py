@@ -42,6 +42,7 @@ async def send_help_mes(mes: discord.Message, _):
         f"## DMs\n"
         f"Reply to a user in DMs: `{CMD_PREFIX}reply <user> <message>`\n"
         f"  You can also Discord reply to a DM with `{CMD_PREFIX}reply <message>`\n"
+        f"Get the ID of this user (only in DM threads): `{CMD_PREFIX}id`\n"
         f"View users waiting for a reply: `{CMD_PREFIX}waiting`. Clear the list with `{CMD_PREFIX}clear`\n"
         f"Stop a user from sending DMs to us: `{CMD_PREFIX}block/{CMD_PREFIX}unblock <user>`\n"
         f"## Misc\n"
@@ -124,6 +125,18 @@ async def search_helper(uid: int) -> str:
         ret += out
 
     return ret
+
+"""
+Get ID
+
+Sends the ID of the corresponding user DM thread, if it exists.
+"""
+async def get_id(mes: discord.Message, _):
+    uid = message_forwarder.get_userid_for_user_reply_thread(mes)
+    if uid is None:
+        await mes.channel.send("I can't get the user's ID. Are we in a DM thread?")
+    else:
+        await mes.channel.send(str(uid))
 
 """
 Log User

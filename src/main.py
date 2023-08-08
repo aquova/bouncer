@@ -37,6 +37,7 @@ FUNC_DICT = {
     "graph":       [visualize.post_plots,          None],
     "help":        [commands.send_help_mes,        None],
     "kick":        [commands.log_user,             LogTypes.KICK],
+    "id":          [commands.get_id,               None],
     "note":        [commands.log_user,             LogTypes.NOTE],
     "preview":     [commands.preview,              None],
     "remove":      [commands.remove_error,         False],

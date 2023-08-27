@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 from re import IGNORECASE, search
 from typing import cast
 
@@ -11,6 +11,7 @@ from config import IGNORE_SPAM, SPAM_CHAN, VALID_ROLES
 from utils import get_userid
 
 SPAM_MES_THRESHOLD = 5
+SPAM_TIME_THRESHOLD = timedelta(minutes=10)
 URL_REGEX = r"https?:\/\/.+\..+"
 NORMAL_TIMEOUT_MIN = 10
 URL_TIMEOUT_MIN = 60
@@ -19,7 +20,7 @@ ul = UserLookup()
 
 class Spammer:
     def __init__(self, message: discord.Message):
-        self.messages = [message]
+        self.reset(message)
 
     def __len__(self) -> int:
         return len(self.messages)
@@ -27,11 +28,18 @@ class Spammer:
     def __str__(self) -> str:
         return self.messages[0].content
 
+    def reset(self, message: discord.Message):
+        self.messages = [message]
+        self.timestamp = datetime.now()
+
     def add(self, message: discord.Message):
         if len(self.messages) > 0 and message.content == self.messages[0].content:
             self.messages.append(message)
         else:
-            self.messages = [message]
+            self.reset(message)
+
+    def get_timestamp(self) -> datetime:
+        return self.timestamp
 
 class Spammers:
     def __init__(self):
@@ -61,7 +69,7 @@ class Spammers:
 
         self.spammers[uid].add(message)
 
-        if len(self.spammers[uid]) >= SPAM_MES_THRESHOLD:
+        if len(self.spammers[uid]) >= SPAM_MES_THRESHOLD and datetime.now() - self.spammers[uid].get_timestamp() < SPAM_TIME_THRESHOLD:
             url_spam = bool(search(URL_REGEX, str(self.spammers[uid]), IGNORECASE))
             await self.mark_spammer(message.author, url_spam)
             return True

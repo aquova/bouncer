@@ -39,6 +39,7 @@ FUNC_DICT = {
     "kick":        [commands.log_user,             LogTypes.KICK],
     "id":          [commands.get_id,               None],
     "note":        [commands.log_user,             LogTypes.NOTE],
+    "open":        [commands.show_reply_thread,    None],
     "preview":     [commands.preview,              None],
     "remove":      [commands.remove_error,         False],
     "reply":       [commands.reply,                None],

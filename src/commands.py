@@ -45,6 +45,7 @@ async def send_help_mes(mes: discord.Message, _):
         f"Get the ID of this user (only in DM threads): `{CMD_PREFIX}id`\n"
         f"View users waiting for a reply: `{CMD_PREFIX}waiting`. Clear the list with `{CMD_PREFIX}clear`\n"
         f"Stop a user from sending DMs to us: `{CMD_PREFIX}block/{CMD_PREFIX}unblock <user>`\n"
+        f"Show the reply thread for a user: `{CMD_PREFIX}open <user>`\n"
         f"## Misc\n"
         f"Sync bot commands to the server: `{CMD_PREFIX}sync`\n"
         f"Remove a user's 'Muted' role: `{CMD_PREFIX}unmute <user>`\n"
@@ -228,6 +229,30 @@ async def log_user(mes: discord.Message, state: LogTypes):
     # Update database
     new_log.message_id = log_mes_id
     db.add_log(new_log)
+
+"""
+Show reply thread
+
+Sends the the reply thread for a user so it's easy for staff to find
+"""
+async def show_reply_thread(mes: discord.Message, _):
+    # Attempt to generate user object
+    userid, userid_from_message = await get_userid(mes, "open")
+    if not userid:
+        return
+
+    user = client.get_user(userid)
+    if user is None:
+        await mes.channel.send("That isn't a valid user.")
+        return
+
+    # Show reply thread if it exists
+    reply_thread_id = message_forwarder.get_reply_thread_id_for_user(user)
+    if reply_thread_id is None:
+        await mes.channel.send(f"User <@{user.id}> does not have a reply thread.")
+        return
+
+    await mes.channel.send(f"Reply thread for <@{user.id}>: <#{reply_thread_id}>.")
 
 """
 Preview message

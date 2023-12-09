@@ -16,29 +16,22 @@ import commands
 import config
 from client import client
 from forwarder import message_forwarder
-from logtypes import LogTypes
 from spam import Spammers
 
 # Initialize helper classes
 spam = Spammers()
 
 FUNC_DICT = {
-    "ban":         [commands.log_user,             LogTypes.BAN],
     "clear":       [commands.clear_am,             None],
     "edit":        [commands.remove_error,         True],
-    "kick":        [commands.log_user,             LogTypes.KICK],
     "id":          [commands.get_id,               None],
-    "note":        [commands.log_user,             LogTypes.NOTE],
     "open":        [commands.show_reply_thread,    None],
     "preview":     [commands.preview,              None],
     "remove":      [commands.remove_error,         False],
     "reply":       [commands.reply,                None],
     "say":         [commands.say,                  None],
-    "scam":        [commands.log_user,             LogTypes.SCAM],
     "search":      [commands.search_command,       None],
-    "unban":       [commands.log_user,             LogTypes.UNBAN],
     "waiting":     [commands.list_waiting,         None],
-    "warn":        [commands.log_user,             LogTypes.WARN],
     "unmute":      [spam.unmute,                   None],
 }
 

@@ -6,12 +6,11 @@ import commonbot.utils
 import config
 import db
 import visualize
-from blocks import BlockedUsers
 from client import client
 from commonbot.user import UserLookup
 from config import CMD_PREFIX
 from forwarder import message_forwarder
-from logtypes import LogTypes, past_tense, present_tense
+from logtypes import LogTypes, past_tense
 from utils import get_userid as utils_get_userid
 from waiting import AnsweringMachine
 
@@ -97,55 +96,36 @@ Log User
 
 Notes an infraction for a user
 """
-async def log_user(mes: discord.Message, state: LogTypes):
-    # Attempt to generate user object
-    userid, userid_from_message = await get_userid(mes, present_tense(state))
-    if not userid:
-        return
-
+async def log_user(user: discord.Member, reason: str, state: LogTypes, author: discord.User | discord.Member) -> str:
     current_time = datetime.now(timezone.utc)
-    # Attempt to fetch the username for the user
-    username = ul.fetch_username(client, userid)
-    if not username:
-        username = "ID: " + str(userid)
-        await mes.channel.send("I wasn't able to find a username for that user, but whatever, I'll do it anyway.")
-
-    # Generate log message, adding URLs of any attachments
-    content = commonbot.utils.combine_message(mes)
-    output = commonbot.utils.parse_message(content, username, userid_from_message)
+    output = ""
 
     if state == LogTypes.SCAM:
-        output = "Banned for sending scam in chat."
-
-    # If they didn't give a message, abort
-    if output == "":
-        await mes.channel.send("Please give a reason for why you want to log them.")
-        return
+        reason = "Banned for sending scam in chat."
 
     # Update records for graphing
     match state:
         case LogTypes.BAN | LogTypes.SCAM:
-            visualize.update_cache(mes.author.name, (1, 0), commonbot.utils.format_time(current_time))
+            visualize.update_cache(author.name, (1, 0), commonbot.utils.format_time(current_time))
         case LogTypes.WARN:
-            visualize.update_cache(mes.author.name, (0, 1), commonbot.utils.format_time(current_time))
+            visualize.update_cache(author.name, (0, 1), commonbot.utils.format_time(current_time))
         case LogTypes.UNBAN:
-            await mes.channel.send("Removing all old logs for unbanning")
-            db.clear_user_logs(userid)
+            output = "Removing all old logs for unbanning"
+            db.clear_user_logs(user.id)
 
     # Generate message for log channel
-    new_log = db.UserLogEntry(None, userid, state, current_time, output, mes.author.name, None)
-    log_message = f"[{commonbot.utils.format_time(current_time)}] `{username}` - {new_log.log_word()} by {mes.author.name} - {output}"
-    await mes.channel.send(log_message)
+    new_log = db.UserLogEntry(None, user.id, state, current_time, reason, author.name, None)
+    log_message = f"[{commonbot.utils.format_time(current_time)}] `{str(user)}` - {new_log.log_word()} by {author.name} - {reason}"
+    output += log_message
 
     # Send ban recommendation, if needed
-    count = db.get_warn_count(userid)
+    count = db.get_warn_count(user.id)
     if (state == LogTypes.WARN and count >= config.WARN_THRESHOLD):
-        await mes.channel.send(f"This user has received {config.WARN_THRESHOLD} warnings or more. It is recommended that they be banned.")
+        output += f"\nThis user has received {config.WARN_THRESHOLD} warnings or more. It is recommended that they be banned."
 
     # Record this action in the user's reply thread
-    user = client.get_user(userid)
-    if user:
-        await _add_context_to_reply_thread(mes, user, f"`{str(user)}` was {past_tense(state)}", output)
+    # TODO
+    # await _add_context_to_reply_thread(message, user, f"`{str(user)}` was {past_tense(state)}", reason)
 
     log_mes_id = 0
     # If we aren't noting, need to also write to log channel
@@ -155,33 +135,31 @@ async def log_user(mes: discord.Message, state: LogTypes):
         log_mes_id = log_mes.id
 
         try:
-            # Send a DM to the user
-            user = client.get_user(userid)
-            if user:
-                dm_chan = user.dm_channel
-                # If first time DMing, need to create channel
-                if not dm_chan:
-                    dm_chan = await user.create_dm()
+            dm_chan = user.dm_channel
+            # If first time DMing, need to create channel
+            if not dm_chan:
+                dm_chan = await user.create_dm()
 
-                # Only send DM when specified in configs
-                if state == LogTypes.BAN and config.DM_BAN:
-                    await dm_chan.send(BAN_KICK_MES.format(type="banned", mes=output))
-                elif state == LogTypes.WARN and config.DM_WARN:
-                    await dm_chan.send(WARN_MES.format(count=count, mes=output))
-                elif state == LogTypes.KICK and config.DM_BAN:
-                    await dm_chan.send(BAN_KICK_MES.format(type="kicked", mes=output))
-                elif state == LogTypes.SCAM and config.DM_BAN:
-                    await dm_chan.send(SCAM_MES)
+            # Only send DM when specified in configs
+            if state == LogTypes.BAN and config.DM_BAN:
+                await dm_chan.send(BAN_KICK_MES.format(type="banned", mes=reason))
+            elif state == LogTypes.WARN and config.DM_WARN:
+                await dm_chan.send(WARN_MES.format(count=count, mes=reason))
+            elif state == LogTypes.KICK and config.DM_BAN:
+                await dm_chan.send(BAN_KICK_MES.format(type="kicked", mes=reason))
+            elif state == LogTypes.SCAM and config.DM_BAN:
+                await dm_chan.send(SCAM_MES)
         # Exception handling
         except discord.errors.HTTPException as err:
             if err.code == 50007:
-                await mes.channel.send("Cannot send messages to this user. It is likely they have DM closed or I am blocked.")
+                output += "\nCannot send messages to this user. It is likely they have DM closed or I am blocked."
             else:
-                await mes.channel.send(f"ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {err}")
+                output += f"\nERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {err}"
 
     # Update database
     new_log.message_id = log_mes_id
     db.add_log(new_log)
+    return output
 
 """
 Show reply thread

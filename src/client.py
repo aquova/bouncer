@@ -1,14 +1,14 @@
 from typing import cast
 
 import discord
+from discord.ext import commands
 
-from config import LOG_CHAN, MAILBOX, SYS_LOG, WATCHLIST_CHAN
+from config import CMD_PREFIX, LOG_CHAN, MAILBOX, SYS_LOG, WATCHLIST_CHAN
 
-
-class DiscordClient(discord.Client):
-    def __init__(self, *, intents: discord.Intents):
-        super().__init__(intents=intents)
-        self.tree = discord.app_commands.CommandTree(self)
+class DiscordClient(commands.Bot):
+    def __init__(self):
+        intents = discord.Intents.all()
+        super().__init__(command_prefix=CMD_PREFIX, intents=intents)
 
     def set_channels(self):
         self.mailbox = cast(discord.TextChannel, self.get_channel(MAILBOX))
@@ -21,5 +21,4 @@ class DiscordClient(discord.Client):
         self.tree.copy_global_to(guild=guild)
         await self.tree.sync(guild=guild)
 
-my_intents = discord.Intents.all()
-client = DiscordClient(intents=my_intents)
+client = DiscordClient()

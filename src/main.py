@@ -120,8 +120,7 @@ Runs when a guild (server) becomes available to the bot
 """
 @client.event
 async def on_guild_available(guild: discord.Guild):
-    if not dbg.is_debug_bot():
-        await client.sync_guild(guild)
+    await client.sync_guild(guild)
 
 """
 On Thread Create

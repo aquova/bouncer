@@ -10,7 +10,7 @@ from client import client
 from commonbot.user import UserLookup
 from config import CMD_PREFIX
 from forwarder import message_forwarder
-from logtypes import LogTypes, past_tense
+from logtypes import LogTypes
 from utils import get_userid as utils_get_userid
 from waiting import AnsweringMachine
 
@@ -36,38 +36,16 @@ async def list_waiting(message: discord.Message, _):
             await message.channel.send(mes)
 
 
-"""
-User Search
-
-Searches the database for the specified user, given a message
-"""
-async def search_command(mes: discord.Message, _):
-    userid, _ = await get_userid(mes, "search")
-    if not userid:
-        return
-
-    output = await search_helper(userid)
-    await commonbot.utils.send_message(output, mes.channel)
-
-
 async def get_userid(mes: discord.Message, cmd: str, args: str = "") -> tuple[int | None, bool]:
     return await utils_get_userid(ul, mes, cmd, args)
 
-
-async def search_helper(uid: int) -> str:
-    ret = ""
-    # Get database values for given user
-    search_results = db.search(uid)
-    username = ul.fetch_username(client, uid)
-
-    if not search_results:
-        if username:
-            ret += f"User {username} was not found in the database\n"
-        else:
-            return "That user was not found in the database or the server\n"
+def search_logs(user: discord.Member) -> str:
+    search_results = db.search(user.id)
+    if len(search_results) == 0:
+        return f"User {str(user)} was not found in the database\n"
     else:
         # Format output message
-        out = f"User `{username}` (ID: {uid}) was found with the following infractions\n"
+        out = f"User `{str(user)}` (ID: {user.id}) was found with the following infractions\n"
         warn_cnt = 0
         for index, item in enumerate(search_results):
             if item.log_type == LogTypes.WARN:
@@ -75,9 +53,7 @@ async def search_helper(uid: int) -> str:
                 out += f"{index + 1}. {db.UserLogEntry.format(item, warn_cnt)}"
             else:
                 out += f"{index + 1}. {db.UserLogEntry.format(item, None)}"
-        ret += out
-
-    return ret
+        return out
 
 """
 Get ID

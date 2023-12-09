@@ -30,7 +30,6 @@ FUNC_DICT = {
     "remove":      [commands.remove_error,         False],
     "reply":       [commands.reply,                None],
     "say":         [commands.say,                  None],
-    "search":      [commands.search_command,       None],
     "waiting":     [commands.list_waiting,         None],
     "unmute":      [spam.unmute,                   None],
 }

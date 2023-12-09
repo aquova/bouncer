@@ -41,6 +41,12 @@ async def scam_slash(interaction: discord.Interaction, user: discord.Member):
     response = await commands.log_user(user, "", LogTypes.SCAM, interaction.user)
     await interaction.response.send_message(response)
 
+@client.tree.command(name="search", description="Search for a user's logs")
+@discord.app_commands.describe(user="User")
+async def search_slash(interaction: discord.Interaction, user: discord.Member):
+    response = commands.search_logs(user)
+    await interaction.response.send_message(response)
+
 @client.tree.command(name="unban", description="Log a user unbanning")
 @discord.app_commands.describe(user="User", reason="Reason for unbanning")
 async def unban_slash(interaction: discord.Interaction, user: discord.Member, reason: str):

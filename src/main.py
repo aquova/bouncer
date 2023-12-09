@@ -9,7 +9,6 @@ import humanize
 import commonbot.utils
 # Needs to happen before other imports that cause db to be queried
 import db
-from commonbot.debug import Debug
 
 db.initialize()
 
@@ -22,7 +21,6 @@ from spam import Spammers
 from watcher import Watcher
 
 # Initialize helper classes
-dbg = Debug(config.OWNER, config.CMD_PREFIX, config.DEBUG_BOT)
 spam = Spammers()
 watch = Watcher()
 
@@ -78,7 +76,7 @@ def should_log(server: discord.Guild) -> bool:
     if not server:
         return False
 
-    return not dbg.is_debug_bot() and server.id == config.HOME_SERVER
+    return not config.DEBUG_BOT and server.id == config.HOME_SERVER
 
 """
 On Ready
@@ -98,13 +96,6 @@ async def on_ready():
 
     client.set_channels()
     spam.set_channel()
-
-    if not dbg.is_debug_bot():
-        # Upload our DB file to a private channel as a backup
-        current_time = datetime.now(timezone.utc)
-        filename = f"bouncer_backup_{commonbot.utils.format_time(current_time)}.db"
-        with open(config.DATABASE_PATH, 'rb') as db_file:
-            await client.log.send(file=discord.File(db_file, filename=filename))
 
 """
 On Guild Available
@@ -321,14 +312,6 @@ async def on_message(message: discord.Message):
         return
 
     try:
-        # Allows the owner to enable debug mode
-        if dbg.check_toggle(message):
-            await dbg.toggle_debug(message)
-            return
-
-        if dbg.should_ignore_message(message):
-            return
-
         # If bouncer detects a private DM sent to it, forward it to staff
         if isinstance(message.channel, discord.channel.DMChannel):
             await message_forwarder.on_dm(message)

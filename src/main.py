@@ -10,7 +10,6 @@ import commonbot.utils
 # Needs to happen before other imports that cause db to be queried
 import db
 from commonbot.debug import Debug
-from commonbot.timekeep import Timekeeper
 
 db.initialize()
 
@@ -26,7 +25,6 @@ from watcher import Watcher
 # Initialize helper classes
 dbg = Debug(config.OWNER, config.CMD_PREFIX, config.DEBUG_BOT)
 spam = Spammers()
-tk = Timekeeper()
 watch = Watcher()
 
 FUNC_DICT = {
@@ -35,7 +33,6 @@ FUNC_DICT = {
     "clear":       [commands.clear_am,             None],
     "edit":        [commands.remove_error,         True],
     "graph":       [visualize.post_plots,          None],
-    "help":        [commands.send_help_mes,        None],
     "kick":        [commands.log_user,             LogTypes.KICK],
     "id":          [commands.get_id,               None],
     "note":        [commands.log_user,             LogTypes.NOTE],
@@ -46,10 +43,8 @@ FUNC_DICT = {
     "say":         [commands.say,                  None],
     "scam":        [commands.log_user,             LogTypes.SCAM],
     "search":      [commands.search_command,       None],
-    "sync":        [commands.sync,                 None],
     "unban":       [commands.log_user,             LogTypes.UNBAN],
     "unblock":     [commands.block_user,           False],
-    "uptime":      [tk.uptime,                     None],
     "waiting":     [commands.list_waiting,         None],
     "warn":        [commands.log_user,             LogTypes.WARN],
     "watch":       [watch.watch_user,              None],

@@ -23,47 +23,6 @@ BAN_KICK_MES = "Hi there! You've been {type} from the Stardew Valley Discord for
 SCAM_MES = "Hi there! You've been banned from the Stardew Valley Discord for posting scam links. If your account was compromised, please change your password, enable 2FA, and join <https://discord.gg/uz6KPaCPhf> to appeal."
 WARN_MES = "Hi there! You've received warning #{count} in the Stardew Valley Discord for violating the rules: `{mes}`. Please review <#980331408658661426> and <#980331531425959996> for more info. If you have any questions, you can reply directly to this message to contact the staff."
 
-async def send_help_mes(mes: discord.Message, _):
-    dm_warns = "On" if config.DM_WARN else "Off"
-    dm_bans = "On" if config.DM_BAN else "Off"
-    help_mes = (
-        f"## Logging\n"
-        f"Issue a warning: `{CMD_PREFIX}warn <user> <message>`\n"
-        f"Log a ban: `{CMD_PREFIX}ban <user> <reason>`\n"
-        f"Log an unbanning: `{CMD_PREFIX}unban <user> <reason>`\n"
-        f"Log a kick: `{CMD_PREFIX}kick <user> <reason>`\n"
-        f"Ban with a pre-made scam message: `{CMD_PREFIX}scam <user>`\n"
-        f"Preview what will be sent to the user `{CMD_PREFIX}preview <warn/ban/kick> <reason>`\n"
-        f"## Users\n"
-        f"Search for a user: `{CMD_PREFIX}search <user>`\n"
-        f"Create a note about a user: `{CMD_PREFIX}note <user> <message>`\n"
-        f"Remove a user's log: `{CMD_PREFIX}remove <user> <index(optional)>`\n"
-        f"Edit a user's note: `{CMD_PREFIX}edit <user> <index(optional)> <new_message>`\n"
-        f"## DMs\n"
-        f"Reply to a user in DMs: `{CMD_PREFIX}reply <user> <message>`\n"
-        f"  You can also Discord reply to a DM with `{CMD_PREFIX}reply <message>`\n"
-        f"Get the ID of this user (only in DM threads): `{CMD_PREFIX}id`\n"
-        f"View users waiting for a reply: `{CMD_PREFIX}waiting`. Clear the list with `{CMD_PREFIX}clear`\n"
-        f"Stop a user from sending DMs to us: `{CMD_PREFIX}block/{CMD_PREFIX}unblock <user>`\n"
-        f"Show the reply thread for a user: `{CMD_PREFIX}open <user>`\n"
-        f"## Misc\n"
-        f"Sync bot commands to the server: `{CMD_PREFIX}sync`\n"
-        f"Remove a user's 'Muted' role: `{CMD_PREFIX}unmute <user>`\n"
-        f"Say a message as the bot: `{CMD_PREFIX}say <channel> <message>`\n"
-        f"## Watchlist\n"
-        f"Watch a user's every move: `{CMD_PREFIX}watch <user>`\n"
-        f"Remove user from watch list: `{CMD_PREFIX}unwatch <user>`\n"
-        f"List watched users: `{CMD_PREFIX}watchlist`\n"
-        f"## Stats\n"
-        f"Plot warn/ban stats: `{CMD_PREFIX}graph`\n"
-        f"View bot uptime: `{CMD_PREFIX}uptime`\n"
-        f"## Config\n"
-        f"DMing users when they are banned is `{dm_bans}`\n"
-        f"DMing users when they are warned is `{dm_warns}`"
-    )
-
-    await mes.channel.send(help_mes)
-
 async def clear_am(message: discord.Message, _):
     am.clear_entries()
     await message.channel.send("Cleared waiting messages!")
@@ -78,11 +37,6 @@ async def list_waiting(message: discord.Message, _):
         for mes in mes_list:
             await message.channel.send(mes)
 
-
-async def sync(message: discord.Message, _):
-    if message.guild is not None:
-        await client.sync_guild(message.guild)
-        await message.channel.send("Server synced")
 
 """
 User Search

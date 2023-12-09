@@ -41,6 +41,12 @@ async def preview_slash(interaction: discord.Interaction, reason: str, log_type:
     response = commands.preview(reason, log_type)
     await interaction.response.send_message(response)
 
+@client.tree.command(name="say", description="Say a message as the bot")
+@discord.app_commands.describe(message="Message to say", channel="Channel to post in")
+async def say_slash(interaction: discord.Interaction, message: str, channel: discord.TextChannel | discord.Thread):
+    await channel.send(message)
+    await interaction.response.send_message("Message sent!", ephemeral=True)
+
 @client.tree.command(name="scam", description="Log a scam")
 @discord.app_commands.describe(user="User")
 async def scam_slash(interaction: discord.Interaction, user: discord.Member):

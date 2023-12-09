@@ -29,7 +29,6 @@ FUNC_DICT = {
     "preview":     [commands.preview,              None],
     "remove":      [commands.remove_error,         False],
     "reply":       [commands.reply,                None],
-    "say":         [commands.say,                  None],
     "waiting":     [commands.list_waiting,         None],
     "unmute":      [spam.unmute,                   None],
 }

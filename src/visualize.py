@@ -103,12 +103,14 @@ def gen_monthly_plot():
 
     plt.savefig(MONTH_PLOT)
 
-async def post_plots(message: discord.Message, _):
+async def post_plots(response: discord.InteractionResponse):
     gen_user_plot()
     gen_monthly_plot()
 
+    files = []
     with open(USER_PLOT, 'rb') as user_file:
-        await message.channel.send(file=discord.File(user_file))
+        files.append(discord.File(user_file))
 
     with open(MONTH_PLOT, 'rb') as month_file:
-        await message.channel.send(file=discord.File(month_file))
+        files.append(discord.File(month_file))
+    await response.send_message(files=files)

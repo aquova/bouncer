@@ -15,7 +15,6 @@ db.initialize()
 
 import commands
 import config
-import visualize
 from client import client
 from forwarder import message_forwarder
 from logtypes import LogTypes
@@ -32,7 +31,6 @@ FUNC_DICT = {
     "block":       [commands.block_user,           True],
     "clear":       [commands.clear_am,             None],
     "edit":        [commands.remove_error,         True],
-    "graph":       [visualize.post_plots,          None],
     "kick":        [commands.log_user,             LogTypes.KICK],
     "id":          [commands.get_id,               None],
     "note":        [commands.log_user,             LogTypes.NOTE],

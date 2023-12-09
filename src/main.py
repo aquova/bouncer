@@ -22,14 +22,12 @@ from spam import Spammers
 spam = Spammers()
 
 FUNC_DICT = {
-    "clear":       [commands.clear_am,             None],
     "edit":        [commands.remove_error,         True],
     "id":          [commands.get_id,               None],
     "open":        [commands.show_reply_thread,    None],
     "preview":     [commands.preview,              None],
     "remove":      [commands.remove_error,         False],
     "reply":       [commands.reply,                None],
-    "waiting":     [commands.list_waiting,         None],
     "unmute":      [spam.unmute,                   None],
 }
 
@@ -156,7 +154,7 @@ async def on_member_ban(server: discord.Guild, member: discord.Member):
         return
 
     # We can remove banned user from our answering machine and watch list (if they exist)
-    commands.am.remove_entry(member.id)
+    client.am.remove_entry(member.id)
     client.watch.remove_user(member.id)
 
     # Keep a record of their banning, in case the log is made after they're no longer here
@@ -176,7 +174,7 @@ async def on_member_remove(member: discord.Member):
         return
 
     # We can remove left users from our answering machine
-    commands.am.remove_entry(member.id)
+    client.am.remove_entry(member.id)
 
     # Remember that the user has left, in case we want to log after they're gone
     username = str(member)

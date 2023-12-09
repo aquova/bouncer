@@ -8,7 +8,7 @@ class BlockedUsers:
         self.blocklist = [x[0] for x in block_db]
 
     def handle_block(self, user: discord.Member, block: bool) -> str:
-        is_blocked = self._is_in_blocklist(user.id)
+        is_blocked = self.is_in_blocklist(user.id)
         if block:
             if is_blocked:
                 return "Um... That user was already blocked..."
@@ -30,5 +30,5 @@ class BlockedUsers:
         db.remove_block(userid)
         self.blocklist.remove(userid)
 
-    def _is_in_blocklist(self, userid: int) -> bool:
+    def is_in_blocklist(self, userid: int) -> bool:
         return userid in self.blocklist

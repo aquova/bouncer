@@ -31,7 +31,13 @@ class AnsweringMachine:
     def clear_entries(self):
         self.waiting_list.clear()
 
-    def gen_waiting_list(self) -> list[str]:
+    def list_waiting(self) -> str:
+        waiting = self._gen_waiting_list()
+        if len(waiting) == 0:
+            return "There are no messages waiting!"
+        return "\n".join(waiting)
+
+    def _gen_waiting_list(self) -> list[str]:
         curr_time = datetime.now(timezone.utc)
         waiting_list = self.get_entries().copy()
         output_list = []

@@ -5,12 +5,14 @@ from discord.ext import commands
 
 from blocks import BlockedUsers
 from config import CMD_PREFIX, LOG_CHAN, MAILBOX, SYS_LOG, WATCHLIST_CHAN
+from waiting import AnsweringMachine
 from watcher import Watcher
 
 class DiscordClient(commands.Bot):
     def __init__(self):
         intents = discord.Intents.all()
         super().__init__(command_prefix=CMD_PREFIX, intents=intents)
+        self.am = AnsweringMachine()
         self.blocks = BlockedUsers()
         self.watch = Watcher()
 

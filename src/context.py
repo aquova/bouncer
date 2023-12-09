@@ -19,6 +19,11 @@ async def block_slash(interaction: discord.Interaction, user: discord.Member, bl
     response = client.blocks.handle_block(user, block)
     await interaction.response.send_message(response)
 
+@client.tree.command(name="clear", description="Clear list of users waiting for reply")
+async def clear_slash(interaction: discord.Interaction):
+    client.am.clear_entries()
+    await interaction.response.send_message("Cleared waiting messages!")
+
 @client.tree.command(name="graph", description="Post graphs of moderator activity")
 async def graph_slash(interaction: discord.Interaction):
     await post_plots(interaction.response)
@@ -63,6 +68,11 @@ async def search_slash(interaction: discord.Interaction, user: discord.Member):
 @discord.app_commands.describe(user="User", reason="Reason for unbanning")
 async def unban_slash(interaction: discord.Interaction, user: discord.Member, reason: str):
     response = await commands.log_user(user, reason, LogTypes.UNBAN, interaction.user)
+    await interaction.response.send_message(response)
+
+@client.tree.command(name="waiting", description="List users who are waiting for a reply")
+async def waiting_slash(interaction: discord.Interaction):
+    response = client.am.list_waiting()
     await interaction.response.send_message(response)
 
 @client.tree.command(name="warn", description="Log a user warn")

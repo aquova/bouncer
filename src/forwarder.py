@@ -4,7 +4,6 @@ from typing import cast
 
 import discord
 
-import commands
 import commonbot.utils
 import db
 from client import client
@@ -45,7 +44,7 @@ class MessageForwarder:
         :param edit: Whether this message was an edit
         """
         # Ignore blocked users
-        if commands.bu.is_in_blocklist(message.author.id):
+        if client.blocks.is_in_blocklist(message.author.id):
             return
 
         # If the user is in the home server, treat it as a regular DM
@@ -86,7 +85,7 @@ class MessageForwarder:
         # Record that the user is waiting for a reply
         url = log_mes.jump_url if log_mes else None
         mes_entry = AnsweringMachineEntry(str(message.author), message.created_at, content, url)
-        commands.am.update_entry(message.author.id, mes_entry)
+        client.am.update_entry(message.author.id, mes_entry)
 
     def get_userid_for_user_reply_thread(self, message: discord.Message) -> int | None:
         """

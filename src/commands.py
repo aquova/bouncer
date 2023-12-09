@@ -12,29 +12,12 @@ from config import CMD_PREFIX
 from forwarder import message_forwarder
 from logtypes import LogTypes
 from utils import get_userid as utils_get_userid
-from waiting import AnsweringMachine
 
 ul = UserLookup()
-am = AnsweringMachine()
 
 BAN_KICK_MES = "Hi there! You've been {type} from the Stardew Valley Discord for violating the rules: `{mes}`. If you have any questions, and for information on appeals, you can join <https://discord.gg/uz6KPaCPhf>."
 SCAM_MES = "Hi there! You've been banned from the Stardew Valley Discord for posting scam links. If your account was compromised, please change your password, enable 2FA, and join <https://discord.gg/uz6KPaCPhf> to appeal."
 WARN_MES = "Hi there! You've received warning #{count} in the Stardew Valley Discord for violating the rules: `{mes}`. Please review <#980331408658661426> and <#980331531425959996> for more info. If you have any questions, you can reply directly to this message to contact the staff."
-
-async def clear_am(message: discord.Message, _):
-    am.clear_entries()
-    await message.channel.send("Cleared waiting messages!")
-
-
-async def list_waiting(message: discord.Message, _):
-    mes_list = am.gen_waiting_list()
-
-    if len(mes_list) == 0:
-        await message.channel.send("There are no messages waiting")
-    else:
-        for mes in mes_list:
-            await message.channel.send(mes)
-
 
 async def get_userid(mes: discord.Message, cmd: str, args: str = "") -> tuple[int | None, bool]:
     return await utils_get_userid(ul, mes, cmd, args)
@@ -296,7 +279,7 @@ async def reply(mes: discord.Message, _):
         await mes.channel.send(f"Message sent to `{str(user)}`.")
 
         # If they were in our answering machine, they have been replied to, and can be removed
-        am.remove_entry(user.id)
+        client.am.remove_entry(user.id)
 
         # Add context in the user's reply thread
         await _add_context_to_reply_thread(mes, user, f"Message sent to `{str(user)}`", output)

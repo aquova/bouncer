@@ -16,7 +16,6 @@ from utils import get_userid as utils_get_userid
 from waiting import AnsweringMachine
 
 ul = UserLookup()
-bu = BlockedUsers()
 am = AnsweringMachine()
 
 BAN_KICK_MES = "Hi there! You've been {type} from the Stardew Valley Discord for violating the rules: `{mes}`. If you have any questions, and for information on appeals, you can join <https://discord.gg/uz6KPaCPhf>."
@@ -330,35 +329,6 @@ async def remove_error(mes: discord.Message, edit: bool):
         # Print message if unable to find message to delete, but don't stop
         except discord.errors.HTTPException as err:
             print(f"Unable to find message to delete: {str(err)}")
-
-"""
-Block User
-
-Prevents DMs from a given user from being forwarded
-"""
-async def block_user(mes: discord.Message, block: bool):
-    userid, _ = await get_userid(mes, "block" if block else "unblock")
-    if not userid:
-        return
-
-    username = ul.fetch_username(client, userid)
-    if not username:
-        username = str(userid)
-
-    # Store in the database that the given user is un/blocked
-    # Also update current block list to match
-    if block:
-        if bu.is_in_blocklist(userid):
-            await mes.channel.send("Um... That user was already blocked...")
-        else:
-            bu.block_user(userid)
-            await mes.channel.send(f"I have now blocked {username}. Their DMs will no longer be forwarded.")
-    else:
-        if not bu.is_in_blocklist(userid):
-            await mes.channel.send("That user hasn't been blocked...")
-        else:
-            bu.unblock_user(userid)
-            await mes.channel.send(f"I have now unblocked {username}. Their DMs will now be forwarded.")
 
 """
 Reply

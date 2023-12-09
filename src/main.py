@@ -26,7 +26,6 @@ watch = Watcher()
 
 FUNC_DICT = {
     "ban":         [commands.log_user,             LogTypes.BAN],
-    "block":       [commands.block_user,           True],
     "clear":       [commands.clear_am,             None],
     "edit":        [commands.remove_error,         True],
     "kick":        [commands.log_user,             LogTypes.KICK],
@@ -40,7 +39,6 @@ FUNC_DICT = {
     "scam":        [commands.log_user,             LogTypes.SCAM],
     "search":      [commands.search_command,       None],
     "unban":       [commands.log_user,             LogTypes.UNBAN],
-    "unblock":     [commands.block_user,           False],
     "waiting":     [commands.list_waiting,         None],
     "warn":        [commands.log_user,             LogTypes.WARN],
     "watch":       [watch.watch_user,              None],

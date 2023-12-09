@@ -3,12 +3,14 @@ from typing import cast
 import discord
 from discord.ext import commands
 
+from blocks import BlockedUsers
 from config import CMD_PREFIX, LOG_CHAN, MAILBOX, SYS_LOG, WATCHLIST_CHAN
 
 class DiscordClient(commands.Bot):
     def __init__(self):
         intents = discord.Intents.all()
         super().__init__(command_prefix=CMD_PREFIX, intents=intents)
+        self.blocks = BlockedUsers()
 
     def set_channels(self):
         self.mailbox = cast(discord.TextChannel, self.get_channel(MAILBOX))

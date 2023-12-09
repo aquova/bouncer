@@ -4,6 +4,12 @@ from client import client
 from report import ReportModal
 from visualize import post_plots
 
+@client.tree.command(name="block", description="Change if user can DM us")
+@discord.app_commands.describe(user="User", block="Block?")
+async def block_slash(interaction: discord.Interaction, user: discord.Member, block: bool):
+    response = client.blocks.handle_block(user, block)
+    await interaction.response.send_message(response)
+
 @client.tree.command(name="graph", description="Post graphs of moderator activity")
 async def graph_slash(interaction: discord.Interaction):
     await post_plots(interaction.response)

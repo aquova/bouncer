@@ -166,51 +166,24 @@ Preview message
 
 Prints out Bouncer's DM message as the user will receive it
 """
-async def preview(mes: discord.Message, _):
-    output = commonbot.utils.strip_words(mes.content, 1)
+def preview(reason: str, log_type: LogTypes) -> str:
+    if not config.DM_BAN and (log_type == LogTypes.BAN or log_type == LogTypes.KICK or log_type == LogTypes.SCAM):
+        return "DMing the user about their bans is currently off, they won't see any message"
 
-    state_raw = commonbot.utils.get_first_word(output)
-    output = commonbot.utils.strip_words(output, 1)
+    if not config.DM_WARN and log_type == LogTypes.WARN:
+        return "DMing the user about their warns is currently off, they won't see any message"
 
-    state = None
-    if state_raw == "ban":
-        state = LogTypes.BAN
-    elif state_raw == "kick":
-        state = LogTypes.KICK
-    elif state_raw == "warn":
-        state = LogTypes.WARN
-    elif state_raw == "scam":
-        state = LogTypes.SCAM
-    else:
-        await mes.channel.send(f"I have no idea what a {state_raw} is, but it's certainly not a `ban`, `warn`, or `kick`.")
-        return
-
-    # Might as well mimic logging behavior
-    if output == "" and state != LogTypes.SCAM:
-        await mes.channel.send("Please give a reason for why you want to log them.")
-        return
-
-    match state:
+    match log_type:
         case LogTypes.BAN:
-            if config.DM_BAN:
-                await mes.channel.send(BAN_KICK_MES.format(type="banned", mes=output))
-            else:
-                await mes.channel.send("DMing the user about their bans is currently off, they won't see any message")
+            return BAN_KICK_MES.format(type="banned", mes=reason)
         case LogTypes.WARN:
-            if config.DM_WARN:
-                await mes.channel.send(WARN_MES.format(count="X",mes=output))
-            else:
-                await mes.channel.send("DMing the user about their warns is currently off, they won't see any message")
+                return WARN_MES.format(count="X",mes=reason)
         case LogTypes.KICK:
-            if config.DM_BAN:
-                await mes.channel.send(BAN_KICK_MES.format(type="kicked", mes=output))
-            else:
-                await mes.channel.send("DMing the user about their kicks is currently off, they won't see any message")
+                return BAN_KICK_MES.format(type="kicked", mes=reason)
         case LogTypes.SCAM:
-            if config.DM_BAN:
-                await mes.channel.send(SCAM_MES)
-            else:
-                await mes.channel.send("DMing the user about their bans is currently off, they won't see any message")
+            return SCAM_MES
+        case _:
+            return "We don't DM the user for those."
 
 """
 Remove Error

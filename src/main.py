@@ -18,11 +18,9 @@ from client import client
 from forwarder import message_forwarder
 from logtypes import LogTypes
 from spam import Spammers
-from watcher import Watcher
 
 # Initialize helper classes
 spam = Spammers()
-watch = Watcher()
 
 FUNC_DICT = {
     "ban":         [commands.log_user,             LogTypes.BAN],
@@ -41,10 +39,7 @@ FUNC_DICT = {
     "unban":       [commands.log_user,             LogTypes.UNBAN],
     "waiting":     [commands.list_waiting,         None],
     "warn":        [commands.log_user,             LogTypes.WARN],
-    "watch":       [watch.watch_user,              None],
-    "watchlist":   [watch.get_watchlist,           None],
     "unmute":      [spam.unmute,                   None],
-    "unwatch":     [watch.unwatch_user,            None],
 }
 
 """
@@ -171,7 +166,7 @@ async def on_member_ban(server: discord.Guild, member: discord.Member):
 
     # We can remove banned user from our answering machine and watch list (if they exist)
     commands.am.remove_entry(member.id)
-    watch.remove_user(member.id)
+    client.watch.remove_user(member.id)
 
     # Keep a record of their banning, in case the log is made after they're no longer here
     username = str(member)
@@ -247,7 +242,7 @@ async def on_message_edit(before: discord.Message, after: discord.Message):
         await commonbot.utils.send_message(mes, client.syslog)
 
         # If user is on watchlist, then post it there as well
-        watching = watch.should_note(after.author.id)
+        watching = client.watch.should_note(after.author.id)
         if watching:
             await commonbot.utils.send_message(mes, client.watchlist)
 
@@ -320,7 +315,7 @@ async def on_message(message: discord.Message):
             return
 
         # Check if user is on watchlist, and should be tracked
-        watching = watch.should_note(message.author.id)
+        watching = client.watch.should_note(message.author.id)
         if watching:
             content = commonbot.utils.combine_message(message)
             mes = f"<@{str(message.author.id)}> said in <#{message.channel.id}>: {content}"

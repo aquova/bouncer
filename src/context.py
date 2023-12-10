@@ -7,12 +7,6 @@ from report import ReportModal
 from visualize import post_plots
 
 ### Slash Commands
-@client.tree.command(name="ban", description="Log a user ban")
-@discord.app_commands.describe(user="User", reason="Reason for banning")
-async def ban_slash(interaction: discord.Interaction, user: discord.Member, reason: str):
-    response = await commands.log_user(user, reason, LogTypes.BAN, interaction.user)
-    await interaction.response.send_message(response)
-
 @client.tree.command(name="block", description="Change if user can DM us")
 @discord.app_commands.describe(user="User", block="Block?")
 async def block_slash(interaction: discord.Interaction, user: discord.Member, block: bool):
@@ -28,10 +22,19 @@ async def clear_slash(interaction: discord.Interaction):
 async def graph_slash(interaction: discord.Interaction):
     await post_plots(interaction.response)
 
-@client.tree.command(name="kick", description="Log a user kick")
-@discord.app_commands.describe(user="User", reason="Reason for kicking")
-async def kick_slash(interaction: discord.Interaction, user: discord.Member, reason: str):
-    response = await commands.log_user(user, reason, LogTypes.KICK, interaction.user)
+# Note and Scam have their own separate commands:
+# - Scam is meant to be a shortcut with fewer fields
+# - Notes don't send DMs to their targets, so keep it separate in case of misclicks
+@client.tree.command(name="log", description="Log a user infraction")
+@discord.app_commands.describe(user="User", reason="Reason for log", log_type="Type of log")
+@discord.app_commands.choices(log_type=[
+    discord.app_commands.Choice(name="Ban", value=LogTypes.BAN),
+    discord.app_commands.Choice(name="Warn", value=LogTypes.WARN),
+    discord.app_commands.Choice(name="Kick", value=LogTypes.KICK),
+    discord.app_commands.Choice(name="Unban", value=LogTypes.UNBAN),
+])
+async def log_slash(interaction: discord.Interaction, user: discord.Member, reason: str, log_type: LogTypes):
+    response = await commands.log_user(user, reason, log_type, interaction.user)
     await interaction.response.send_message(response)
 
 @client.tree.command(name="note", description="Add a user note")
@@ -70,21 +73,9 @@ async def search_slash(interaction: discord.Interaction, user: discord.Member):
     response = commands.search_logs(user)
     await interaction.response.send_message(response)
 
-@client.tree.command(name="unban", description="Log a user unbanning")
-@discord.app_commands.describe(user="User", reason="Reason for unbanning")
-async def unban_slash(interaction: discord.Interaction, user: discord.Member, reason: str):
-    response = await commands.log_user(user, reason, LogTypes.UNBAN, interaction.user)
-    await interaction.response.send_message(response)
-
 @client.tree.command(name="waiting", description="List users who are waiting for a reply")
 async def waiting_slash(interaction: discord.Interaction):
     response = client.am.list_waiting()
-    await interaction.response.send_message(response)
-
-@client.tree.command(name="warn", description="Log a user warn")
-@discord.app_commands.describe(user="User", reason="Reason for warning")
-async def warn_slash(interaction: discord.Interaction, user: discord.Member, reason: str):
-    response = await commands.log_user(user, reason, LogTypes.WARN, interaction.user)
     await interaction.response.send_message(response)
 
 @client.tree.command(name="watch", description="Edit the watchlist")

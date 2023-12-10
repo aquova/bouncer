@@ -7,10 +7,6 @@ import discord
 import humanize
 
 import commonbot.utils
-# Needs to happen before other imports that cause db to be queried
-import db
-
-db.initialize()
 
 import commands
 import config

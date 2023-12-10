@@ -57,8 +57,7 @@ Whether the bot should log this event in config.SYS_LOG
 def should_log(server: discord.Guild) -> bool:
     if not server:
         return False
-
-    return not config.DEBUG_BOT and server.id == config.HOME_SERVER
+    return server.id == config.HOME_SERVER
 
 """
 On Ready

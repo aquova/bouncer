@@ -30,7 +30,6 @@ VALID_ROLES = cfg['roles']['admin']
 
 DM_BAN = cfg['DM']['ban']
 DM_WARN = cfg['DM']['warn']
-DEBUG_BOT = (cfg['debug'].upper() == "TRUE")
 
 USER_PLOT = "./private/user_plot.png"
 MONTH_PLOT = "./private/month_plot.png"

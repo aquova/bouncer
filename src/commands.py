@@ -10,6 +10,9 @@ from forwarder import message_forwarder
 from logtypes import LogTypes
 import utils
 
+# Add extra message if more than threshold number of warns
+_WARN_THRESHOLD = 3
+
 BAN_KICK_MES = "Hi there! You've been {type} from the Stardew Valley Discord for violating the rules: `{mes}`. If you have any questions, and for information on appeals, you can join <https://discord.gg/uz6KPaCPhf>."
 SCAM_MES = "Hi there! You've been banned from the Stardew Valley Discord for posting scam links. If your account was compromised, please change your password, enable 2FA, and join <https://discord.gg/uz6KPaCPhf> to appeal."
 WARN_MES = "Hi there! You've received warning #{count} in the Stardew Valley Discord for violating the rules: `{mes}`. Please review <#980331408658661426> and <#980331531425959996> for more info. If you have any questions, you can reply directly to this message to contact the staff."
@@ -64,8 +67,8 @@ async def log_user(user: discord.Member, reason: str, state: LogTypes, author: d
 
     # Send ban recommendation, if needed
     count = db.get_warn_count(user.id)
-    if (state == LogTypes.WARN and count >= config.WARN_THRESHOLD):
-        output += f"\nThis user has received {config.WARN_THRESHOLD} warnings or more. It is recommended that they be banned."
+    if (state == LogTypes.WARN and count >= _WARN_THRESHOLD):
+        output += f"\nThis user has received {_WARN_THRESHOLD} warnings or more. It is recommended that they be banned."
 
     # Record this action in the user's reply thread
     # TODO

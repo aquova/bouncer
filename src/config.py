@@ -1,13 +1,11 @@
-import json
+import yaml
 
 DATABASE_PATH = "./private/bouncer.db"
-# Add extra message if more than threshold number of warns
-WARN_THRESHOLD = 3
 
 # Read values from config file
-CONFIG_PATH = "./private/config.json"
-with open(CONFIG_PATH) as config_file:
-    cfg = json.load(config_file)
+CONFIG_PATH = "./private/config.yaml"
+with open(CONFIG_PATH, 'r') as config_file:
+    cfg = yaml.safe_load(config_file)
 
 # Set values from config file as constants
 DISCORD_KEY = cfg['discord']

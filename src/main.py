@@ -12,15 +12,10 @@ import commands
 import config
 from client import client
 from forwarder import message_forwarder
-from spam import Spammers
-
-# Initialize helper classes
-spam = Spammers()
 
 FUNC_DICT = {
     "id":          [commands.get_id,               None],
     "open":        [commands.show_reply_thread,    None],
-    "unmute":      [spam.unmute,                   None],
 }
 
 """
@@ -68,7 +63,6 @@ async def on_ready():
     await client.change_presence(activity=activity_object)
 
     client.set_channels()
-    spam.set_channel()
 
 """
 On Guild Available
@@ -290,8 +284,9 @@ async def on_message(message: discord.Message):
             await message_forwarder.on_dm(message)
             return
 
-        spam_message = await spam.check_spammer(message)
-        if spam_message:
+        (spammed, spam_message) = await client.spammers.check_spammer(message)
+        if spammed:
+            await client.spam.send(spam_message)
             return
 
         # Check if user is on watchlist, and should be tracked

@@ -85,6 +85,12 @@ async def search_slash(interaction: discord.Interaction, user: discord.Member):
     response = commands.search_logs(user)
     await interaction.response.send_message(response)
 
+@client.tree.command(name="unmute", description="Remove a user's timeout")
+@discord.app_commands.describe(user="User")
+async def unmute_slash(interaction: discord.Interaction, user: discord.Member):
+    response = await client.spammers.unmute(user)
+    await interaction.response.send_message(response)
+
 @client.tree.command(name="waiting", description="List users who are waiting for a reply")
 async def waiting_slash(interaction: discord.Interaction):
     response = client.am.list_waiting()

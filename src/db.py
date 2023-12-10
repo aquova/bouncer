@@ -2,9 +2,9 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import datetime
 
-from commonbot.utils import format_time
 from config import DATABASE_PATH
 from logtypes import LogTypes, past_tense
+from utils import format_time
 
 
 @dataclass

@@ -2,13 +2,13 @@ from datetime import datetime, timezone
 
 import discord
 
-import commonbot.utils
 import config
 import db
 import visualize
 from client import client
 from forwarder import message_forwarder
 from logtypes import LogTypes
+import utils
 
 BAN_KICK_MES = "Hi there! You've been {type} from the Stardew Valley Discord for violating the rules: `{mes}`. If you have any questions, and for information on appeals, you can join <https://discord.gg/uz6KPaCPhf>."
 SCAM_MES = "Hi there! You've been banned from the Stardew Valley Discord for posting scam links. If your account was compromised, please change your password, enable 2FA, and join <https://discord.gg/uz6KPaCPhf> to appeal."
@@ -50,16 +50,16 @@ async def log_user(user: discord.Member, reason: str, state: LogTypes, author: d
     # Update records for graphing
     match state:
         case LogTypes.BAN | LogTypes.SCAM:
-            visualize.update_cache(author.name, (1, 0), commonbot.utils.format_time(current_time))
+            visualize.update_cache(author.name, (1, 0), utils.format_time(current_time))
         case LogTypes.WARN:
-            visualize.update_cache(author.name, (0, 1), commonbot.utils.format_time(current_time))
+            visualize.update_cache(author.name, (0, 1), utils.format_time(current_time))
         case LogTypes.UNBAN:
             output = "Removing all old logs for unbanning"
             db.clear_user_logs(user.id)
 
     # Generate message for log channel
     new_log = db.UserLogEntry(None, user.id, state, current_time, reason, author.name, None)
-    log_message = f"[{commonbot.utils.format_time(current_time)}] `{str(user)}` - {new_log.log_word()} by {author.name} - {reason}"
+    log_message = f"[{utils.format_time(current_time)}] `{str(user)}` - {new_log.log_word()} by {author.name} - {reason}"
     output += log_message
 
     # Send ban recommendation, if needed
@@ -196,9 +196,9 @@ async def remove_error(user: discord.Member, index: int) -> str:
     out = f"The following log was deleted:\n{db.UserLogEntry.format(item)}"
 
     if item.log_type == LogTypes.BAN:
-        visualize.update_cache(item.staff, (-1, 0), commonbot.utils.format_time(item.timestamp))
+        visualize.update_cache(item.staff, (-1, 0), utils.format_time(item.timestamp))
     elif item.log_type == LogTypes.WARN:
-        visualize.update_cache(item.staff, (0, -1), commonbot.utils.format_time(item.timestamp))
+        visualize.update_cache(item.staff, (0, -1), utils.format_time(item.timestamp))
 
     # Search logging channel for matching post, and remove it
     try:

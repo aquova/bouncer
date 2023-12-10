@@ -1,17 +1,16 @@
 # Bouncer
 # https://github.com/aquova/bouncer
+# 2018-2023
 
 from datetime import datetime, timezone
 
 import discord
 import humanize
 
-import commonbot.utils
-
-import commands
 import config
 from client import client
 from forwarder import message_forwarder
+import utils
 
 """
 Delete message
@@ -29,7 +28,7 @@ async def delete_message_helper(message: discord.Message):
         for item in message.attachments:
             mes += '\n' + item.url
 
-    await commonbot.utils.send_message(mes, client.syslog)
+    await utils.send_message(mes, client.syslog)
 
 """
 Should Log
@@ -137,10 +136,7 @@ async def on_member_ban(server: discord.Guild, member: discord.Member):
     client.am.remove_entry(member.id)
     client.watch.remove_user(member.id)
 
-    # Keep a record of their banning, in case the log is made after they're no longer here
-    username = str(member)
-    commands.ul.add_ban(member.id, username)
-    mes = f":newspaper2: **{username} ({member.id})** has been banned."
+    mes = f":newspaper2: **{str(member)} ({member.id})** has been banned."
     await client.syslog.send(mes)
 
 """
@@ -156,10 +152,7 @@ async def on_member_remove(member: discord.Member):
     # We can remove left users from our answering machine
     client.am.remove_entry(member.id)
 
-    # Remember that the user has left, in case we want to log after they're gone
-    username = str(member)
-    commands.ul.add_ban(member.id, username)
-    mes = f":wave: **{username} ({member.id})** has left"
+    mes = f":wave: **{str(member)} ({member.id})** has left"
     await client.syslog.send(mes)
 
 """
@@ -208,12 +201,12 @@ async def on_message_edit(before: discord.Message, after: discord.Message):
 
     try:
         mes = f":pencil: **{str(before.author)}** modified in <#{before.channel.id}>: `{before.content}` to `{after.content}`"
-        await commonbot.utils.send_message(mes, client.syslog)
+        await utils.send_message(mes, client.syslog)
 
         # If user is on watchlist, then post it there as well
         watching = client.watch.should_note(after.author.id)
         if watching:
-            await commonbot.utils.send_message(mes, client.watchlist)
+            await utils.send_message(mes, client.watchlist)
 
     except discord.errors.HTTPException as err:
         print(f"Unknown error with editing message. This message was unable to post for this reason: {err}\n")
@@ -286,9 +279,9 @@ async def on_message(message: discord.Message):
     # Check if user is on watchlist, and should be tracked
     watching = client.watch.should_note(message.author.id)
     if watching:
-        content = commonbot.utils.combine_message(message)
+        content = utils.combine_message(message)
         mes = f"<@{str(message.author.id)}> said in <#{message.channel.id}>: {content}"
-        await commonbot.utils.send_message(mes, client.watchlist)
+        await utils.send_message(mes, client.watchlist)
 
     # If a user pings bouncer, log into mod channel, unless it's us
     if client.user in message.mentions and message.channel.category_id not in config.INPUT_CATEGORIES:

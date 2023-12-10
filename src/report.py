@@ -4,8 +4,8 @@ from typing import cast
 import discord
 
 from client import client
-from commonbot.utils import combine_message
 from forwarder import message_forwarder
+import utils
 
 class ReportResolveButton(discord.ui.Button):
     def __init__(self):
@@ -94,7 +94,7 @@ class ReportModal(discord.ui.Modal):
             url=self.message.jump_url)
 
         reported_user: discord.User | discord.Member = self.message.author
-        message_str: str = combine_message(self.message)
+        message_str: str = utils.combine_message(self.message)
         comments_str: str = self.comments_input.value
 
         len_max: int = 1000

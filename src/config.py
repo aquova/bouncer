@@ -1,8 +1,6 @@
 import json
 
 DATABASE_PATH = "./private/bouncer.db"
-# Discord has a 2000 message character limit
-CHAR_LIMIT = 2000
 # Add extra message if more than threshold number of warns
 WARN_THRESHOLD = 3
 

@@ -3,8 +3,8 @@ from re import IGNORECASE, search
 
 import discord
 
-from commonbot.utils import check_roles
 from config import IGNORE_SPAM, VALID_ROLES
+from utils import check_roles
 
 SPAM_MES_THRESHOLD = 5
 SPAM_TIME_THRESHOLD = timedelta(minutes=10)

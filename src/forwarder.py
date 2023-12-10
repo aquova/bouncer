@@ -4,11 +4,11 @@ from typing import cast
 
 import discord
 
-import commonbot.utils
 import db
 from client import client
 from config import HOME_SERVER, THREAD_ROLES
 from waiting import AnsweringMachineEntry, is_in_home_server
+import utils
 
 
 class MessageForwarder:
@@ -63,14 +63,14 @@ class MessageForwarder:
             reply_message += " (edited)"
 
         # Fill in the rest of the message with what the user said
-        content = commonbot.utils.combine_message(message)
+        content = utils.combine_message(message)
         reply_message += f": {content}"
 
         # Get or create the appropriate thread for the message user
         reply_channel = await self.get_or_create_user_reply_thread(message.author, True, content=content)
 
         # Forward the message to the channel/thread
-        log_mes = await commonbot.utils.send_message(reply_message, reply_channel)
+        log_mes = await utils.send_message(reply_message, reply_channel)
 
         try:
             # Send the user a message so they know something actually happened

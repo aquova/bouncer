@@ -27,7 +27,6 @@ FUNC_DICT = {
     "open":        [commands.show_reply_thread,    None],
     "preview":     [commands.preview,              None],
     "remove":      [commands.remove_error,         False],
-    "reply":       [commands.reply,                None],
     "unmute":      [spam.unmute,                   None],
 }
 

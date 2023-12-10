@@ -245,52 +245,24 @@ Reply
 
 Sends a private message to the specified user
 """
-async def reply(mes: discord.Message, _):
+async def reply(user: discord.Member, message: str) -> str:
     try:
-        user, metadata_words = _get_user_for_reply(mes)
-    except GetUserForReplyException as err:
-        await mes.channel.send(str(err))
-        return
-
-    # If we couldn't find anyone, then they aren't in the server, and can't be DMed
-    if not user:
-        if mes.reference:
-            await mes.channel.send("Sorry, but I wasn't able to get the user from the message. Odds are the bot was restarted after that was sent. You will need to do it 'the old fashioned way'")
-        else:
-            await mes.channel.send("Sorry, but they need to be in the server for me to message them")
-        return
-
-    try:
-        content = commonbot.utils.combine_message(mes)
-        output = commonbot.utils.strip_words(content, metadata_words)
-
-        # Don't allow blank messages
-        if len(output) == 0 or output.isspace():
-            await mes.channel.send("...That message was blank. Please send an actual message")
-            return
-
-        dm_chan = user.dm_channel
         # If first DMing, need to create DM channel
+        dm_chan = user.dm_channel
         if not dm_chan:
             dm_chan = await client.create_dm(user)
-        # Message sent to user
-        await dm_chan.send(f"A message from the SDV staff: {output}")
-        # Notification of sent message to the senders
-        await mes.channel.send(f"Message sent to `{str(user)}`.")
 
-        # If they were in our answering machine, they have been replied to, and can be removed
+        await dm_chan.send(f"A message from the SDV staff: {message}")
         client.am.remove_entry(user.id)
 
         # Add context in the user's reply thread
-        await _add_context_to_reply_thread(mes, user, f"Message sent to `{str(user)}`", output)
-
-    # Exception handling
+        # await _add_context_to_reply_thread(mes, user, f"Message sent to `{str(user)}`", message)
+        return f"Message sent to `{str(user)}`."
     except discord.errors.HTTPException as err:
         if err.code == 50007:
-            await mes.channel.send("Cannot send messages to this user. It is likely they have DM closed or I am blocked.")
+            return "Cannot send messages to this user. It is likely they have DM closed or I am blocked."
         else:
-            await mes.channel.send(f"ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {err}")
-
+            return f"ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {err}"
 
 """
 _add_context_to_reply_thread

@@ -13,11 +13,6 @@ import config
 from client import client
 from forwarder import message_forwarder
 
-FUNC_DICT = {
-    "id":          [commands.get_id,               None],
-    "open":        [commands.show_reply_thread,    None],
-}
-
 """
 Delete message
 
@@ -278,46 +273,30 @@ async def on_message(message: discord.Message):
     if message.author.id == client.user.id:
         return
 
-    try:
-        # If bouncer detects a private DM sent to it, forward it to staff
-        if isinstance(message.channel, discord.channel.DMChannel):
-            await message_forwarder.on_dm(message)
-            return
+    # If bouncer detects a private DM sent to it, forward it to staff
+    if isinstance(message.channel, discord.channel.DMChannel):
+        await message_forwarder.on_dm(message)
+        return
 
-        (spammed, spam_message) = await client.spammers.check_spammer(message)
-        if spammed:
-            await client.spam.send(spam_message)
-            return
+    (spammed, spam_message) = await client.spammers.check_spammer(message)
+    if spammed:
+        await client.spam.send(spam_message)
+        return
 
-        # Check if user is on watchlist, and should be tracked
-        watching = client.watch.should_note(message.author.id)
-        if watching:
-            content = commonbot.utils.combine_message(message)
-            mes = f"<@{str(message.author.id)}> said in <#{message.channel.id}>: {content}"
-            await commonbot.utils.send_message(mes, client.watchlist)
+    # Check if user is on watchlist, and should be tracked
+    watching = client.watch.should_note(message.author.id)
+    if watching:
+        content = commonbot.utils.combine_message(message)
+        mes = f"<@{str(message.author.id)}> said in <#{message.channel.id}>: {content}"
+        await commonbot.utils.send_message(mes, client.watchlist)
 
-        # If a user pings bouncer, log into mod channel, unless it's us
-        if client.user in message.mentions and message.channel.category_id not in config.INPUT_CATEGORIES:
-            embed: discord.Embed = discord.Embed(
-                title=f"\N{DIGIT ONE}\u20E3 Pinged by {message.author.global_name or message.author}",
-                description=f"{message.content if len(message.content) <= 99 else message.content[:99] + '…'}",
-                colour=discord.Colour.blue(),
-                url=message.jump_url)
-            await client.mailbox.send(embed=embed)
-
-        # Only allow moderators to invoke commands, and only in staff category
-        if message.content.startswith(config.CMD_PREFIX):
-            if commonbot.utils.check_roles(message.author, config.VALID_ROLES) and message.channel.category_id in config.INPUT_CATEGORIES:
-                cmd = commonbot.utils.strip_prefix(message.content, config.CMD_PREFIX)
-                cmd = commonbot.utils.get_first_word(cmd)
-                if cmd in FUNC_DICT:
-                    func = FUNC_DICT[cmd][0]
-                    arg = FUNC_DICT[cmd][1]
-                    await func(message, arg)
-    except discord.errors.Forbidden as err:
-        if err.code == 50007:
-            await client.mailbox.send("Unable to send message - Can't send messages to that user")
-            return
-        raise err
+    # If a user pings bouncer, log into mod channel, unless it's us
+    if client.user in message.mentions and message.channel.category_id not in config.INPUT_CATEGORIES:
+        embed: discord.Embed = discord.Embed(
+            title=f"\N{DIGIT ONE}\u20E3 Pinged by {message.author.global_name or message.author}",
+            description=f"{message.content if len(message.content) <= 99 else message.content[:99] + '…'}",
+            colour=discord.Colour.blue(),
+            url=message.jump_url)
+        await client.mailbox.send(embed=embed)
 
 client.run(config.DISCORD_KEY)

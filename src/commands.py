@@ -7,21 +7,18 @@ import config
 import db
 import visualize
 from client import client
-from commonbot.user import UserLookup
-from config import CMD_PREFIX
 from forwarder import message_forwarder
 from logtypes import LogTypes
-from utils import get_userid as utils_get_userid
-
-ul = UserLookup()
 
 BAN_KICK_MES = "Hi there! You've been {type} from the Stardew Valley Discord for violating the rules: `{mes}`. If you have any questions, and for information on appeals, you can join <https://discord.gg/uz6KPaCPhf>."
 SCAM_MES = "Hi there! You've been banned from the Stardew Valley Discord for posting scam links. If your account was compromised, please change your password, enable 2FA, and join <https://discord.gg/uz6KPaCPhf> to appeal."
 WARN_MES = "Hi there! You've received warning #{count} in the Stardew Valley Discord for violating the rules: `{mes}`. Please review <#980331408658661426> and <#980331531425959996> for more info. If you have any questions, you can reply directly to this message to contact the staff."
 
-async def get_userid(mes: discord.Message, cmd: str, args: str = "") -> tuple[int | None, bool]:
-    return await utils_get_userid(ul, mes, cmd, args)
+"""
+Search logs
 
+Searches the database for the specified user
+"""
 def search_logs(user: discord.Member) -> str:
     search_results = db.search(user.id)
     if len(search_results) == 0:
@@ -37,18 +34,6 @@ def search_logs(user: discord.Member) -> str:
             else:
                 out += f"{index + 1}. {db.UserLogEntry.format(item, None)}"
         return out
-
-"""
-Get ID
-
-Sends the ID of the corresponding user DM thread, if it exists.
-"""
-async def get_id(mes: discord.Message, _):
-    uid = message_forwarder.get_userid_for_user_reply_thread(mes)
-    if uid is None:
-        await mes.channel.send("I can't get the user's ID. Are we in a DM thread?")
-    else:
-        await mes.channel.send(str(uid))
 
 """
 Log User
@@ -168,6 +153,11 @@ def preview(reason: str, log_type: LogTypes) -> str:
         case _:
             return "We don't DM the user for those."
 
+"""
+Edit log
+
+Edits the specified log index for the user
+"""
 def edit_log(user: discord.Member, index: int, message: str, author: discord.User | discord.Member) -> str:
     search_results = db.search(user.id)
     # If no results in database found, can't modify
@@ -262,58 +252,4 @@ async def _add_context_to_reply_thread(mes: discord.Message, user: discord.User 
 
     # Suppress embeds so the jump url doesn't show a useless 'Discord - A New Way to Chat....' embed
     await reply_thread.send(f"{context} ({mes.jump_url}): {message}", suppress_embeds=True)
-
-
-class GetUserForReplyException(Exception):
-    """
-    Helper exception to make _get_user_for_reply easier to write.
-
-    By raising this the function can bail out early, so fewer levels of if/else nesting are needed.
-    """
-    pass
-
-
-"""
-_get_user_for_reply
-
-Gets the user to reply to for a reply command.
-
-Based on the reply command staff wrote, and the channel it was sent in, this figures out who to DM.
-
-Returns a user (or None, if staff mentioned a user not in the server) and the number of words to strip from the reply command.
-"""
-def _get_user_for_reply(message: discord.Message) -> tuple[discord.User | discord.Member | None, int]:
-    # If it's a Discord reply to a Bouncer message, use the mention in the message
-    if message.reference:
-        user_reply = message.reference.cached_message
-        if user_reply:
-            if user_reply.author == client.user and len(user_reply.mentions) == 1:
-                return user_reply.mentions[0], 1
-
-    # If it's a reply thread, the user the reply thread is for, otherwise None
-    thread_user = message_forwarder.get_userid_for_user_reply_thread(message)
-
-    # Replying to a user with '^' is no longer supported, but some people might need a reminder
-    if message.content.split()[1] == "^":
-        raise GetUserForReplyException("Replying to a user with '^' is no longer supported.")
-
-    # The mentioned user, or None if no user is mentioned
-    userid = ul.parse_id(message)
-
-    # We pick the user to reply to based on the following table
-    # |                     | User Mention                                                    | No User Mention                |
-    # |---------------------|-----------------------------------------------------------------|--------------------------------|
-    # | Not In Reply Thread | Use the mentioned user                                          | Error - Unknown who to message |
-    # | In Reply Thread     | Error - Users are not supposed to be mentioned in reply threads | Use the reply thread user      |
-
-    if userid:
-        if thread_user is None:  # User mentioned, not a thread -> use the mentioned user
-            return client.get_user(userid), 2
-        else:  # User mentioned, reply thread -> error, users are not supposed to be mentioned in reply threads
-            raise GetUserForReplyException(f"In user reply threads, mentioning users is disabled. Use `{CMD_PREFIX}reply MSG` to reply to the user the thread is for (or mention any user outside a thread).")
-    else:
-        if thread_user is None:  # No user mentioned, not a reply thread -> error, unknown who to message
-            raise GetUserForReplyException(f"I wasn't able to understand that message: `{CMD_PREFIX}reply USER`")
-        else:  # No user mentioned, reply thread -> use reply thread user
-            return client.get_user(thread_user), 1
 

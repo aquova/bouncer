@@ -18,6 +18,12 @@ async def clear_slash(interaction: discord.Interaction):
     client.am.clear_entries()
     await interaction.response.send_message("Cleared waiting messages!")
 
+@client.tree.command(name="edit", description="Edit an incorrect log")
+@discord.app_commands.describe(user="User", message="New log entry", index="Log index to edit")
+async def edit_slash(interaction: discord.Interaction, user: discord.Member, message: str, index: int):
+    response = commands.edit_log(user, index, message, interaction.user)
+    await interaction.response.send_message(response)
+
 @client.tree.command(name="graph", description="Post graphs of moderator activity")
 async def graph_slash(interaction: discord.Interaction):
     await post_plots(interaction.response)
@@ -47,6 +53,12 @@ async def note_slash(interaction: discord.Interaction, user: discord.Member, not
 @discord.app_commands.describe(reason="Reason for logging", log_type="Log type")
 async def preview_slash(interaction: discord.Interaction, reason: str, log_type: LogTypes):
     response = commands.preview(reason, log_type)
+    await interaction.response.send_message(response)
+
+@client.tree.command(name="remove", description="Remove a log")
+@discord.app_commands.describe(user="User", index="Log index to remove")
+async def remove_slash(interaction: discord.Interaction, user: discord.Member, index: int):
+    response = await commands.remove_error(user, index)
     await interaction.response.send_message(response)
 
 @client.tree.command(name="reply", description="Send a DM to a user")

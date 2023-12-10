@@ -18,11 +18,8 @@ from spam import Spammers
 spam = Spammers()
 
 FUNC_DICT = {
-    "edit":        [commands.remove_error,         True],
     "id":          [commands.get_id,               None],
     "open":        [commands.show_reply_thread,    None],
-    "preview":     [commands.preview,              None],
-    "remove":      [commands.remove_error,         False],
     "unmute":      [spam.unmute,                   None],
 }
 

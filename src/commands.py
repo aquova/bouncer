@@ -28,7 +28,7 @@ def search_logs(user: discord.Member) -> str:
         return f"User {str(user)} was not found in the database\n"
     else:
         # Format output message
-        out = f"User `{str(user)}` (ID: {user.id}) was found with the following infractions\n"
+        out = f"User `{str(user)}` ({user.id}) was found with the following infractions\n"
         warn_cnt = 0
         for index, item in enumerate(search_results):
             if item.log_type == LogTypes.WARN:
@@ -168,77 +168,57 @@ def preview(reason: str, log_type: LogTypes) -> str:
         case _:
             return "We don't DM the user for those."
 
+def edit_log(user: discord.Member, index: int, message: str, author: discord.User | discord.Member) -> str:
+    search_results = db.search(user.id)
+    # If no results in database found, can't modify
+    if not search_results:
+        return "I couldn't find that user in the database"
+    # If invalid index given, yell
+    # 1-indexed for the users
+    if index < 1 or index > len(search_results):
+        return f"I can't modify item number {index}, there aren't that many for this user"
+
+    item = search_results[index - 1]
+    item.timestamp = datetime.now(timezone.utc)
+    item.log_message = message
+    item.staff = str(author)
+    db.add_log(item)
+    return f"The log now reads as follows:\n{db.UserLogEntry.format(item)}"
+
 """
 Remove Error
 
 Removes last database entry for specified user
 """
-async def remove_error(mes: discord.Message, edit: bool):
-    userid, userid_from_message = await get_userid(mes, "edit" if edit else "remove", "[num] new_message" if edit else "[num]")
-    if not userid:
-        return
-
-    username = ul.fetch_username(client, userid)
-    if not username:
-        username = str(userid)
-
-    # If editing, and no message specified, abort.
-    output = commonbot.utils.parse_message(mes.content, username, userid_from_message)
-    if output == "":
-        if edit:
-            await mes.channel.send("You need to specify an edit message")
-            return
-        else:
-            output = "0"
-
-    try:
-        index = int(output.split()[0]) - 1
-        output = commonbot.utils.strip_words(output, 1)
-    except (IndexError, ValueError):
-        index = -1
-
-    # Find most recent entry in database for specified user
-    search_results = db.search(userid)
+async def remove_error(user: discord.Member, index: int) -> str:
+    search_results = db.search(user.id)
     # If no results in database found, can't modify
     if not search_results:
-        await mes.channel.send("I couldn't find that user in the database")
+        return "I couldn't find that user in the database"
     # If invalid index given, yell
-    elif (index > len(search_results) - 1) or index < -1:
-        await mes.channel.send(f"I can't modify item number {index + 1}, there aren't that many for this user")
-    else:
-        item = search_results[index]
-        if edit:
-            if item.log_type == LogTypes.NOTE:
-                item.timestamp = datetime.now(timezone.utc)
-                item.log_message = output
-                item.staff = mes.author.name
-                db.add_log(item)
-                out = f"The log now reads as follows:\n{db.UserLogEntry.format(item)}\n"
-                await mes.channel.send(out)
-            else:
-                await mes.channel.send("You can only edit notes for now")
-            return
+    # 1-indexed for the users
+    if index < 1 or index > len(search_results):
+        return f"I can't modify item number {index}, there aren't that many for this user"
 
-        # Everything after here is deletion
-        if item.dbid is not None:
-            db.remove_log(item.dbid)
-        out = "The following log was deleted:\n"
-        out += db.UserLogEntry.format(item)
+    item = search_results[index - 1]
+    if item.dbid is not None: # This is for the linter's sake
+        db.remove_log(item.dbid)
+    out = f"The following log was deleted:\n{db.UserLogEntry.format(item)}"
 
-        if item.log_type == LogTypes.BAN:
-            visualize.update_cache(item.staff, (-1, 0), commonbot.utils.format_time(item.timestamp))
-        elif item.log_type == LogTypes.WARN:
-            visualize.update_cache(item.staff, (0, -1), commonbot.utils.format_time(item.timestamp))
-        await mes.channel.send(out)
+    if item.log_type == LogTypes.BAN:
+        visualize.update_cache(item.staff, (-1, 0), commonbot.utils.format_time(item.timestamp))
+    elif item.log_type == LogTypes.WARN:
+        visualize.update_cache(item.staff, (0, -1), commonbot.utils.format_time(item.timestamp))
 
-        # Search logging channel for matching post, and remove it
-        try:
-            if item.message_id != 0 and item.message_id is not None:
-                old_mes = await client.log.fetch_message(item.message_id)
-                await old_mes.delete()
-        # Print message if unable to find message to delete, but don't stop
-        except discord.errors.HTTPException as err:
-            print(f"Unable to find message to delete: {str(err)}")
+    # Search logging channel for matching post, and remove it
+    try:
+        if item.message_id != 0 and item.message_id is not None:
+            old_mes = await client.log.fetch_message(item.message_id)
+            await old_mes.delete()
+    # If we were unable to find message to delete, that's okay
+    except discord.errors.HTTPException:
+        pass
+    return out
 
 """
 Reply

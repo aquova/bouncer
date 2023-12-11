@@ -2,10 +2,10 @@ from datetime import datetime, timezone
 
 import discord
 
-import config
 import db
 import visualize
 from client import client
+from config import DM_BAN, DM_WARN
 from forwarder import message_forwarder
 from logtypes import LogTypes, past_tense
 import utils
@@ -87,13 +87,13 @@ async def log_user(user: discord.Member, reason: str, state: LogTypes, author: d
                 dm_chan = await user.create_dm()
 
             # Only send DM when specified in configs
-            if state == LogTypes.BAN and config.DM_BAN:
+            if state == LogTypes.BAN and DM_BAN:
                 await dm_chan.send(BAN_KICK_MES.format(type="banned", mes=reason))
-            elif state == LogTypes.WARN and config.DM_WARN:
+            elif state == LogTypes.WARN and DM_WARN:
                 await dm_chan.send(WARN_MES.format(count=count, mes=reason))
-            elif state == LogTypes.KICK and config.DM_BAN:
+            elif state == LogTypes.KICK and DM_BAN:
                 await dm_chan.send(BAN_KICK_MES.format(type="kicked", mes=reason))
-            elif state == LogTypes.SCAM and config.DM_BAN:
+            elif state == LogTypes.SCAM and DM_BAN:
                 await dm_chan.send(SCAM_MES)
         # Exception handling
         except discord.errors.HTTPException as err:
@@ -137,10 +137,10 @@ Preview message
 Prints out Bouncer's DM message as the user will receive it
 """
 def preview(reason: str, log_type: LogTypes) -> str:
-    if not config.DM_BAN and (log_type == LogTypes.BAN or log_type == LogTypes.KICK or log_type == LogTypes.SCAM):
+    if not DM_BAN and (log_type == LogTypes.BAN or log_type == LogTypes.KICK or log_type == LogTypes.SCAM):
         return "DMing the user about their bans is currently off, they won't see any message"
 
-    if not config.DM_WARN and log_type == LogTypes.WARN:
+    if not DM_WARN and log_type == LogTypes.WARN:
         return "DMing the user about their warns is currently off, they won't see any message"
 
     match log_type:
@@ -217,7 +217,7 @@ DM
 
 Sends a private message to the specified user
 """
-async def dm(user: discord.Member, message: str, channel_id: int) -> str:
+async def dm(user: discord.User | discord.Member, message: str, channel_id: int) -> str:
     try:
         # If first DMing, need to create DM channel
         dm_chan = user.dm_channel
@@ -237,6 +237,18 @@ async def dm(user: discord.Member, message: str, channel_id: int) -> str:
             return f"ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {err}"
 
 """
+Reply
+
+Sends a private message to the user whose DM thread this is
+"""
+async def reply(message: str, channel_id: int) -> str:
+    user = _get_user_for_reply(channel_id)
+    if user is None:
+        return "This command can only be sent inside a DM thread. Try again there, or use the `/dm` command."
+    response = await dm(user, message, channel_id)
+    return response
+
+"""
 _add_context_to_reply_thread
 
 Adds information about a moderation action taken on a specific user to the user's reply thread.
@@ -253,5 +265,20 @@ async def _add_context_to_reply_thread(channel_id: int, user: discord.User | dis
     reply_thread = await message_forwarder.get_or_create_user_reply_thread(user, content=message)
 
     # Suppress embeds so the jump url doesn't show a useless 'Discord - A New Way to Chat....' embed
+    # TODO: Readd jump url
     await reply_thread.send(f"{context}: {message}", suppress_embeds=True)
 
+"""
+_get_user_for_reply
+
+Gets the user to reply to for a reply command.
+
+Based on the channel it was sent in, this figures out who to DM.
+"""
+def _get_user_for_reply(channel_id: int) -> discord.User | discord.Member | None:
+    # If it's a reply thread, the user the reply thread is for, otherwise None
+    thread_user = message_forwarder.get_userid_for_user_reply_thread(channel_id)
+
+    if thread_user is not None:
+        return client.get_user(thread_user)
+    return None

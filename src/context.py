@@ -73,6 +73,14 @@ async def remove_slash(interaction: discord.Interaction, user: discord.Member, i
     response = await commands.remove_error(user, index)
     await interaction.response.send_message(response)
 
+@client.tree.command(name="reply", description="Reply to a user from within their thread")
+@discord.app_commands.describe(message="Message")
+async def reply_slash(interaction: discord.Interaction, message: str):
+    if interaction.channel_id is None: # Only for the linter's sake
+        return
+    response = await commands.reply(message, interaction.channel_id)
+    await interaction.response.send_message(response)
+
 @client.tree.command(name="say", description="Say a message as the bot")
 @discord.app_commands.describe(message="Message to say", channel="Channel to post in")
 async def say_slash(interaction: discord.Interaction, message: str, channel: discord.TextChannel | discord.Thread):

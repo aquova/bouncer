@@ -87,14 +87,14 @@ class MessageForwarder:
         mes_entry = AnsweringMachineEntry(str(message.author), message.created_at, content, url)
         client.am.update_entry(message.author.id, mes_entry)
 
-    def get_userid_for_user_reply_thread(self, message: discord.Message) -> int | None:
+    def get_userid_for_user_reply_thread(self, channel_id: int) -> int | None:
         """
         Get the user id to reply to if message was sent in a reply thread.
 
         :param message: The staff reply message.
         :return: The user id, if message was sent in a user reply thread. None otherwise.
         """
-        return self._thread_id_to_user_id(message.channel.id)
+        return self._thread_id_to_user_id(channel_id)
 
     def get_reply_thread_id_for_user(self, user: discord.User | discord.Member) -> int | None:
         """

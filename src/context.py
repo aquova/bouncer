@@ -21,7 +21,9 @@ async def clear_slash(interaction: discord.Interaction):
 @client.tree.command(name="dm", description="Send a DM to a user")
 @discord.app_commands.describe(user="User", message="Message")
 async def dm_slash(interaction: discord.Interaction, user: discord.Member, message: str):
-    response = await commands.dm(user, message)
+    if interaction.channel_id is None: # Only for the linter's sake
+        return
+    response = await commands.dm(user, message, interaction.channel_id)
     await interaction.response.send_message(response)
 
 @client.tree.command(name="edit", description="Edit an incorrect log")
@@ -46,13 +48,17 @@ async def graph_slash(interaction: discord.Interaction):
     discord.app_commands.Choice(name="Unban", value=LogTypes.UNBAN),
 ])
 async def log_slash(interaction: discord.Interaction, user: discord.Member, reason: str, log_type: LogTypes):
-    response = await commands.log_user(user, reason, log_type, interaction.user)
+    if interaction.channel_id is None:
+        return
+    response = await commands.log_user(user, reason, log_type, interaction.user, interaction.channel_id)
     await interaction.response.send_message(response)
 
 @client.tree.command(name="note", description="Add a user note")
 @discord.app_commands.describe(user="User", note="Note to add")
 async def note_slash(interaction: discord.Interaction, user: discord.Member, note: str):
-    response = await commands.log_user(user, note, LogTypes.NOTE, interaction.user)
+    if interaction.channel_id is None:
+        return
+    response = await commands.log_user(user, note, LogTypes.NOTE, interaction.user, interaction.channel_id)
     await interaction.response.send_message(response)
 
 @client.tree.command(name="preview", description="Prints out a DM message as the user will receive it")
@@ -76,7 +82,9 @@ async def say_slash(interaction: discord.Interaction, message: str, channel: dis
 @client.tree.command(name="scam", description="Log a scam")
 @discord.app_commands.describe(user="User")
 async def scam_slash(interaction: discord.Interaction, user: discord.Member):
-    response = await commands.log_user(user, "", LogTypes.SCAM, interaction.user)
+    if interaction.channel_id is None:
+        return
+    response = await commands.log_user(user, "", LogTypes.SCAM, interaction.user, interaction.channel_id)
     await interaction.response.send_message(response)
 
 @client.tree.command(name="search", description="Search for a user's logs")

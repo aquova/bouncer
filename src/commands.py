@@ -7,7 +7,7 @@ import db
 import visualize
 from client import client
 from forwarder import message_forwarder
-from logtypes import LogTypes
+from logtypes import LogTypes, past_tense
 import utils
 
 # Add extra message if more than threshold number of warns
@@ -43,7 +43,7 @@ Log User
 
 Notes an infraction for a user
 """
-async def log_user(user: discord.Member, reason: str, state: LogTypes, author: discord.User | discord.Member) -> str:
+async def log_user(user: discord.Member, reason: str, state: LogTypes, author: discord.User | discord.Member, channel_id: int) -> str:
     current_time = datetime.now(timezone.utc)
     output = ""
 
@@ -71,8 +71,7 @@ async def log_user(user: discord.Member, reason: str, state: LogTypes, author: d
         output += f"\nThis user has received {_WARN_THRESHOLD} warnings or more. It is recommended that they be banned."
 
     # Record this action in the user's reply thread
-    # TODO
-    # await _add_context_to_reply_thread(message, user, f"`{str(user)}` was {past_tense(state)}", reason)
+    await _add_context_to_reply_thread(channel_id, user, f"`{str(user)}` was {past_tense(state)}", reason)
 
     log_mes_id = 0
     # If we aren't noting, need to also write to log channel
@@ -218,7 +217,7 @@ DM
 
 Sends a private message to the specified user
 """
-async def dm(user: discord.Member, message: str) -> str:
+async def dm(user: discord.Member, message: str, channel_id: int) -> str:
     try:
         # If first DMing, need to create DM channel
         dm_chan = user.dm_channel
@@ -229,7 +228,7 @@ async def dm(user: discord.Member, message: str) -> str:
         client.am.remove_entry(user.id)
 
         # Add context in the user's reply thread
-        # await _add_context_to_reply_thread(mes, user, f"Message sent to `{str(user)}`", message)
+        await _add_context_to_reply_thread(channel_id, user, f"Message sent to `{str(user)}`", message)
         return f"Message sent to `{str(user)}`."
     except discord.errors.HTTPException as err:
         if err.code == 50007:
@@ -246,13 +245,13 @@ If the moderation action already happened in the user's reply thread, no more co
 
 Otherwise, it posts a message in the reply thread with the details of the action and a link to the source message.
 """
-async def _add_context_to_reply_thread(mes: discord.Message, user: discord.User | discord.Member, context: str, message: str):
+async def _add_context_to_reply_thread(channel_id: int, user: discord.User | discord.Member, context: str, message: str):
     reply_thread_id = message_forwarder.get_reply_thread_id_for_user(user)
-    if mes.channel.id == reply_thread_id:
+    if channel_id == reply_thread_id:
         return # Already in reply thread, nothing to do
 
     reply_thread = await message_forwarder.get_or_create_user_reply_thread(user, content=message)
 
     # Suppress embeds so the jump url doesn't show a useless 'Discord - A New Way to Chat....' embed
-    await reply_thread.send(f"{context} ({mes.jump_url}): {message}", suppress_embeds=True)
+    await reply_thread.send(f"{context}: {message}", suppress_embeds=True)
 

@@ -5,7 +5,7 @@ import discord
 import db
 import visualize
 from client import client
-from config import DM_BAN, DM_WARN
+from config import BAN_APPEAL_URL, DM_BAN, DM_WARN, INFO_CHANS, SERVER_NAME
 from forwarder import message_forwarder
 from logtypes import LogTypes, past_tense
 import utils
@@ -13,9 +13,9 @@ import utils
 # Add extra message if more than threshold number of warns
 _WARN_THRESHOLD = 3
 
-BAN_KICK_MES = "Hi there! You've been {type} from the Stardew Valley Discord for violating the rules: `{mes}`. If you have any questions, and for information on appeals, you can join <https://discord.gg/uz6KPaCPhf>."
-SCAM_MES = "Hi there! You've been banned from the Stardew Valley Discord for posting scam links. If your account was compromised, please change your password, enable 2FA, and join <https://discord.gg/uz6KPaCPhf> to appeal."
-WARN_MES = "Hi there! You've received warning #{count} in the Stardew Valley Discord for violating the rules: `{mes}`. Please review <#980331408658661426> and <#980331531425959996> for more info. If you have any questions, you can reply directly to this message to contact the staff."
+BAN_KICK_MES = "Hi there! You've been {type} from the {name} Discord for violating the rules: `{mes}`. If you have any questions, and for information on appeals, you can join <{url}>."
+SCAM_MES = "Hi there! You've been banned from the {name} Discord for posting scam links. If your account was compromised, please change your password, enable 2FA, and join <{url}> to appeal."
+WARN_MES = "Hi there! You've received warning #{count} in the {name} Discord for violating the rules: `{mes}`. Please review {chans} for more info. If you have any questions, you can reply directly to this message to contact the staff."
 
 """
 Search logs
@@ -88,19 +88,20 @@ async def log_user(user: discord.Member, reason: str, state: LogTypes, author: d
 
             # Only send DM when specified in configs
             if state == LogTypes.BAN and DM_BAN:
-                await dm_chan.send(BAN_KICK_MES.format(type="banned", mes=reason))
+                await dm_chan.send(BAN_KICK_MES.format(name=SERVER_NAME, type="banned", mes=reason, url=BAN_APPEAL_URL))
             elif state == LogTypes.WARN and DM_WARN:
-                await dm_chan.send(WARN_MES.format(count=count, mes=reason))
+                info = " and ".join([f"<#{x}>" for x in INFO_CHANS])
+                await dm_chan.send(WARN_MES.format(name=SERVER_NAME, count=count, mes=reason, chans=info))
             elif state == LogTypes.KICK and DM_BAN:
-                await dm_chan.send(BAN_KICK_MES.format(type="kicked", mes=reason))
+                await dm_chan.send(BAN_KICK_MES.format(name=SERVER_NAME, type="kicked", mes=reason, url=BAN_APPEAL_URL))
             elif state == LogTypes.SCAM and DM_BAN:
-                await dm_chan.send(SCAM_MES)
+                await dm_chan.send(SCAM_MES.format(name=SERVER_NAME, url=BAN_APPEAL_URL))
         # Exception handling
         except discord.errors.HTTPException as err:
             if err.code == 50007:
                 output += "\nCannot send messages to this user. It is likely they have DM closed or I am blocked."
             else:
-                output += f"\nERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {err}"
+                output += f"\nERROR: While attempting to DM, there was an unexpected error: {err}"
 
     # Update database
     new_log.message_id = log_mes_id
@@ -145,13 +146,14 @@ def preview(reason: str, log_type: LogTypes) -> str:
 
     match log_type:
         case LogTypes.BAN:
-            return BAN_KICK_MES.format(type="banned", mes=reason)
+            return BAN_KICK_MES.format(name=SERVER_NAME, type="banned", mes=reason, url=BAN_APPEAL_URL)
         case LogTypes.WARN:
-                return WARN_MES.format(count="X",mes=reason)
+                info = " and ".join([f"<#{x}>" for x in INFO_CHANS])
+                return WARN_MES.format(name=SERVER_NAME, count="X",mes=reason, chans=info)
         case LogTypes.KICK:
-                return BAN_KICK_MES.format(type="kicked", mes=reason)
+                return BAN_KICK_MES.format(name=SERVER_NAME, type="kicked", mes=reason, url=BAN_APPEAL_URL)
         case LogTypes.SCAM:
-            return SCAM_MES
+            return SCAM_MES.format(name=SERVER_NAME, url=BAN_APPEAL_URL)
         case _:
             return "We don't DM the user for those."
 
@@ -224,7 +226,7 @@ async def dm(user: discord.User | discord.Member, message: str, channel_id: int)
         if not dm_chan:
             dm_chan = await client.create_dm(user)
 
-        await dm_chan.send(f"A message from the SDV staff: {message}")
+        await dm_chan.send(f"A message from the {SERVER_NAME} staff: {message}")
         client.am.remove_entry(user.id)
 
         # Add context in the user's reply thread
@@ -234,7 +236,7 @@ async def dm(user: discord.User | discord.Member, message: str, channel_id: int)
         if err.code == 50007:
             return "Cannot send messages to this user. It is likely they have DM closed or I am blocked."
         else:
-            return f"ERROR: While attempting to DM, there was an unexpected error. Tell aquova this: {err}"
+            return f"ERROR: While attempting to DM, there was an unexpected error: {err}"
 
 """
 Reply

@@ -80,7 +80,7 @@ class MessageForwarder:
             if err.code == 50007:
                 await reply_channel.send("Unable to send message forward notification to the above user - Can't send messages to that user")
             else:
-                await reply_channel.send(f"ERROR: While attempting to send message forward notification, there was an unexpected error. Tell aquova this: {err}")
+                await reply_channel.send(f"ERROR: While attempting to send message forward notification, there was an unexpected error: {err}")
 
         # Record that the user is waiting for a reply
         url = log_mes.jump_url if log_mes else None

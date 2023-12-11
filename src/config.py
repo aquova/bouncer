@@ -9,10 +9,11 @@ with open(CONFIG_PATH, 'r') as config_file:
 
 # Set values from config file as constants
 DISCORD_KEY = cfg['discord']
-OWNER = cfg['owner']
 CMD_PREFIX = cfg['command_prefix']
+SERVER_NAME = cfg['server_name']
 
 HOME_SERVER = cfg['servers']['home']
+BAN_APPEAL_URL = cfg['appeal_url']
 
 INPUT_CATEGORIES = cfg['categories']['listening']
 MAILBOX = cfg['channels']['mailbox']
@@ -21,6 +22,7 @@ SYS_LOG = cfg['channels']['syslog']
 WATCHLIST_CHAN = cfg['channels']['watchlist']
 SPAM_CHAN = cfg['channels']['spam']
 IGNORE_SPAM = cfg['channels']['ignore_spam']
+INFO_CHANS = cfg['channels']['info']
 
 VALID_ROLES = cfg['roles']['admin']
 

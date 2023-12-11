@@ -214,11 +214,11 @@ async def remove_error(user: discord.Member, index: int) -> str:
     return out
 
 """
-Reply
+DM
 
 Sends a private message to the specified user
 """
-async def reply(user: discord.Member, message: str) -> str:
+async def dm(user: discord.Member, message: str) -> str:
     try:
         # If first DMing, need to create DM channel
         dm_chan = user.dm_channel

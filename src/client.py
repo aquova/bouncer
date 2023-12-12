@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 
 from blocks import BlockedUsers
-from config import CMD_PREFIX, LOG_CHAN, MAILBOX, SPAM_CHAN, SYS_LOG, WATCHLIST_CHAN
+from config import LOG_CHAN, MAILBOX, SPAM_CHAN, SYS_LOG, WATCHLIST_CHAN
 import db
 from spam import Spammers
 from waiting import AnsweringMachine
@@ -13,7 +13,8 @@ from watcher import Watcher
 class DiscordClient(commands.Bot):
     def __init__(self):
         intents = discord.Intents.all()
-        super().__init__(command_prefix=CMD_PREFIX, intents=intents)
+        # The command prefix is never used, but we have to have something
+        super().__init__(command_prefix="$", intents=intents)
         db.initialize()
 
         self.am = AnsweringMachine()

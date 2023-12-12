@@ -283,8 +283,8 @@ async def on_message(message: discord.Message):
         mes = f"<@{str(message.author.id)}> said in <#{message.channel.id}>: {content}"
         await utils.send_message(mes, client.watchlist)
 
-    # If a user pings bouncer, log into mod channel, unless it's us
-    if client.user in message.mentions and message.channel.category_id not in config.INPUT_CATEGORIES:
+    # If a user pings bouncer, log into mod channel
+    if client.user in message.mentions:
         embed: discord.Embed = discord.Embed(
             title=f"\N{DIGIT ONE}\u20E3 Pinged by {message.author.global_name or message.author}",
             description=f"{message.content if len(message.content) <= 99 else message.content[:99] + '…'}",

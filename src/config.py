@@ -9,13 +9,11 @@ with open(CONFIG_PATH, 'r') as config_file:
 
 # Set values from config file as constants
 DISCORD_KEY = cfg['discord']
-CMD_PREFIX = cfg['command_prefix']
 SERVER_NAME = cfg['server_name']
 
 HOME_SERVER = cfg['servers']['home']
 BAN_APPEAL_URL = cfg['appeal_url']
 
-INPUT_CATEGORIES = cfg['categories']['listening']
 MAILBOX = cfg['channels']['mailbox']
 LOG_CHAN = cfg['channels']['log']
 SYS_LOG = cfg['channels']['syslog']

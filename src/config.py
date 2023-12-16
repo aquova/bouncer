@@ -12,6 +12,7 @@ DISCORD_KEY = cfg['discord']
 SERVER_NAME = cfg['server_name']
 
 HOME_SERVER = cfg['servers']['home']
+ADMIN_CATEGORIES = cfg['categories']['admin']
 BAN_APPEAL_URL = cfg['appeal_url']
 
 MAILBOX = cfg['channels']['mailbox']

@@ -22,13 +22,14 @@ Search logs
 
 Searches the database for the specified user
 """
-def search_logs(user: discord.Member) -> str:
-    search_results = db.search(user.id)
+def search_logs(user: discord.Member | int) -> str:
+    uid = user.id if isinstance(user, discord.Member) else user
+    search_results = db.search(uid)
     if len(search_results) == 0:
         return f"User {str(user)} was not found in the database\n"
     else:
         # Format output message
-        out = f"User `{str(user)}` ({user.id}) was found with the following infractions\n"
+        out = f"User `{str(user)}` ({uid}) was found with the following infractions\n"
         warn_cnt = 0
         for index, item in enumerate(search_results):
             if item.log_type == LogTypes.WARN:

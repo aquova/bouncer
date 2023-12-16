@@ -113,24 +113,12 @@ Show reply thread
 
 Sends the the reply thread for a user so it's easy for staff to find
 """
-async def show_reply_thread(mes: discord.Message, _):
-    # Attempt to generate user object
-    userid, userid_from_message = await get_userid(mes, "open")
-    if not userid:
-        return
-
-    user = client.get_user(userid)
-    if user is None:
-        await mes.channel.send("That isn't a valid user.")
-        return
-
+async def show_reply_thread(user: discord.Member) -> str:
     # Show reply thread if it exists
     reply_thread_id = message_forwarder.get_reply_thread_id_for_user(user)
     if reply_thread_id is None:
-        await mes.channel.send(f"User <@{user.id}> does not have a reply thread.")
-        return
-
-    await mes.channel.send(f"Reply thread for <@{user.id}>: <#{reply_thread_id}>.")
+        return f"User <@{user.id}> does not have a reply thread."
+    return f"Reply thread for <@{user.id}>: <#{reply_thread_id}>."
 
 """
 Preview message

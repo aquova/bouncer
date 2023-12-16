@@ -61,6 +61,12 @@ async def note_slash(interaction: discord.Interaction, user: discord.Member, not
     response = await commands.log_user(user, note, LogTypes.NOTE, interaction.user, interaction.channel_id)
     await interaction.response.send_message(response)
 
+@client.tree.command(name="open", description="Get user's reply thread")
+@discord.app_commands.describe(user="User")
+async def open_slash(interaction: discord.Interaction, user: discord.Member):
+    response = await commands.show_reply_thread(user)
+    await interaction.response.send_message(response)
+
 @client.tree.command(name="preview", description="Prints out a DM message as the user will receive it")
 @discord.app_commands.describe(reason="Reason for logging", log_type="Log type")
 async def preview_slash(interaction: discord.Interaction, reason: str, log_type: LogTypes):

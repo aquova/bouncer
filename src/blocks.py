@@ -7,7 +7,7 @@ class BlockedUsers:
         block_db = db.get_blocklist()
         self.blocklist = [x[0] for x in block_db]
 
-    def handle_block(self, user: discord.Member, block: bool) -> str:
+    def handle_block(self, user: discord.User, block: bool) -> str:
         is_blocked = self.is_in_blocklist(user.id)
         if block:
             if is_blocked:

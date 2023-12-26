@@ -22,14 +22,13 @@ Search logs
 
 Searches the database for the specified user
 """
-def search_logs(user: discord.Member | int) -> str:
-    uid = user.id if isinstance(user, discord.Member) else user
-    search_results = db.search(uid)
+def search_logs(user: discord.User) -> str:
+    search_results = db.search(user.id)
     if len(search_results) == 0:
         return f"User {str(user)} was not found in the database\n"
     else:
         # Format output message
-        out = f"User `{str(user)}` ({uid}) was found with the following infractions\n"
+        out = f"User `{str(user)}` ({user.id}) was found with the following infractions\n"
         warn_cnt = 0
         for index, item in enumerate(search_results):
             if item.log_type == LogTypes.WARN:
@@ -44,7 +43,7 @@ Log User
 
 Notes an infraction for a user
 """
-async def log_user(user: discord.Member, reason: str, state: LogTypes, author: discord.User | discord.Member, channel_id: int) -> str:
+async def log_user(user: discord.User, reason: str, state: LogTypes, author: discord.User | discord.Member, channel_id: int) -> str:
     current_time = datetime.now(timezone.utc)
     output = ""
 
@@ -100,7 +99,7 @@ async def log_user(user: discord.Member, reason: str, state: LogTypes, author: d
         # Exception handling
         except discord.errors.HTTPException as err:
             if err.code == 50007:
-                output += "\nCannot send messages to this user. It is likely they have DM closed or I am blocked."
+                output += "\nCannot send messages to this user. It is likely that we do not share a server or that they are not accepting my DMs."
             else:
                 output += f"\nERROR: While attempting to DM, there was an unexpected error: {err}"
 
@@ -114,7 +113,7 @@ Show reply thread
 
 Sends the the reply thread for a user so it's easy for staff to find
 """
-async def show_reply_thread(user: discord.Member) -> str:
+async def show_reply_thread(user: discord.User) -> str:
     # Show reply thread if it exists
     reply_thread_id = message_forwarder.get_reply_thread_id_for_user(user)
     if reply_thread_id is None:
@@ -151,7 +150,7 @@ Edit log
 
 Edits the specified log index for the user
 """
-def edit_log(user: discord.Member, index: int, message: str, author: discord.User | discord.Member) -> str:
+def edit_log(user: discord.User, index: int, message: str, author: discord.User | discord.Member) -> str:
     search_results = db.search(user.id)
     # If no results in database found, can't modify
     if not search_results:
@@ -173,7 +172,7 @@ Remove Error
 
 Removes last database entry for specified user
 """
-async def remove_error(user: discord.Member, index: int) -> str:
+async def remove_error(user: discord.User, index: int) -> str:
     search_results = db.search(user.id)
     # If no results in database found, can't modify
     if not search_results:

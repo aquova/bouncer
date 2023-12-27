@@ -17,7 +17,7 @@ async def interaction_response_helper(interaction: discord.Interaction, response
         else:
             await interaction.response.send_message(response)
     else:
-        await interaction.response.send_message("Don't leak info!")
+        await interaction.response.send_message("Don't leak info!", ephemeral=True)
 
 ### Slash Commands
 @client.tree.command(name="block", description="Change if user can DM us")

@@ -14,6 +14,7 @@ SERVER_NAME = cfg['server_name']
 HOME_SERVER = cfg['servers']['home']
 ADMIN_CATEGORIES = cfg['categories']['admin']
 BAN_APPEAL_URL = cfg['appeal_url']
+PASTE_URL = cfg['paste_url']
 
 MAILBOX = cfg['channels']['mailbox']
 LOG_CHAN = cfg['channels']['log']

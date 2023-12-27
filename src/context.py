@@ -6,11 +6,16 @@ from config import ADMIN_CATEGORIES
 from logtypes import LogTypes
 from report import ReportModal
 from visualize import post_plots
+from utils import CHAR_LIMIT, create_paste_link
 
 # Interaction wrapper that prevents users from leaking info
 async def interaction_response_helper(interaction: discord.Interaction, response: str):
     if interaction.channel.category.id in ADMIN_CATEGORIES:
-        await interaction.response.send_message(response)
+        if len(response) > CHAR_LIMIT:
+            url = create_paste_link(response)
+            await interaction.response.send_message(f"The reply won't fit into a Discord message, [click here to view]({url}). Also consider shorting the response to this command.")
+        else:
+            await interaction.response.send_message(response)
     else:
         await interaction.response.send_message("Don't leak info!")
 

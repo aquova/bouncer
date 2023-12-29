@@ -43,7 +43,10 @@ def combine_message(mes: discord.Message) -> str:
 # Creates a URL to be decoded by the web-hosted paste service
 # See https://github.com/topaz/paste
 def create_paste_link(message: str) -> str:
-    data = message.encode()
+    # Note that this filters out non-ASCII characters, like emoji, which could potentially be an issue
+    # There's no reason why this shouldn't work, except the JS implementation of LZMA/Base64 on the server side
+    # doesn't seem to decode it in the same way as Python encodes it, leading to a jumbled mess
+    data = message.encode('ascii', errors='ignore')
     compressed = lzma.compress(data, format=lzma.FORMAT_ALONE)
     b64 = base64.b64encode(compressed)
     return f"{PASTE_URL}#{b64.decode()}"

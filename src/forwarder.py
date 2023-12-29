@@ -75,7 +75,7 @@ class MessageForwarder:
         try:
             # Send the user a message so they know something actually happened
             if not edit:
-                await message.channel.send("Your message has been forwarded!")
+                await message.add_reaction("✅")
         except discord.errors.Forbidden as err:
             if err.code == 50007:
                 await reply_channel.send("Unable to send message forward notification to the above user - Can't send messages to that user")

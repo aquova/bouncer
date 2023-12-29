@@ -1,6 +1,7 @@
 discord: "<TOKEN>"                          # Your Discord bot token
 server_name: "My Server"                    # Server name, shows up in ban/warn messages
 appeal_url: "https://discord.gg/example"    # URL for appeal server, shows up in ban messasges
+paste_url: "https://example.com/paste/"     # URL for message paste service. See https://github.com/topaz/paste for more details
 
 servers:
     home: 1234567890123456789               # ID of your server
@@ -13,6 +14,10 @@ channels:
     syslog: 1234567890123456789             # ID of channel to post moderator action logs
     watchlist: 1234567890123456789          # ID of channel to post messages sent by users on watchlist
     info:                                   # List of channels containing helpful user info, shows up in ban/warn messages
+        - 1234567890123456789
+
+categories:
+    admin:                                  # List of category IDs the bot can display sensitive information in
         - 1234567890123456789
 
 roles:

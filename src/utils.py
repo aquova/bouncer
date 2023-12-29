@@ -3,7 +3,7 @@ from textwrap import wrap
 
 import discord
 
-_CHAR_LIMIT = 1990 # The actual limit is 2000, but we'll be conservative
+CHAR_LIMIT = 1990 # The actual limit is 2000, but we'll be conservative
 
 # Output is of the form YYYY-MM-DD
 def format_time(time: datetime) -> str:
@@ -38,19 +38,22 @@ def combine_message(mes: discord.Message) -> str:
 
     return out
 
-async def send_message(message: str, channel: discord.TextChannel | discord.Thread) -> discord.Message | None:
+def split_message(message: str) -> list[str]:
     messages = message.split('\n')
     to_send = [messages[0]]
     for msg in messages[1:]:
-        if len(msg) >= _CHAR_LIMIT:
-            to_send += wrap(msg, width=_CHAR_LIMIT)
-        elif len(msg) + len(to_send[-1]) < _CHAR_LIMIT:
+        if len(msg) >= CHAR_LIMIT:
+            to_send += wrap(msg, width=CHAR_LIMIT)
+        elif len(msg) + len(to_send[-1]) < CHAR_LIMIT:
             to_send[-1] += f"\n{msg}"
         else:
             to_send.append(msg)
+    return to_send
 
+async def send_message(message: str, channel: discord.TextChannel | discord.Thread) -> discord.Message | None:
+    messages = split_message(message)
     first_id = None
-    for msg in to_send:
+    for msg in messages:
         if len(msg) > 0:
             mid = await channel.send(msg)
             first_id = mid if first_id is None else first_id

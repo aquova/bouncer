@@ -6,11 +6,19 @@ from config import ADMIN_CATEGORIES
 from logtypes import LogTypes
 from report import ReportModal
 from visualize import post_plots
+from utils import CHAR_LIMIT, split_message
 
 # Interaction wrapper that prevents users from leaking info
 async def interaction_response_helper(interaction: discord.Interaction, response: str):
     if interaction.channel.category.id in ADMIN_CATEGORIES:
-        await interaction.response.send_message(response)
+        if len(response) > CHAR_LIMIT:
+            messages = split_message(response)
+            await interaction.response.send_message(messages[0])
+            followup = interaction.followup
+            for m in messages[1:]:
+                await followup.send(m)
+        else:
+            await interaction.response.send_message(response)
     else:
         await interaction.response.send_message("Don't leak info!", ephemeral=True)
 

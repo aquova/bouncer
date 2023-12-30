@@ -219,7 +219,7 @@ async def dm(user: discord.User | discord.Member, message: str, channel_id: int)
 
         # Add context in the user's reply thread
         await _add_context_to_reply_thread(channel_id, user, f"Message sent to `{str(user)}`", message)
-        return f"Message sent to `{str(user)}`."
+        return f"Message sent to `{str(user)}`: {message}"
     except discord.errors.HTTPException as err:
         if err.code == 50007:
             return "Cannot send messages to this user. It is likely they have DM closed or I am blocked."

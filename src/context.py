@@ -52,6 +52,13 @@ async def edit_slash(interaction: discord.Interaction, user: discord.User, messa
 async def graph_slash(interaction: discord.Interaction):
     await post_plots(interaction.response)
 
+@client.tree.command(name="id", description="Fetch the user ID of this DM thread")
+async def id_slash(interaction: discord.Interaction):
+    if interaction.channel_id is None: # Only for linter's sake
+        return
+    response = commands.get_id(interaction.channel_id)
+    await interaction_response_helper(interaction, response)
+
 # Note and Scam have their own separate commands:
 # - Scam is meant to be a shortcut with fewer fields
 # - Notes don't send DMs to their targets, so keep it separate in case of misclicks

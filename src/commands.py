@@ -121,6 +121,17 @@ async def show_reply_thread(user: discord.User) -> str:
     return f"Reply thread for <@{user.id}>: <#{reply_thread_id}>."
 
 """
+Get user ID
+
+Get's the user ID associated with the channel ID of the current DM thread
+"""
+def get_id(channel_id: int) -> str:
+    user = _get_user_for_reply(channel_id)
+    if user is None:
+        return "I can't get this user's ID. Are we in a DM thread?"
+    return str(user.id)
+
+"""
 Preview message
 
 Prints out Bouncer's DM message as the user will receive it

@@ -73,8 +73,14 @@ async def id_slash(interaction: discord.Interaction):
 async def log_slash(interaction: discord.Interaction, user: discord.User, reason: str, log_type: LogTypes):
     if interaction.channel_id is None:
         return
-    response = await commands.log_user(user, reason, log_type, interaction.user, interaction.channel_id)
-    await interaction_response_helper(interaction, response)
+    if interaction.channel.category.id in ADMIN_CATEGORIES:
+        # Logging is a fairly intensive task, with potentially several items that requires us to wait on Discord
+        # To that end, defer the response, so that it doesn't take too long and indicate to the user it failed
+        await interaction.response.defer()
+        response = await commands.log_user(user, reason, log_type, interaction.user, interaction.channel_id)
+        await interaction.followup.send(response)
+    else:
+        await interaction.response.send_message("Don't leak info!", ephemeral=True)
 
 @client.tree.command(name="note", description="Add a user note")
 @discord.app_commands.describe(user="User", note="Note to add")

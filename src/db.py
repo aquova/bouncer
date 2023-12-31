@@ -2,9 +2,9 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import datetime
 
-from commonbot.utils import format_time
 from config import DATABASE_PATH
 from logtypes import LogTypes, past_tense
+from utils import format_time
 
 
 @dataclass
@@ -147,9 +147,10 @@ def clear_user_logs(userid: int):
         if log.dbid is not None:
             remove_log(log.dbid)
 
-def get_watch_list() -> list[tuple]:
+def get_watch_list() -> list[int]:
     query = ("SELECT * FROM watching",)
-    return _db_read(query)
+    result = _db_read(query)
+    return [x[0] for x in result]
 
 def add_watch(userid: int):
     query = ("INSERT OR REPLACE INTO watching (id) VALUES (?)", [userid])

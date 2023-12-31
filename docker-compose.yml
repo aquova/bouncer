@@ -3,5 +3,6 @@ services:
     bouncer:
         image: aquova/bouncer:latest
         restart: unless-stopped
+        container_name: bouncer
         volumes:
             - ./src:/bouncer

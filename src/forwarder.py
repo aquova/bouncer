@@ -4,12 +4,11 @@ from typing import cast
 
 import discord
 
-import commands
-import commonbot.utils
 import db
 from client import client
 from config import HOME_SERVER, THREAD_ROLES
 from waiting import AnsweringMachineEntry, is_in_home_server
+import utils
 
 
 class MessageForwarder:
@@ -45,7 +44,7 @@ class MessageForwarder:
         :param edit: Whether this message was an edit
         """
         # Ignore blocked users
-        if commands.bu.is_in_blocklist(message.author.id):
+        if client.blocks.is_in_blocklist(message.author.id):
             return
 
         # If the user is in the home server, treat it as a regular DM
@@ -64,38 +63,38 @@ class MessageForwarder:
             reply_message += " (edited)"
 
         # Fill in the rest of the message with what the user said
-        content = commonbot.utils.combine_message(message)
+        content = utils.combine_message(message)
         reply_message += f": {content}"
 
         # Get or create the appropriate thread for the message user
         reply_channel = await self.get_or_create_user_reply_thread(message.author, True, content=content)
 
         # Forward the message to the channel/thread
-        log_mes = await commonbot.utils.send_message(reply_message, reply_channel)
+        log_mes = await utils.send_message(reply_message, reply_channel)
 
         try:
             # Send the user a message so they know something actually happened
             if not edit:
-                await message.channel.send("Your message has been forwarded!")
+                await message.add_reaction("✅")
         except discord.errors.Forbidden as err:
             if err.code == 50007:
                 await reply_channel.send("Unable to send message forward notification to the above user - Can't send messages to that user")
             else:
-                await reply_channel.send(f"ERROR: While attempting to send message forward notification, there was an unexpected error. Tell aquova this: {err}")
+                await reply_channel.send(f"ERROR: While attempting to send message forward notification, there was an unexpected error: {err}")
 
         # Record that the user is waiting for a reply
         url = log_mes.jump_url if log_mes else None
         mes_entry = AnsweringMachineEntry(str(message.author), message.created_at, content, url)
-        commands.am.update_entry(message.author.id, mes_entry)
+        client.am.update_entry(message.author.id, mes_entry)
 
-    def get_userid_for_user_reply_thread(self, message: discord.Message) -> int | None:
+    def get_userid_for_user_reply_thread(self, channel_id: int) -> int | None:
         """
         Get the user id to reply to if message was sent in a reply thread.
 
         :param message: The staff reply message.
         :return: The user id, if message was sent in a user reply thread. None otherwise.
         """
-        return self._thread_id_to_user_id(message.channel.id)
+        return self._thread_id_to_user_id(channel_id)
 
     def get_reply_thread_id_for_user(self, user: discord.User | discord.Member) -> int | None:
         """

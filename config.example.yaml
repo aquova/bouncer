@@ -1,0 +1,33 @@
+discord: "<TOKEN>"                          # Your Discord bot token
+server_name: "My Server"                    # Server name, shows up in ban/warn messages
+appeal_url: "https://discord.gg/example"    # URL for appeal server, shows up in ban messasges
+paste_url: "https://example.com/paste/"     # URL for message paste service. See https://github.com/topaz/paste for more details
+
+servers:
+    home: 1234567890123456789               # ID of your server
+
+channels:
+    mailbox: 1234567890123456789            # ID of channel user DMs should be routed to
+    spam: 1234567890123456789               # ID of channel spam notifications should be posted in
+    ignore_spam: []                         # List of channel IDs to ignore spammy posts
+    log: 1234567890123456789                # ID of channel to post general server updates (see events in main.py)
+    syslog: 1234567890123456789             # ID of channel to post moderator action logs
+    watchlist: 1234567890123456789          # ID of channel to post messages sent by users on watchlist
+    info:                                   # List of channels containing helpful user info, shows up in ban/warn messages
+        - 1234567890123456789
+
+categories:
+    admin:                                  # List of category IDs the bot can display sensitive information in
+        - 1234567890123456789
+
+roles:
+    admin:                                  # List of role IDs the bot should treat as administrator
+        - 1234567890123456789
+
+messageForwarding:
+    rolesToAddToThreads:                    # List of role IDs the bot should automatically add to user DM threads
+        - 1234567890123456789
+
+DM:
+    ban: True                               # Whether the bot should DM users about their bans
+    warn: True                              # Whether the bot should DM users about their warnings

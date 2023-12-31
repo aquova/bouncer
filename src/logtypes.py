@@ -1,4 +1,6 @@
-class LogTypes():
+from enum import IntEnum
+
+class LogTypes(IntEnum):
     BAN = 0
     WARN = 1
     NOTE = 2

@@ -1,62 +1,31 @@
 import discord
 
 import db
-from client import client
-from commonbot.user import UserLookup
-from utils import get_userid
-
 
 class Watcher:
     def __init__(self):
-        self.watchlist = [x[0] for x in db.get_watch_list()]
-        self.ul = UserLookup()
+        self.watchlist = db.get_watch_list()
 
-    def should_note(self, id: int) -> bool:
-        return id in self.watchlist
+    def should_note(self, uid: int) -> bool:
+        return uid in self.watchlist
 
-    def remove_user(self, id: int):
-        if id in self.watchlist:
-            db.del_watch(id)
-            self.watchlist.remove(id)
+    def remove_user(self, uid: int):
+        if uid in self.watchlist:
+            db.del_watch(uid)
+            self.watchlist.remove(uid)
 
-    async def watch_user(self, mes: discord.Message, _):
-        userid, _ = await get_userid(self.ul, mes, "watch")
-        if not userid:
-            return
+    def handle_watch(self, user: discord.Member, watch: bool) -> str:
+        if watch:
+            db.add_watch(user.id)
+            self.watchlist.append(user.id)
+            return f"{str(user)} has been added to the watch list. :spy:"
+        else:
+            if user.id not in self.watchlist:
+                return "...That user is not being watched"
+            self.remove_user(user.id)
+            return f"{str(user)} has been removed from the watch list."
 
-        db.add_watch(userid)
-        self.watchlist.append(userid)
-
-        username = self.ul.fetch_username(client, userid)
-        await mes.channel.send(f"{username} has been added to the watch list. :spy:")
-
-    async def unwatch_user(self, mes: discord.Message, _):
-        userid, _ = await get_userid(self.ul, mes, "unwatch")
-        if not userid:
-            return
-        elif userid not in self.watchlist:
-            await mes.channel.send("...That user is not being watched")
-            return
-
-        self.remove_user(userid)
-
-        username = self.ul.fetch_username(client, userid)
-        await mes.channel.send(f"{username} has been removed from the watch list.")
-
-    async def get_watchlist(self, mes: discord.Message, _):
+    def get_watchlist(self) -> str:
         if len(self.watchlist) == 0:
-            await mes.channel.send("There are no users being watched")
-            return
-
-        output = "```"
-        for userid in self.watchlist:
-            username = self.ul.fetch_username(client, userid)
-            if username:
-                output += f"{username} ({userid})\n"
-            else:
-                # If we couldn't find them, just prune them
-                self.remove_user(userid)
-
-        output += "```"
-
-        await mes.channel.send(output)
+            return "There are no users being watched"
+        return "\n".join([f"<@{x}>" for x in self.watchlist])

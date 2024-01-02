@@ -127,8 +127,12 @@ async def say_slash(interaction: discord.Interaction, message: str, channel: dis
 async def scam_slash(interaction: discord.Interaction, user: discord.User):
     if interaction.channel_id is None:
         return
-    response = await commands.log_user(user, "", LogTypes.SCAM, interaction.user, interaction.channel_id)
-    await interaction_response_helper(interaction, response)
+    if interaction.channel.category.id in ADMIN_CATEGORIES:
+        await interaction.response.defer()
+        response = await commands.log_user(user, "", LogTypes.SCAM, interaction.user, interaction.channel_id)
+        await interaction.followup.send(response)
+    else:
+        await interaction.response.send_message("Don't leak info!", ephemeral=True)
 
 @client.tree.command(name="search", description="Search for a user's logs")
 @discord.app_commands.describe(user="User")

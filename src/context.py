@@ -5,6 +5,7 @@ import commands
 from config import ADMIN_CATEGORIES
 from logtypes import LogTypes
 from report import ReportModal
+from say import SayModal
 from visualize import post_plots
 from utils import CHAR_LIMIT, split_message
 
@@ -117,10 +118,9 @@ async def reply_slash(interaction: discord.Interaction, message: str):
     await interaction_response_helper(interaction, response)
 
 @client.tree.command(name="say", description="Say a message as the bot")
-@discord.app_commands.describe(message="Message to say", channel="Channel to post in")
-async def say_slash(interaction: discord.Interaction, message: str, channel: discord.TextChannel | discord.Thread):
-    await channel.send(message)
-    await interaction_response_helper(interaction, "Message sent!")
+@discord.app_commands.describe(channel="Channel to post in")
+async def say_slash(interaction: discord.Interaction, channel: discord.TextChannel | discord.Thread):
+    await interaction.response.send_modal(SayModal(channel))
 
 @client.tree.command(name="scam", description="Log a scam")
 @discord.app_commands.describe(user="User")

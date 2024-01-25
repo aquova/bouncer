@@ -9,6 +9,33 @@ from say import SayModal
 from visualize import post_plots
 from utils import CHAR_LIMIT, split_message
 
+HELP_MESSAGE = (
+    "# Bouncer Slash Command Reference\n"
+    "`/help` - Print this message\n"
+    "## Logging\n"
+    "`/log` - Log a user infraction\n"
+    "`/note` - Add a user note\n"
+    "`/scam` - Log a scam\n"
+    "`/search` - Search for a user's logs\n"
+    "`/edit` - Edit an incorrect log\n"
+    "`/remove` - Remove a log\n"
+    "## Messaging Users\n"
+    "`/dm` - Send a DM to a user\n"
+    "`/reply` - Reply to the other of a DM thread\n"
+    "`/preview` - Preview DM message sent to a user\n"
+    "`/open` - Get a user's DM thread\n"
+    "`/id` - Fetch the ID of a user in a DM thread\n"
+    "`/waiting` - List users who are waiting for a reply\n"
+    "`/clear` - Clear list of users waiting for reply\n"
+    "## Misc.\n"
+    "`/graph` - Post graphs of moderator activity\n"
+    "`/say` - Post a message as the bot\n"
+    "`/unmute` - Remove a user's timeout\n"
+    "`/block` - Change if a user can DM the bot\n"
+    "`/watch` - Change if a user is on the watchlist\n"
+    "`/watchlist` - Print out the watchlist\n"
+)
+
 # Interaction wrapper that prevents users from leaking info
 async def interaction_response_helper(interaction: discord.Interaction, response: str):
     if interaction.channel.category.id in ADMIN_CATEGORIES:
@@ -52,6 +79,10 @@ async def edit_slash(interaction: discord.Interaction, user: discord.User, messa
 @client.tree.command(name="graph", description="Post graphs of moderator activity")
 async def graph_slash(interaction: discord.Interaction):
     await post_plots(interaction.response)
+
+@client.tree.command(name="help", description="Post the help message")
+async def help_slash(interaction: discord.Interaction):
+    await interaction.response.send_message(HELP_MESSAGE)
 
 @client.tree.command(name="id", description="Fetch the user ID of this DM thread")
 async def id_slash(interaction: discord.Interaction):

@@ -21,7 +21,7 @@ HELP_MESSAGE = (
     "`/remove` - Remove a log\n"
     "## Messaging Users\n"
     "`/dm` - Send a DM to a user\n"
-    "`/reply` - Reply to the other of a DM thread\n"
+    "`/reply` - Reply to the owner of a DM thread\n"
     "`/preview` - Preview DM message sent to a user\n"
     "`/open` - Get a user's DM thread\n"
     "`/id` - Fetch the ID of a user in a DM thread\n"

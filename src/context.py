@@ -38,17 +38,17 @@ HELP_MESSAGE = (
 
 # Interaction wrapper that prevents users from leaking info
 async def interaction_response_helper(interaction: discord.Interaction, response: str):
+    send_method = interaction.followup.send if interaction.response.is_done() else interaction.response.send_message
     if interaction.channel.category.id in ADMIN_CATEGORIES:
         if len(response) > CHAR_LIMIT:
             messages = split_message(response)
-            await interaction.response.send_message(messages[0])
-            followup = interaction.followup
+            await send_method(messages[0])
             for m in messages[1:]:
-                await followup.send(m)
+                await interaction.followup.send(m)
         else:
-            await interaction.response.send_message(response)
+            await send_method(response)
     else:
-        await interaction.response.send_message("Don't leak info!", ephemeral=True)
+        await send_method("Don't leak info!", ephemeral=True)
 
 ### Slash Commands
 @client.tree.command(name="block", description="Change if user can DM us")
@@ -67,6 +67,7 @@ async def clear_slash(interaction: discord.Interaction):
 async def dm_slash(interaction: discord.Interaction, user: discord.User, message: str):
     if interaction.channel_id is None: # Only for the linter's sake
         return
+    await interaction.response.defer()
     response = await commands.dm(user, message, interaction.channel_id)
     await interaction_response_helper(interaction, response)
 
@@ -105,20 +106,18 @@ async def id_slash(interaction: discord.Interaction):
 async def log_slash(interaction: discord.Interaction, user: discord.User, reason: str, log_type: LogTypes):
     if interaction.channel_id is None:
         return
-    if interaction.channel.category.id in ADMIN_CATEGORIES:
-        # Logging is a fairly intensive task, with potentially several items that requires us to wait on Discord
-        # To that end, defer the response, so that it doesn't take too long and indicate to the user it failed
-        await interaction.response.defer()
-        response = await commands.log_user(user, reason, log_type, interaction.user, interaction.channel_id)
-        await interaction.followup.send(response)
-    else:
-        await interaction.response.send_message("Don't leak info!", ephemeral=True)
+    # Logging is a fairly intensive task, with potentially several items that requires us to wait on Discord
+    # To that end, defer the response, so that it doesn't take too long and indicate to the user it failed
+    await interaction.response.defer()
+    response = await commands.log_user(user, reason, log_type, interaction.user, interaction.channel_id)
+    await interaction_response_helper(interaction, response)
 
 @client.tree.command(name="note", description="Add a user note")
 @discord.app_commands.describe(user="User", note="Note to add")
 async def note_slash(interaction: discord.Interaction, user: discord.User, note: str):
     if interaction.channel_id is None:
         return
+    await interaction.response.defer()
     response = await commands.log_user(user, note, LogTypes.NOTE, interaction.user, interaction.channel_id)
     await interaction_response_helper(interaction, response)
 
@@ -158,12 +157,9 @@ async def say_slash(interaction: discord.Interaction, channel: discord.TextChann
 async def scam_slash(interaction: discord.Interaction, user: discord.User):
     if interaction.channel_id is None:
         return
-    if interaction.channel.category.id in ADMIN_CATEGORIES:
-        await interaction.response.defer()
-        response = await commands.log_user(user, "", LogTypes.SCAM, interaction.user, interaction.channel_id)
-        await interaction.followup.send(response)
-    else:
-        await interaction.response.send_message("Don't leak info!", ephemeral=True)
+    await interaction.response.defer()
+    response = await commands.log_user(user, "", LogTypes.SCAM, interaction.user, interaction.channel_id)
+    await interaction_response_helper(interaction, response)
 
 @client.tree.command(name="search", description="Search for a user's logs")
 @discord.app_commands.describe(user="User")

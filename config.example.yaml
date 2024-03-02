@@ -1,7 +1,6 @@
 discord: "<TOKEN>"                          # Your Discord bot token
 server_name: "My Server"                    # Server name, shows up in ban/warn messages
 appeal_url: "https://discord.gg/example"    # URL for appeal server, shows up in ban messasges
-paste_url: "https://example.com/paste/"     # URL for message paste service. See https://github.com/topaz/paste for more details
 
 servers:
     home: 1234567890123456789               # ID of your server

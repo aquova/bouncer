@@ -29,6 +29,12 @@ class UserLogEntry:
         else:
             return past_tense(self.log_type)
 
+    def as_list(self):
+        if self.dbid is not None:
+            return [self.dbid, self.user_id, self.log_type, self.timestamp, self.log_message, self.staff, self.message_id]
+        else:
+            return [self.user_id, self.log_type, self.timestamp, self.log_message, self.staff, self.message_id]
+
 """
 Initialize database
 
@@ -72,6 +78,7 @@ def search(user_id: int) -> list[UserLogEntry]:
             dt = datetime.strptime(result[3], "%Y-%m-%d %H:%M:%S.%f%z")
         except ValueError:
             dt = datetime.strptime(result[3], "%Y-%m-%d %H:%M:%S.%f")
+            dt = dt.replace(tzinfo=timezone.utc)
         entry = UserLogEntry(result[0], result[1], result[2], dt, result[4], result[5], result[6])
         entries.append(entry)
 

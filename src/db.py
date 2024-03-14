@@ -66,8 +66,12 @@ def search(user_id: int) -> list[UserLogEntry]:
 
     entries = []
     for result in search_results:
-        # This really is supposed to be a datetime, not a string, but I think the conversion to/from SQL has mucked with it
-        dt = datetime.strptime(result[3], "%Y-%m-%d %H:%M:%S.%f%z")
+        # SQL stores Python datetimes as strings so we need to format them back
+        # Making matters worse, older logs might not have the TZ data at the end, so we need to handle both
+        try:
+            dt = datetime.strptime(result[3], "%Y-%m-%d %H:%M:%S.%f%z")
+        except ValueError:
+            dt = datetime.strptime(result[3], "%Y-%m-%d %H:%M:%S.%f")
         entry = UserLogEntry(result[0], result[1], result[2], dt, result[4], result[5], result[6])
         entries.append(entry)
 

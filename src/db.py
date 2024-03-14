@@ -1,6 +1,6 @@
 import sqlite3
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 
 from config import DATABASE_PATH
 from logtypes import LogTypes, past_tense
@@ -17,20 +17,17 @@ class UserLogEntry:
     staff: str
     message_id: int | None
 
-    def format(self, warn_num: int|None=None):
-        return f"[{format_time(self.timestamp)}] {self.log_word(warn_num)} by {self.staff} - {self.log_message}\n"
+    def format(self, warn_num: int | None=None):
+        now = datetime.now(timezone.utc)
+        diff = now - self.timestamp
+        obsolete_tag = "**[OLD]**" if diff.days > 365 else ""
+        return f"[{format_time(self.timestamp)}] {obsolete_tag} {self.log_word(warn_num)} by {self.staff} - {self.log_message}\n"
 
     def log_word(self, warn_num: int | None=None) -> str:
         if warn_num is not None:
             return f"Warning #{warn_num}"
         else:
             return past_tense(self.log_type)
-
-    def as_list(self):
-        if self.dbid is not None:
-            return [self.dbid, self.user_id, self.log_type, self.timestamp, self.log_message, self.staff, self.message_id]
-        else:
-            return [self.user_id, self.log_type, self.timestamp, self.log_message, self.staff, self.message_id]
 
 """
 Initialize database
@@ -69,7 +66,9 @@ def search(user_id: int) -> list[UserLogEntry]:
 
     entries = []
     for result in search_results:
-        entry = UserLogEntry(result[0], result[1], result[2], result[3], result[4], result[5], result[6])
+        # This really is supposed to be a datetime, not a string, but I think the conversion to/from SQL has mucked with it
+        dt = datetime.strptime(result[3], "%Y-%m-%d %H:%M:%S.%f%z")
+        entry = UserLogEntry(result[0], result[1], result[2], dt, result[4], result[5], result[6])
         entries.append(entry)
 
     return entries

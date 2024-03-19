@@ -7,6 +7,7 @@ from blocks import BlockedUsers
 from config import LOG_CHAN, MAILBOX, SPAM_CHAN, SYS_LOG, WATCHLIST_CHAN
 import db
 from spam import Spammers
+from syslog import Syslog
 from waiting import AnsweringMachine
 from watcher import Watcher
 
@@ -20,14 +21,17 @@ class DiscordClient(commands.Bot):
         self.am = AnsweringMachine()
         self.blocks = BlockedUsers()
         self.spammers = Spammers()
+        self.syslog = Syslog()
         self.watch = Watcher()
 
-    def set_channels(self):
+    async def set_channels(self):
         self.mailbox = cast(discord.TextChannel, self.get_channel(MAILBOX))
         self.log = cast(discord.TextChannel, self.get_channel(LOG_CHAN))
         self.spam = cast(discord.TextChannel, self.get_channel(SPAM_CHAN))
-        self.syslog = cast(discord.TextChannel, self.get_channel(SYS_LOG))
         self.watchlist = cast(discord.TextChannel, self.get_channel(WATCHLIST_CHAN))
+
+        self.syslog.setup(self.get_channel(SYS_LOG))
+        await self.add_cog(self.syslog)
 
     async def sync_guild(self, guild: discord.Guild):
         import context

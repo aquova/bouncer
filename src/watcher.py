@@ -14,7 +14,7 @@ class Watcher:
             db.del_watch(uid)
             self.watchlist.remove(uid)
 
-    def handle_watch(self, user: discord.Member, watch: bool) -> str:
+    def handle_watch(self, user: discord.User, watch: bool) -> str:
         if watch:
             db.add_watch(user.id)
             self.watchlist.append(user.id)

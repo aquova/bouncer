@@ -180,7 +180,7 @@ async def waiting_slash(interaction: discord.Interaction):
 
 @client.tree.command(name="watch", description="Edit the watchlist")
 @discord.app_commands.describe(user="User", watch="Watch?")
-async def watch_slash(interaction: discord.Interaction, user: discord.Member, watch: bool):
+async def watch_slash(interaction: discord.Interaction, user: discord.User, watch: bool):
     response = client.watch.handle_watch(user, watch)
     await interaction_response_helper(interaction, response)
 

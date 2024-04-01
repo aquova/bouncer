@@ -11,7 +11,8 @@ class Syslog(commands.Cog):
 
     def setup(self, syslog: discord.TextChannel):
         self.channel = syslog
-        self._post_logs.start()
+        if not self._post_logs.is_running():
+            self._post_logs.start()
 
     def cog_unload(self):
         self._post_logs.cancel()

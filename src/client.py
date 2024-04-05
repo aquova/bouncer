@@ -30,8 +30,9 @@ class DiscordClient(commands.Bot):
         self.spam = cast(discord.TextChannel, self.get_channel(SPAM_CHAN))
         self.watchlist = cast(discord.TextChannel, self.get_channel(WATCHLIST_CHAN))
 
-        self.syslog.setup(self.get_channel(SYS_LOG))
-        await self.add_cog(self.syslog)
+        if not self.syslog.is_loaded():
+            self.syslog.setup(self.get_channel(SYS_LOG))
+            await self.add_cog(self.syslog)
 
     async def sync_guild(self, guild: discord.Guild):
         import context

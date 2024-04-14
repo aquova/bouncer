@@ -6,8 +6,8 @@ import db
 import visualize
 from client import client
 from config import BAN_APPEAL_URL, DM_BAN, DM_WARN, INFO_CHANS, SERVER_NAME
-from forwarder import message_forwarder
 from logtypes import LogTypes, past_tense
+from reply import add_context_to_reply_thread
 import utils
 
 # Add extra message if more than threshold number of warns
@@ -71,7 +71,7 @@ async def log_user(user: discord.User, reason: str, state: LogTypes, author: dis
         output += f"\nThis user has received {_WARN_THRESHOLD} warnings or more. It is recommended that they be banned."
 
     # Record this action in the user's reply thread
-    await _add_context_to_reply_thread(channel_id, user, f"`{str(user)}` was {past_tense(state)}", reason)
+    await add_context_to_reply_thread(channel_id, user, f"`{str(user)}` was {past_tense(state)}", reason)
 
     log_mes_id = 0
     # If we aren't noting, need to also write to log channel
@@ -107,29 +107,6 @@ async def log_user(user: discord.User, reason: str, state: LogTypes, author: dis
     new_log.message_id = log_mes_id
     db.add_log(new_log)
     return output
-
-"""
-Show reply thread
-
-Sends the the reply thread for a user so it's easy for staff to find
-"""
-async def show_reply_thread(user: discord.User) -> str:
-    # Show reply thread if it exists
-    reply_thread_id = message_forwarder.get_reply_thread_id_for_user(user)
-    if reply_thread_id is None:
-        return f"User <@{user.id}> does not have a reply thread."
-    return f"Reply thread for <@{user.id}>: <#{reply_thread_id}>."
-
-"""
-Get user ID
-
-Get's the user ID associated with the channel ID of the current DM thread
-"""
-def get_id(channel_id: int) -> str:
-    user = _get_user_for_reply(channel_id)
-    if user is None:
-        return "I can't get this user's ID. Are we in a DM thread?"
-    return str(user.id)
 
 """
 Preview message
@@ -212,74 +189,3 @@ async def remove_error(user: discord.User, index: int) -> str:
     except discord.errors.HTTPException:
         pass
     return out
-
-"""
-DM
-
-Sends a private message to the specified user
-"""
-async def dm(user: discord.User | discord.Member, message: str, channel_id: int) -> str:
-    try:
-        # If first DMing, need to create DM channel
-        dm_chan = user.dm_channel
-        if not dm_chan:
-            dm_chan = await client.create_dm(user)
-
-        await dm_chan.send(f"A message from the {SERVER_NAME} staff: {message}")
-        client.am.remove_entry(user.id)
-
-        # Add context in the user's reply thread
-        await _add_context_to_reply_thread(channel_id, user, f"Message sent to `{str(user)}`", message)
-        return f"Message sent to `{str(user)}`: {message}"
-    except discord.errors.HTTPException as err:
-        if err.code == 50007:
-            return "Cannot send messages to this user. It is likely they have DM closed or I am blocked."
-        else:
-            return f"ERROR: While attempting to DM, there was an unexpected error: {err}"
-
-"""
-Reply
-
-Sends a private message to the user whose DM thread this is
-"""
-async def reply(message: str, channel_id: int) -> str:
-    user = _get_user_for_reply(channel_id)
-    if user is None:
-        return "This command can only be sent inside a DM thread. Try again there, or use the `/dm` command."
-    response = await dm(user, message, channel_id)
-    return response
-
-"""
-_add_context_to_reply_thread
-
-Adds information about a moderation action taken on a specific user to the user's reply thread.
-
-If the moderation action already happened in the user's reply thread, no more context is needed, so this does nothing.
-
-Otherwise, it posts a message in the reply thread with the details of the action and a link to the source message.
-"""
-async def _add_context_to_reply_thread(channel_id: int, user: discord.User | discord.Member, context: str, message: str):
-    reply_thread_id = message_forwarder.get_reply_thread_id_for_user(user)
-    if channel_id == reply_thread_id:
-        return # Already in reply thread, nothing to do
-
-    reply_thread = await message_forwarder.get_or_create_user_reply_thread(user, content=message)
-
-    # Suppress embeds so the jump url doesn't show a useless 'Discord - A New Way to Chat....' embed
-    # TODO: Readd jump url
-    await reply_thread.send(f"{context}: {message}", suppress_embeds=True)
-
-"""
-_get_user_for_reply
-
-Gets the user to reply to for a reply command.
-
-Based on the channel it was sent in, this figures out who to DM.
-"""
-def _get_user_for_reply(channel_id: int) -> discord.User | discord.Member | None:
-    # If it's a reply thread, the user the reply thread is for, otherwise None
-    thread_user = message_forwarder.get_userid_for_user_reply_thread(channel_id)
-
-    if thread_user is not None:
-        return client.get_user(thread_user)
-    return None

@@ -3,6 +3,8 @@ from textwrap import wrap
 
 import discord
 
+from config import ADMIN_CATEGORIES
+
 CHAR_LIMIT = 1990 # The actual limit is 2000, but we'll be conservative
 
 # Output is of the form YYYY-MM-DD
@@ -37,6 +39,20 @@ def combine_message(mes: discord.Message) -> str:
         out += '\n' + sticker.url
 
     return out
+
+# Interaction wrapper that prevents users from leaking info
+async def interaction_response_helper(interaction: discord.Interaction, response: str):
+    send_method = interaction.followup.send if interaction.response.is_done() else interaction.response.send_message
+    if interaction.channel.category.id in ADMIN_CATEGORIES:
+        if len(response) > CHAR_LIMIT:
+            messages = split_message(response)
+            await send_method(messages[0])
+            for m in messages[1:]:
+                await interaction.followup.send(m)
+        else:
+            await send_method(response)
+    else:
+        await send_method("Don't leak info!", ephemeral=True)
 
 def split_message(message: str) -> list[str]:
     messages = message.split('\n')

@@ -3,6 +3,25 @@ import discord
 from client import client
 from config import SERVER_NAME
 from forwarder import message_forwarder
+from utils import CHAR_LIMIT, interaction_response_helper
+
+class DmModal(discord.ui.Modal):
+    def __init__(self, user: discord.User):
+        super().__init__(title="DM a user")
+        self.user = user
+        self.content = discord.ui.TextInput(
+            label="DM Message",
+            style=discord.TextStyle.long,
+            max_length=CHAR_LIMIT,
+            required=True,
+        )
+        self.add_item(self.content)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        if interaction.channel_id is None: # Only for the linter's sake
+            return
+        response = await dm(self.user, self.content.value, interaction.channel_id)
+        await interaction_response_helper(interaction, response)
 
 """
 Show reply thread

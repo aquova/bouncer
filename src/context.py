@@ -1,14 +1,13 @@
 import discord
 
 from client import client
-from config import ADMIN_CATEGORIES
 import logs
 from logtypes import LogTypes
 from report import ReportModal
 import reply
 from say import SayModal
 from visualize import post_plots
-from utils import CHAR_LIMIT, split_message
+from utils import interaction_response_helper
 
 HELP_MESSAGE = (
     "# Bouncer Slash Command Reference\n"
@@ -37,20 +36,6 @@ HELP_MESSAGE = (
     "`/watchlist` - Print out the watchlist\n"
 )
 
-# Interaction wrapper that prevents users from leaking info
-async def interaction_response_helper(interaction: discord.Interaction, response: str):
-    send_method = interaction.followup.send if interaction.response.is_done() else interaction.response.send_message
-    if interaction.channel.category.id in ADMIN_CATEGORIES:
-        if len(response) > CHAR_LIMIT:
-            messages = split_message(response)
-            await send_method(messages[0])
-            for m in messages[1:]:
-                await interaction.followup.send(m)
-        else:
-            await send_method(response)
-    else:
-        await send_method("Don't leak info!", ephemeral=True)
-
 ### Slash Commands
 @client.tree.command(name="block", description="Change if user can DM us")
 @discord.app_commands.describe(user="User", block="Block?")
@@ -71,6 +56,10 @@ async def dm_slash(interaction: discord.Interaction, user: discord.User, message
     await interaction.response.defer()
     response = await reply.dm(user, message, interaction.channel_id)
     await interaction_response_helper(interaction, response)
+
+@client.tree.command(name="dm-popup", description="Send a DM to a user, with a popup")
+async def popup_slash(interaction: discord.Interaction, user: discord.User):
+    await interaction.response.send_modal(reply.DmModal(user))
 
 @client.tree.command(name="edit", description="Edit an incorrect log")
 @discord.app_commands.describe(user="User", message="New log entry", index="Log index to edit")

@@ -55,6 +55,10 @@ async def send_message(message: str, channel: discord.TextChannel | discord.Thre
     first_id = None
     for msg in messages:
         if len(msg) > 0:
-            mid = await channel.send(msg)
-            first_id = mid if first_id is None else first_id
+            try:
+                mid = await channel.send(msg)
+                first_id = mid if first_id is None else first_id
+            except discord.errors.DiscordServerError:
+                print("Discord server error, unable to post message")
+                break
     return first_id

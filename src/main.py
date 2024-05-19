@@ -152,6 +152,9 @@ async def on_member_remove(member: discord.Member):
     # We can remove left users from our answering machine
     client.am.remove_entry(member.id)
 
+    if client.watch.should_note(member.id):
+        await utils.send_message(f"{str(member)} has left the server.", client.watchlist)
+
     mes = f":wave: **{str(member)} ({member.id})** has left"
     client.syslog.add_log(mes)
 
@@ -220,6 +223,9 @@ Occurs when a user joins the server
 async def on_member_join(member: discord.Member):
     if not should_log(member.guild):
         return
+
+    if client.watch.should_note(member.id):
+        await utils.send_message(f"{str(member)} has joined the server.", client.watchlist)
 
     mes = f":confetti_ball: **{str(member)} ({member.id})** has joined"
     client.syslog.add_log(mes)

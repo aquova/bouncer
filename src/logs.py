@@ -13,9 +13,9 @@ import utils
 # Add extra message if more than threshold number of warns
 _WARN_THRESHOLD = 3
 
-BAN_KICK_MES = "Hi there! You've been {type} from the {name} Discord for violating the rules: `{mes}`. If you have any questions, and for information on appeals, you can join <{url}>."
+BAN_KICK_MES = "Hi there! You've been {type} from the {name} Discord for violating the rules.\n> {mes}.\nIf you have any questions, and for information on appeals, you can join <{url}>."
 SCAM_MES = "Hi there! You've been banned from the {name} Discord for posting scam links. If your account was compromised, please change your password, enable 2FA, and join <{url}> to appeal."
-WARN_MES = "Hi there! You've received warning #{count} in the {name} Discord for violating the rules: `{mes}`. Please review {chans} for more info. If you have any questions, you can reply directly to this message to contact the staff."
+WARN_MES = "Hi there! You've received warning #{count} in the {name} Discord for violating the rules.\n> {mes}.\nPlease review {chans} for more info. If you have any questions, you can reply directly to this message to contact the staff."
 
 """
 Search logs

@@ -28,7 +28,7 @@ async def delete_message_helper(message: discord.Message):
         for item in message.attachments:
             mes += '\n' + item.url
 
-    client.syslog.add_log(mes)
+    await utils.send_message(mes, client.syslog)
 
 """
 Should Log
@@ -94,7 +94,7 @@ async def on_member_update(before: discord.Member, after: discord.Member):
             mes = f"**:spy: {str(after)}** has reset their username"
         else:
             mes = f"**:spy: {str(after)}** is now known as `{after.nick}`"
-        client.syslog.add_log(mes)
+        await utils.send_message(mes, client.syslog)
     # If role quantity has changed
     elif before.roles != after.roles:
         # Determine role difference, post about it
@@ -110,7 +110,7 @@ async def on_member_update(before: discord.Member, after: discord.Member):
             mes += f":new: **{str(after)}** had the role(s) `{added_str}` added."
 
         if mes != "":
-            client.syslog.add_log(mes)
+            await utils.send_message(mes, client.syslog)
     # If they were timed out
     # Note, this won't trip when the timeout wears off, due to a Discord limitation
     if before.timed_out_until != after.timed_out_until:
@@ -118,9 +118,9 @@ async def on_member_update(before: discord.Member, after: discord.Member):
             timedelta = after.timed_out_until - datetime.now(timezone.utc)
             timeout_str = humanize.precisedelta(timedelta, minimum_unit="seconds", format="%d")
             mes = f":zipper_mouth: {str(after)} has been timed out for {timeout_str}."
-            client.syslog.add_log(mes)
+            await utils.send_message(mes, client.syslog)
         else:
-            client.syslog.add_log(f":grin: {str(after)} is no longer timed out.")
+            await utils.send_message(f":grin: {str(after)} is no longer timed out.", client.syslog)
 
 """
 On Member Ban
@@ -137,7 +137,7 @@ async def on_member_ban(server: discord.Guild, member: discord.Member):
     client.watch.remove_user(member.id)
 
     mes = f":newspaper2: **{str(member)} ({member.id})** has been banned."
-    client.syslog.add_log(mes)
+    await utils.send_message(mes, client.syslog)
 
 """
 On Member Remove
@@ -156,7 +156,7 @@ async def on_member_remove(member: discord.Member):
         await utils.send_message(f"{str(member)} has left the server.", client.watchlist)
 
     mes = f":wave: **{str(member)} ({member.id})** has left"
-    client.syslog.add_log(mes)
+    await utils.send_message(mes, client.syslog)
 
 """
 On Message Delete
@@ -204,7 +204,7 @@ async def on_message_edit(before: discord.Message, after: discord.Message):
 
     try:
         mes = f":pencil: **{str(before.author)}** modified in <#{before.channel.id}>: `{before.content}` to `{after.content}`"
-        client.syslog.add_log(mes)
+        await utils.send_message(mes, client.syslog)
 
         # If user is on watchlist, then post it there as well
         watching = client.watch.should_note(after.author.id)
@@ -228,7 +228,7 @@ async def on_member_join(member: discord.Member):
         await utils.send_message(f"{str(member)} has joined the server.", client.watchlist)
 
     mes = f":confetti_ball: **{str(member)} ({member.id})** has joined"
-    client.syslog.add_log(mes)
+    await utils.send_message(mes, client.syslog)
 
 """
 On Voice State Update
@@ -242,10 +242,10 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
 
     if not after.channel:
         mes = f":mute: **{str(member)}** has left voice channel {before.channel.name}"
-        client.syslog.add_log(mes)
+        await utils.send_message(mes, client.syslog)
     elif not before.channel:
         mes = f":loud_sound: **{str(member)}** has joined voice channel {after.channel.name}"
-        client.syslog.add_log(mes)
+        await utils.send_message(mes, client.syslog)
 
 """
 On Reaction Remove
@@ -258,7 +258,7 @@ async def on_reaction_remove(reaction: discord.Reaction, user: discord.Member):
         return
 
     emoji_name = reaction.emoji if isinstance(reaction.emoji, str) else reaction.emoji.name
-    client.syslog.add_log(f":face_in_clouds: {str(user)} ({user.id}) removed the `{emoji_name}` emoji")
+    await utils.send_message(f":face_in_clouds: {str(user)} ({user.id}) removed the `{emoji_name}` emoji", client.syslog)
 
 """
 On Message

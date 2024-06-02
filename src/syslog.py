@@ -1,4 +1,4 @@
-from datetime import timedelta, datetime
+from datetime import timedelta, timezone, datetime, UTC
 
 import discord
 
@@ -6,6 +6,8 @@ from utils import send_message
 
 POST_MAX_QUEUE = 5                      # Max number of posts to queue before sending
 POST_MAX_DELTA = timedelta(minutes=5)   # Max amount of time posts should remain in queue
+
+EPOCH = datetime(1970, 1, 1, 0, 0, 0, tzinfo=timezone.utc) # Start of Unix time
 
 class Syslog:
     def __init__(self):
@@ -16,8 +18,10 @@ class Syslog:
         self.channel = syslog
 
     async def add_log(self, message: str):
-        self.logs.append(message)
-        now = datetime.now()
+        now = datetime.now(UTC)
+        unix = int((now - EPOCH).total_seconds())
+        log = f"<t:{unix}:f> {message}"
+        self.logs.append(log)
         if self.oldest is None:
             self.oldest = now
         if len(self.logs) >= POST_MAX_QUEUE or now - self.oldest > POST_MAX_DELTA:

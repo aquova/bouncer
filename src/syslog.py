@@ -32,6 +32,8 @@ class Syslog:
 
     async def _post_logs(self):
         joined = '\n'.join(self.logs)
-        await send_message(joined, self.channel)
+        # We'll clear the logs first, to prevent issues where the same message is
+        # for some reason unable to be sent over and over
         self.logs.clear()
         self.oldest = None
+        await send_message(joined, self.channel)

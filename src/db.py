@@ -73,12 +73,18 @@ def search(user_id: int) -> list[UserLogEntry]:
     entries = []
     for result in search_results:
         # SQL stores Python datetimes as strings so we need to format them back
-        # Making matters worse, older logs might not have the TZ data at the end, so we need to handle both
+        # Making matters worse, there are *three* formats saved in the logs.
+        # - An older format without a timezone
+        # - The more common newer one with a timezone
+        # - A very rarely, some logs don't have any milliseconds stored, possibly due to falling exactly on the second mark
         try:
             dt = datetime.strptime(result[3], "%Y-%m-%d %H:%M:%S.%f%z")
         except ValueError:
-            dt = datetime.strptime(result[3], "%Y-%m-%d %H:%M:%S.%f")
-            dt = dt.replace(tzinfo=timezone.utc)
+            try:
+                dt = datetime.strptime(result[3], "%Y-%m-%d %H:%M:%S.%f")
+                dt = dt.replace(tzinfo=timezone.utc)
+            except ValueError:
+                dt = datetime.strptime(result[3], "%Y-%m-%d %H:%M:%S%z")
         entry = UserLogEntry(result[0], result[1], result[2], dt, result[4], result[5], result[6])
         entries.append(entry)
 

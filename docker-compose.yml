@@ -1,7 +1,7 @@
 services:
     bouncer:
-        image: aquova/bouncer:latest
+        image: aquova/bouncer:uv
         restart: unless-stopped
         container_name: bouncer
         volumes:
-            - ./src:/bouncer
+            - ./private:/bouncer/private

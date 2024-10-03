@@ -1,12 +1,11 @@
-FROM python:3.11-alpine
+FROM ghcr.io/astral-sh/uv:python3.12-alpine
 
 RUN apk update && apk add \
     build-base \
     freetype-dev \
     jpeg-dev
 
-ADD requirements.txt /bouncer/requirements.txt
-RUN pip3 install -r /bouncer/requirements.txt
-
+ADD . /bouncer
 WORKDIR /bouncer
-CMD ["python3", "-u", "main.py"]
+RUN uv sync --frozen
+CMD ["uv", "run", "src/main.py"]

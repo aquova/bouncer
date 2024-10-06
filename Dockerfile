@@ -8,4 +8,4 @@ RUN apk update && apk add \
 ADD . /bouncer
 WORKDIR /bouncer
 RUN uv sync --frozen
-CMD ["uv", "run", "src/main.py"]
+CMD ["uv", "run", "--", "python", "-u", "src/main.py"]

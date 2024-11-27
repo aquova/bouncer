@@ -10,6 +10,8 @@ from config import HOME_SERVER, THREAD_ROLES
 from waiting import AnsweringMachineEntry, is_in_home_server
 import utils
 
+# TODO: This is temporary until support for Forwarded messages comes in the next version of discord.py
+FORWARD_FLAG_VAL = 16384
 
 class MessageForwarder:
     """
@@ -45,6 +47,12 @@ class MessageForwarder:
         """
         # Ignore blocked users
         if client.blocks.is_in_blocklist(message.author.id):
+            return
+
+        # Throw a warning about sending forwarded messages to the bot
+        # TODO: This should be removed when discord.py updates
+        if message.flags.value == FORWARD_FLAG_VAL:
+            await message.channel.send("Sorry, the bot cannot handle Forwarded messages. Perhaps try sending a link to the message?")
             return
 
         # If the user is in the home server, treat it as a regular DM

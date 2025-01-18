@@ -3,11 +3,11 @@ from typing import cast
 import discord
 from discord.ext import commands
 
+from activity import Syslog
 from blocks import BlockedUsers
 from config import LOG_CHAN, MAILBOX, SPAM_CHAN, SYS_LOG, WATCHLIST_CHAN
 import db
 from spam import Spammers
-from syslog import Syslog
 from waiting import AnsweringMachine
 from watcher import Watcher
 

@@ -81,21 +81,16 @@ async def log_user(user: discord.User, reason: str, state: LogTypes, author: dis
         log_mes_id = log_mes.id
 
         try:
-            dm_chan = user.dm_channel
-            # If first time DMing, need to create channel
-            if not dm_chan:
-                dm_chan = await user.create_dm()
-
             # Only send DM when specified in configs
             if state == LogTypes.BAN and DM_BAN:
-                await dm_chan.send(BAN_KICK_MES.format(name=SERVER_NAME, type="banned", mes=reason, url=BAN_APPEAL_URL))
+                await user.send(BAN_KICK_MES.format(name=SERVER_NAME, type="banned", mes=reason, url=BAN_APPEAL_URL))
             elif state == LogTypes.WARN and DM_WARN:
                 info = " and ".join([f"<#{x}>" for x in INFO_CHANS])
-                await dm_chan.send(WARN_MES.format(name=SERVER_NAME, count=count, mes=reason, chans=info))
+                await user.send(WARN_MES.format(name=SERVER_NAME, count=count, mes=reason, chans=info))
             elif state == LogTypes.KICK and DM_BAN:
-                await dm_chan.send(BAN_KICK_MES.format(name=SERVER_NAME, type="kicked", mes=reason, url=BAN_APPEAL_URL))
+                await user.send(BAN_KICK_MES.format(name=SERVER_NAME, type="kicked", mes=reason, url=BAN_APPEAL_URL))
             elif state == LogTypes.SCAM and DM_BAN:
-                await dm_chan.send(SCAM_MES.format(name=SERVER_NAME, url=BAN_APPEAL_URL))
+                await user.send(SCAM_MES.format(name=SERVER_NAME, url=BAN_APPEAL_URL))
         # Exception handling
         except discord.errors.HTTPException as err:
             if err.code == 50007:

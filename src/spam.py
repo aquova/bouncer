@@ -91,13 +91,8 @@ class Spammers:
         if uid in self.spammers:
             del self.spammers[uid]
 
-        # Create a DM channel between Bouncer if it doesn't exist
         try:
-            dm_chan = user.dm_channel
-            if not dm_chan:
-                dm_chan = await user.create_dm()
-
-            await dm_chan.send(f"Hi there! This is an automated courtesy message informing you that your post(s) have been deleted either for spamming or attempting to ping everyone: '{txt}'. You have been temporarily muted from speaking in the server while the staff team reviews your message. If you have any questions, please reply to this bot.")
+            await user.send(f"Hi there! This is an automated courtesy message informing you that your post(s) have been deleted either for spamming or attempting to ping everyone: '{txt}'. You have been temporarily muted from speaking in the server while the staff team reviews your message. If you have any questions, please reply to this bot.")
         except discord.errors.HTTPException as err:
             if err.code == 50007:
                 pass

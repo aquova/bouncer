@@ -53,12 +53,7 @@ Sends a private message to the specified user
 """
 async def dm(user: discord.User | discord.Member, message: str, channel_id: int) -> str:
     try:
-        # If first DMing, need to create DM channel
-        dm_chan = user.dm_channel
-        if not dm_chan:
-            dm_chan = await client.create_dm(user)
-
-        await dm_chan.send(f"A message from the {SERVER_NAME} staff: {message}")
+        await user.send(f"A message from the {SERVER_NAME} staff: {message}")
         client.am.remove_entry(user.id)
 
         # Add context in the user's reply thread

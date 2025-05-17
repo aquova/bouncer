@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import cast
+from typing import cast, override
 
 import discord
 
@@ -14,6 +14,7 @@ class ReportResolveButton(discord.ui.Button):
             style=discord.ButtonStyle.success
         )
 
+    @override
     async def callback(self, interaction: discord.Interaction):
         if not interaction.message:
             return
@@ -87,6 +88,7 @@ class ReportModal(discord.ui.Modal):
         )
         self.add_item(self.comments_input)
 
+    @override
     async def on_submit(self, interaction: discord.Interaction):
         embed: discord.Embed = discord.Embed(
             title=f"\N{BALLOT BOX WITH BALLOT} Report from #{self.message.channel.name}",
@@ -111,7 +113,8 @@ class ReportModal(discord.ui.Modal):
             ] if field[1]
         ]
 
-        await client.mailbox.send(embed=embed, view=ReportMailboxView(reported_user=reported_user))
+        if client.mailbox is not None:
+            await client.mailbox.send(embed=embed, view=ReportMailboxView(reported_user=reported_user))
         await interaction.response.send_message(
             content="Your report has been forwarded to the server staff. Thanks!",
             ephemeral=True)

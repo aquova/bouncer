@@ -59,6 +59,7 @@ async def log_user(user: discord.User, reason: str, state: LogTypes, author: dis
         case LogTypes.UNBAN:
             output = "Removing all old logs for unbanning"
             db.clear_user_logs(user.id)
+        case _: pass
 
     # Generate message for log channel
     new_log = db.UserLogEntry(None, user.id, state, current_time, reason, author.name, None)
@@ -75,7 +76,7 @@ async def log_user(user: discord.User, reason: str, state: LogTypes, author: dis
 
     log_mes_id = 0
     # If we aren't noting, need to also write to log channel
-    if state != LogTypes.NOTE:
+    if state != LogTypes.NOTE and client.log is not None:
         # Post to channel, keep track of message ID
         log_mes = await client.log.send(log_message)
         log_mes_id = log_mes.id
@@ -177,7 +178,7 @@ async def remove_error(user: discord.User, index: int) -> str:
 
     # Search logging channel for matching post, and remove it
     try:
-        if item.message_id != 0 and item.message_id is not None:
+        if item.message_id != 0 and item.message_id is not None and client.log is not None:
             old_mes = await client.log.fetch_message(item.message_id)
             await old_mes.delete()
     # If we were unable to find message to delete, that's okay

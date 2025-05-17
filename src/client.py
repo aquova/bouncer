@@ -1,4 +1,4 @@
-from typing import cast
+from typing import cast, Final
 
 import discord
 from discord.ext import commands
@@ -18,11 +18,16 @@ class DiscordClient(commands.Bot):
         super().__init__(command_prefix="$", intents=intents)
         db.initialize()
 
-        self.am = AnsweringMachine()
-        self.blocks = BlockedUsers()
-        self.spammers = Spammers()
-        self.syslog = Syslog()
-        self.watch = Watcher()
+        self.am: Final = AnsweringMachine()
+        self.blocks: Final = BlockedUsers()
+        self.spammers: Final = Spammers()
+        self.syslog: Final = Syslog()
+        self.watch: Final = Watcher()
+
+        self.mailbox: discord.TextChannel | None = None
+        self.log: discord.TextChannel | None = None
+        self.spam: discord.TextChannel | None = None
+        self.watchlist: discord.TextChannel | None = None
 
     async def set_channels(self):
         self.mailbox = cast(discord.TextChannel, self.get_channel(MAILBOX))

@@ -1,5 +1,6 @@
 from datetime import timedelta, datetime
 from re import IGNORECASE, search
+from typing import override
 
 import discord
 
@@ -19,12 +20,13 @@ class Spammer:
     def __len__(self) -> int:
         return len(self.messages)
 
+    @override
     def __str__(self) -> str:
         return self.messages[0].content
 
     def reset(self, message: discord.Message):
-        self.messages = [message]
-        self.timestamp = datetime.now()
+        self.messages: list[discord.Message] = [message]
+        self.timestamp: datetime = datetime.now()
 
     def add(self, message: discord.Message):
         if len(self.messages) > 0 and message.content == self.messages[0].content:
@@ -37,7 +39,7 @@ class Spammer:
 
 class Spammers:
     def __init__(self):
-        self.spammers = {}
+        self.spammers: dict[int, Spammer] = {}
 
     async def check_spammer(self, message: discord.Message) -> tuple[bool, str]:
         if message.author.bot or message.content == "":

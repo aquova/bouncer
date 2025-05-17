@@ -8,29 +8,29 @@ with open(CONFIG_PATH, 'r') as config_file:
     cfg = yaml.safe_load(config_file)
 
 # Set values from config file as constants
-DISCORD_KEY = cfg['discord']
-SERVER_NAME = cfg['server_name']
+DISCORD_KEY: str = cfg['discord']
+SERVER_NAME: str = cfg['server_name']
 
-HOME_SERVER = cfg['servers']['home']
-ADMIN_CATEGORIES = cfg['categories']['admin']
-BAN_APPEAL_URL = cfg['appeal_url']
+HOME_SERVER: int = cfg['servers']['home']
+ADMIN_CATEGORIES: list[int] = cfg['categories']['admin']
+BAN_APPEAL_URL: str = cfg['appeal_url']
 
-MAILBOX = cfg['channels']['mailbox']
-LOG_CHAN = cfg['channels']['log']
-SYS_LOG = cfg['channels']['syslog']
-WATCHLIST_CHAN = cfg['channels']['watchlist']
-SPAM_CHAN = cfg['channels']['spam']
-IGNORE_SPAM = cfg['channels']['ignore_spam']
-INFO_CHANS = cfg['channels']['info']
+MAILBOX: int = cfg['channels']['mailbox']
+LOG_CHAN: int = cfg['channels']['log']
+SYS_LOG: int = cfg['channels']['syslog']
+WATCHLIST_CHAN: int = cfg['channels']['watchlist']
+SPAM_CHAN: int = cfg['channels']['spam']
+IGNORE_SPAM: list[int] = cfg['channels']['ignore_spam']
+INFO_CHANS: list[int] = cfg['channels']['info']
 
-VALID_ROLES = cfg['roles']['admin']
+VALID_ROLES: list[int] = cfg['roles']['admin']
 
-DM_BAN = cfg['DM']['ban']
-DM_WARN = cfg['DM']['warn']
+DM_BAN: bool = cfg['DM']['ban']
+DM_WARN: bool = cfg['DM']['warn']
 
 USER_PLOT = "./private/user_plot.png"
 MONTH_PLOT = "./private/month_plot.png"
 
-# list of int: the ids of roles to invite to new forwarded threads
-#              each role must have less than 100 members for the addition to work
-THREAD_ROLES = cfg['messageForwarding']['rolesToAddToThreads']
+# The ids of roles to invite to new forwarded threads.
+# Each role must have less than 100 members for the addition to work
+THREAD_ROLES: list[int] = cfg['messageForwarding']['rolesToAddToThreads']

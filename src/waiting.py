@@ -16,7 +16,7 @@ class AnsweringMachineEntry:
 
 class AnsweringMachine:
     def __init__(self):
-        self.waiting_list = {}
+        self.waiting_list: dict[int, AnsweringMachineEntry] = {}
 
     def remove_entry(self, user_id: int):
         if user_id in self.waiting_list:
@@ -40,7 +40,7 @@ class AnsweringMachine:
     def _gen_waiting_list(self) -> list[str]:
         curr_time = datetime.now(timezone.utc)
         waiting_list = self.get_entries().copy()
-        output_list = []
+        output_list: list[str] = []
         for key, item in waiting_list.items():
             days, hours, minutes, _ = get_time_delta(curr_time, item.timestamp)
             # Purge items that are older than one day

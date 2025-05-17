@@ -11,8 +11,9 @@ EPOCH = datetime(1970, 1, 1, 0, 0, 0, tzinfo=timezone.utc) # Start of Unix time
 
 class Syslog:
     def __init__(self):
-        self.logs = []
-        self.oldest = None
+        self.logs: list[str] = []
+        self.oldest: datetime | None = None
+        self.channel: discord.TextChannel | None = None
 
     def setup(self, syslog: discord.TextChannel):
         self.channel = syslog
@@ -36,4 +37,5 @@ class Syslog:
         # for some reason unable to be sent over and over
         self.logs.clear()
         self.oldest = None
-        await send_message(joined, self.channel)
+        if self.channel is not None:
+            await send_message(joined, self.channel)

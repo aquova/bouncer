@@ -1,4 +1,5 @@
 import discord
+from typing import override
 
 from client import client
 from config import SERVER_NAME
@@ -8,7 +9,7 @@ from utils import CHAR_LIMIT, interaction_response_helper
 class DmModal(discord.ui.Modal):
     def __init__(self, user: discord.User):
         super().__init__(title="DM a user")
-        self.user = user
+        self.user: discord.User = user
         self.content = discord.ui.TextInput(
             label="DM Message",
             style=discord.TextStyle.long,
@@ -17,6 +18,7 @@ class DmModal(discord.ui.Modal):
         )
         self.add_item(self.content)
 
+    @override
     async def on_submit(self, interaction: discord.Interaction):
         if interaction.channel_id is None: # Only for the linter's sake
             return

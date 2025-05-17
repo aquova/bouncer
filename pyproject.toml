@@ -11,3 +11,7 @@ dependencies = [
     "numpy>=2.1.1",
     "pyyaml>=6.0.2",
 ]
+
+[tool.pyright]
+# reportAny = false
+reportUnusedCallResult = false

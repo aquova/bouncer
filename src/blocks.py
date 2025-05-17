@@ -5,7 +5,7 @@ import db
 class BlockedUsers:
     def __init__(self):
         block_db = db.get_blocklist()
-        self.blocklist = [x[0] for x in block_db]
+        self.blocklist: list[int] = [int(x[0]) for x in block_db] # TODO: We really should be storing these as INT, not TEXT
 
     def handle_block(self, user: discord.User, block: bool) -> str:
         is_blocked = self.is_in_blocklist(user.id)

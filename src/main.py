@@ -1,6 +1,6 @@
 # Bouncer
 # https://github.com/aquova/bouncer
-# 2018-2024
+# 2018-2025
 
 from datetime import datetime, timezone
 
@@ -19,9 +19,7 @@ A helper function that deletes and logs the given message
 """
 async def delete_message_helper(message: discord.Message):
     timedelta = datetime.now(timezone.utc) - message.created_at
-    mes = f":no_mobile_phones: **{str(message.author)}** deleted " \
-          f"in <#{message.channel.id}>: `{message.content}` \n" \
-          f":timer: This message was visible for {humanize.precisedelta(timedelta)}."
+    mes = f":no_mobile_phones: **{str(message.author)}** deleted in <#{message.channel.id}>: `{message.content}`\n:timer: This message was visible for {humanize.precisedelta(timedelta)}."
     # Adds URLs for any attachments that were included in deleted message
     # These will likely become invalid, but it's nice to note them anyway
     if message.attachments:
@@ -36,8 +34,6 @@ Should Log
 Whether the bot should log this event in config.SYS_LOG
 """
 def should_log(server: discord.Guild) -> bool:
-    if not server:
-        return False
     return server.id == config.HOME_SERVER
 
 """
@@ -152,7 +148,7 @@ async def on_member_remove(member: discord.Member):
     # We can remove left users from our answering machine
     client.am.remove_entry(member.id)
 
-    if client.watch.should_note(member.id):
+    if client.watch.should_note(member.id) and client.watchlist is not None:
         await utils.send_message(f"{str(member)} has left the server.", client.watchlist)
 
     mes = f":wave: **{str(member)} ({member.id})** has left"
@@ -208,7 +204,7 @@ async def on_message_edit(before: discord.Message, after: discord.Message):
 
         # If user is on watchlist, then post it there as well
         watching = client.watch.should_note(after.author.id)
-        if watching:
+        if watching and client.watchlist is not None:
             await utils.send_message(mes, client.watchlist)
 
     except discord.errors.HTTPException as err:
@@ -224,7 +220,7 @@ async def on_member_join(member: discord.Member):
     if not should_log(member.guild):
         return
 
-    if client.watch.should_note(member.id):
+    if client.watch.should_note(member.id) and client.watchlist is not None:
         await utils.send_message(f"{str(member)} has joined the server.", client.watchlist)
 
     mes = f":confetti_ball: **{str(member)} ({member.id})** has joined"
@@ -240,10 +236,10 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
     if not should_log(member.guild) or member.bot:
         return
 
-    if not after.channel:
+    if after.channel is None and before.channel is not None:
         mes = f":mute: **{str(member)}** has left voice channel {before.channel.name}"
         await client.syslog.add_log(mes)
-    elif not before.channel:
+    elif before.channel is None and after.channel is not None:
         mes = f":loud_sound: **{str(member)}** has joined voice channel {after.channel.name}"
         await client.syslog.add_log(mes)
 
@@ -269,7 +265,7 @@ More or less the main function
 @client.event
 async def on_message(message: discord.Message):
     # Bouncer should not react to its own messages
-    if message.author.id == client.user.id:
+    if client.user is not None and message.author.id == client.user.id:
         return
 
     # If bouncer detects a private DM sent to it, forward it to staff
@@ -277,20 +273,20 @@ async def on_message(message: discord.Message):
         await message_forwarder.on_dm(message)
         return
 
-    (spammed, spam_message) = await client.spammers.check_spammer(message)
-    if spammed:
+    spammed, spam_message = await client.spammers.check_spammer(message)
+    if spammed and client.spam is not None:
         await client.spam.send(spam_message)
         return
 
     # Check if user is on watchlist, and should be tracked
     watching = client.watch.should_note(message.author.id)
-    if watching:
+    if watching and client.watchlist is not None:
         content = utils.combine_message(message)
         mes = f"<@{str(message.author.id)}> said in <#{message.channel.id}>: {content}"
         await utils.send_message(mes, client.watchlist)
 
     # If a user pings bouncer, log into mod channel
-    if client.user in message.mentions:
+    if client.user in message.mentions and client.mailbox is not None:
         embed: discord.Embed = discord.Embed(
             title=f"\N{DIGIT ONE}\u20E3 Pinged by {message.author.global_name or message.author}",
             description=f"{message.content if len(message.content) <= 99 else message.content[:99] + '…'}",

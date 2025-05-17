@@ -4,7 +4,7 @@ import db
 
 class Watcher:
     def __init__(self):
-        self.watchlist = db.get_watch_list()
+        self.watchlist: list[int] = db.get_watch_list()
 
     def should_note(self, uid: int) -> bool:
         return uid in self.watchlist

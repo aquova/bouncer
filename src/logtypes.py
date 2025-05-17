@@ -23,8 +23,6 @@ def present_tense(lt: LogTypes) -> str:
             return "Unban"
         case LogTypes.WARN:
             return "Warning"
-        case _:
-            raise UnknownLogTypeException
 
 def past_tense(lt: LogTypes) -> str:
     match lt:
@@ -38,5 +36,3 @@ def past_tense(lt: LogTypes) -> str:
             return "Unbanned"
         case LogTypes.WARN:
             return "Warned"
-        case _:
-            raise UnknownLogTypeException

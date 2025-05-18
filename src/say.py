@@ -7,7 +7,7 @@ class SayModal(discord.ui.Modal):
     def __init__(self, channel: discord.TextChannel | discord.Thread):
         super().__init__(title="Say a message as the bot")
         self.channel: discord.TextChannel | discord.Thread = channel
-        self.content = discord.ui.TextInput(
+        self.content: discord.ui.TextInput[discord.ui.View] = discord.ui.TextInput(
             label="Bot message",
             style=discord.TextStyle.long,
             max_length=CHAR_LIMIT,

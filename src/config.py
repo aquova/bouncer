@@ -1,3 +1,5 @@
+# pyright: reportAny=false
+
 import yaml
 
 DATABASE_PATH = "./private/bouncer.db"

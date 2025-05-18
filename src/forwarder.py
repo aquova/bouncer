@@ -1,6 +1,8 @@
+# pyright: reportAny=false, reportExplicitAny=false
+
 from collections import OrderedDict
 from threading import Lock
-from typing import cast
+from typing import Any, Callable, cast
 
 import discord
 
@@ -121,6 +123,11 @@ class MessageForwarder:
         :param from_user_message: Whether user reply thread retrieval is motivated by the user sending bouncer a message (True) or staff moderation (False).
         :return: The existing/new thread.
         """
+        # This realistically shouldn't happen, and is just here to keep the linter happy
+        # However if it does happen, then yeah we should bail
+        if singletons.mailbox is None:
+            raise Exception
+
         thread_id = self._user_id_to_thread_id(user.id)
 
         if thread_id is None:
@@ -232,19 +239,19 @@ class LRUCache:
 
     Based on this comment: https://bugs.python.org/issue28178#msg276812.
     """
-    def __init__(self, func, maxsize=128):
+    def __init__(self, func: Callable[..., Any], maxsize: int=128):
         """
         Creates a new instance.
 
         :param func: The function to call to get the value for a key if not present in the cache.
         :param maxsize: The maximum number of items to hold before evicting entries.
         """
-        self._cache = OrderedDict()
-        self._lock = Lock()
-        self._func = func
-        self._maxsize = maxsize
+        self._cache: OrderedDict[Any, Any] = OrderedDict()
+        self._lock: Lock = Lock()
+        self._func: Callable[..., Any] = func
+        self._maxsize: int = maxsize
 
-    def __call__(self, *args):
+    def __call__(self, *args: Any):
         """
         Retrieve the value for the given key (args).
 
@@ -267,7 +274,7 @@ class LRUCache:
 
             return result
 
-    def set(self, result, *args):
+    def set(self, result: Any, *args: Any):
         """
         Set the result for given args, bypassing func.
 

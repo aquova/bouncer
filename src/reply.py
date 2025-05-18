@@ -10,7 +10,7 @@ class DmModal(discord.ui.Modal):
     def __init__(self, user: discord.User):
         super().__init__(title="DM a user")
         self.user: discord.User = user
-        self.content = discord.ui.TextInput(
+        self.content: discord.ui.TextInput[discord.ui.View] = discord.ui.TextInput(
             label="DM Message",
             style=discord.TextStyle.long,
             max_length=CHAR_LIMIT,

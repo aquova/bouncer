@@ -4,8 +4,8 @@ from typing import cast
 
 import discord
 
+from singletons import singletons
 import db
-from client import client
 from config import HOME_SERVER, THREAD_ROLES
 from waiting import AnsweringMachineEntry, is_in_home_server
 import utils
@@ -38,7 +38,7 @@ class MessageForwarder:
         # Both of the above use an LRU cache wrapper around accessing the DB so that every DM/reply does not trigger DB access
         # The chosen cache size should be equal to the number of concurrent/active conversations we expect users to have with bouncer
 
-    async def on_dm(self, message: discord.Message, edit: bool = False):
+    async def on_dm(self, client: discord.Client, message: discord.Message, edit: bool = False):
         """
         On a DM, forward the message to staff.
 
@@ -46,7 +46,7 @@ class MessageForwarder:
         :param edit: Whether this message was an edit
         """
         # Ignore blocked users
-        if client.blocks.is_in_blocklist(message.author.id):
+        if singletons.blocks.is_in_blocklist(message.author.id):
             return
 
         # Throw a warning about sending forwarded messages to the bot
@@ -75,7 +75,7 @@ class MessageForwarder:
         reply_message += f": {content}"
 
         # Get or create the appropriate thread for the message user
-        reply_channel = await self.get_or_create_user_reply_thread(message.author, True, content=content)
+        reply_channel = await self.get_or_create_user_reply_thread(client, message.author, True, content=content)
 
         # Forward the message to the channel/thread
         log_mes = await utils.send_message(reply_message, reply_channel)
@@ -93,7 +93,7 @@ class MessageForwarder:
         # Record that the user is waiting for a reply
         url = log_mes.jump_url if log_mes else None
         mes_entry = AnsweringMachineEntry(str(message.author), message.created_at, content, url)
-        client.am.update_entry(message.author.id, mes_entry)
+        singletons.am.update_entry(message.author.id, mes_entry)
 
     def get_userid_for_user_reply_thread(self, channel_id: int) -> int | None:
         """
@@ -113,7 +113,7 @@ class MessageForwarder:
         """
         return self._user_id_to_thread_id(user.id)
 
-    async def get_or_create_user_reply_thread(self, user: discord.User | discord.Member, from_user_message=False, content: str | None=None) -> discord.Thread:
+    async def get_or_create_user_reply_thread(self, client: discord.Client, user: discord.User | discord.Member, from_user_message: bool=False, content: str | None=None) -> discord.Thread:
         """
         Either retrieves the existing reply thread for a user, or creates a new one if they don't have one.
 
@@ -125,13 +125,13 @@ class MessageForwarder:
 
         if thread_id is None:
             # This is a first time user messaging bouncer or staff moderating a user -> create a reply thread for them
-            return await self._create_reply_thread(user, client.mailbox)
+            return await self._create_reply_thread(client, user, singletons.mailbox)
 
         # Get thread from thread cache (holds active threads only)
         user_reply_thread = client.get_channel(thread_id)
         if user_reply_thread is not None and isinstance(user_reply_thread, discord.Thread):
             # Active thread -> update it and use it for the conversation
-            await self._update_reply_thread(user, user_reply_thread)
+            await self._update_reply_thread(client, user, user_reply_thread)
             return user_reply_thread
 
         # The thread is either archived or deleted; use fetch channel to find out which
@@ -145,19 +145,19 @@ class MessageForwarder:
                     description=f"{content if len(content) <= 99 else content[:99] + '…'}" if content else None,
                     colour=discord.Colour.blue(),
                     url=user_reply_thread.jump_url)
-                await client.mailbox.send(embed=embed)
+                await singletons.mailbox.send(embed=embed)
             else:
                 # It was archived -> send a message to notify mods someone is starting a new conversation or that there was moderation activity
                 msg: str = f"New moderation activity for {user.mention}\nTheir reply thread has been un-archived: {user_reply_thread.mention}"
-                await client.mailbox.send(content=msg)
-            await self._update_reply_thread(user, user_reply_thread)
+                await singletons.mailbox.send(content=msg)
+            await self._update_reply_thread(client, user, user_reply_thread)
             return user_reply_thread
         except discord.errors.NotFound:
             # It was deleted
-            await client.mailbox.send(f"Reply thread for user {user.mention} was not found (it was probably deleted), creating a new one.")
-            return await self._create_reply_thread(user, client.mailbox)
+            await singletons.mailbox.send(f"Reply thread for user {user.mention} was not found (it was probably deleted), creating a new one.")
+            return await self._create_reply_thread(client, user, singletons.mailbox)
 
-    async def _create_reply_thread(self, user: discord.User | discord.Member, parent_channel: discord.TextChannel) -> discord.Thread:
+    async def _create_reply_thread(self, client: discord.Client, user: discord.User | discord.Member, parent_channel: discord.TextChannel) -> discord.Thread:
         """
         Creates a reply thread for a user.
 
@@ -165,7 +165,7 @@ class MessageForwarder:
         :param parent_channel: The channel to create the thread in.
         :return: The new thread.
         """
-        thread = await parent_channel.create_thread(name=self._user_reply_thread_name(user), type=discord.ChannelType.public_thread)
+        thread = await parent_channel.create_thread(name=self._user_reply_thread_name(client, user), type=discord.ChannelType.public_thread)
 
         # Update DB and caches
         db.set_user_reply_thread(user.id, thread.id)
@@ -192,7 +192,7 @@ class MessageForwarder:
         # By editing in a mention, we add staff to the thread without pinging them
         await message.edit(content=content)
 
-    async def _update_reply_thread(self, user: discord.User | discord.Member, thread: discord.Thread):
+    async def _update_reply_thread(self, client: discord.Client, user: discord.User | discord.Member, thread: discord.Thread):
         """
         Update a reply thread for a user. That means:
           - change the thread name to match the user's current name
@@ -201,13 +201,13 @@ class MessageForwarder:
         :param user: The user the thread is for.
         :param thread: The thread.
         """
-        thread_name = self._user_reply_thread_name(user)
+        thread_name = self._user_reply_thread_name(client, user)
 
         if thread.name != thread_name or thread.archived:
             await thread.edit(name=thread_name, archived=False)
             await self._add_staff_to_thread(thread)
 
-    def _user_reply_thread_name(self, user: discord.User | discord.Member) -> str:
+    def _user_reply_thread_name(self, client: discord.Client, user: discord.User | discord.Member) -> str:
         """
         Returns the name of a user reply thread for a user.
 

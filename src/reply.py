@@ -1,7 +1,7 @@
 import discord
 from typing import override
 
-from client import client
+from singletons import singletons
 from config import SERVER_NAME
 from forwarder import message_forwarder
 from utils import CHAR_LIMIT, interaction_response_helper
@@ -22,7 +22,7 @@ class DmModal(discord.ui.Modal):
     async def on_submit(self, interaction: discord.Interaction):
         if interaction.channel_id is None: # Only for the linter's sake
             return
-        response = await dm(self.user, self.content.value, interaction.channel_id)
+        response = await dm(interaction.client, self.user, self.content.value, interaction.channel_id)
         await interaction_response_helper(interaction, response)
 
 """
@@ -42,8 +42,8 @@ Get user ID
 
 Get's the user ID associated with the channel ID of the current DM thread
 """
-def get_id(channel_id: int) -> str:
-    user = _get_user_for_reply(channel_id)
+def get_id(client: discord.Client, channel_id: int) -> str:
+    user = _get_user_for_reply(client, channel_id)
     if user is None:
         return "I can't get this user's ID. Are we in a DM thread?"
     return str(user.id)
@@ -53,13 +53,13 @@ DM
 
 Sends a private message to the specified user
 """
-async def dm(user: discord.User | discord.Member, message: str, channel_id: int) -> str:
+async def dm(client: discord.Client, user: discord.User | discord.Member, message: str, channel_id: int) -> str:
     try:
         await user.send(f"A message from the {SERVER_NAME} staff: {message}")
-        client.am.remove_entry(user.id)
+        singletons.am.remove_entry(user.id)
 
         # Add context in the user's reply thread
-        await add_context_to_reply_thread(channel_id, user, f"Message sent to `{str(user)}`", message)
+        await add_context_to_reply_thread(client, channel_id, user, f"Message sent to `{str(user)}`", message)
         return f"Message sent to `{str(user)}`: {message}"
     except discord.errors.HTTPException as err:
         if err.code == 50007:
@@ -72,11 +72,11 @@ Reply
 
 Sends a private message to the user whose DM thread this is
 """
-async def reply(message: str, channel_id: int) -> str:
-    user = _get_user_for_reply(channel_id)
+async def reply(client: discord.Client, message: str, channel_id: int) -> str:
+    user = _get_user_for_reply(client, channel_id)
     if user is None:
         return "This command can only be sent inside a DM thread. Try again there, or use the `/dm` command."
-    response = await dm(user, message, channel_id)
+    response = await dm(client, user, message, channel_id)
     return response
 
 """
@@ -88,12 +88,12 @@ If the moderation action already happened in the user's reply thread, no more co
 
 Otherwise, it posts a message in the reply thread with the details of the action and a link to the source message.
 """
-async def add_context_to_reply_thread(channel_id: int, user: discord.User | discord.Member, context: str, message: str):
+async def add_context_to_reply_thread(client: discord.Client, channel_id: int, user: discord.User | discord.Member, context: str, message: str):
     reply_thread_id = message_forwarder.get_reply_thread_id_for_user(user)
     if channel_id == reply_thread_id:
         return # Already in reply thread, nothing to do
 
-    reply_thread = await message_forwarder.get_or_create_user_reply_thread(user, content=message)
+    reply_thread = await message_forwarder.get_or_create_user_reply_thread(client, user, content=message)
 
     await reply_thread.send(f"{context}: {message}")
 
@@ -104,7 +104,7 @@ Gets the user to reply to for a reply command.
 
 Based on the channel it was sent in, this figures out who to DM.
 """
-def _get_user_for_reply(channel_id: int) -> discord.User | discord.Member | None:
+def _get_user_for_reply(client: discord.Client, channel_id: int) -> discord.User | discord.Member | None:
     # If it's a reply thread, the user the reply thread is for, otherwise None
     thread_user = message_forwarder.get_userid_for_user_reply_thread(channel_id)
 

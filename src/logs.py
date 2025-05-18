@@ -2,9 +2,9 @@ from datetime import datetime, timezone
 
 import discord
 
+from singletons import singletons
 import db
 import visualize
-from client import client
 from config import BAN_APPEAL_URL, DM_BAN, DM_WARN, INFO_CHANS, SERVER_NAME
 from logtypes import LogTypes, past_tense
 from reply import add_context_to_reply_thread
@@ -43,7 +43,7 @@ Log User
 
 Notes an infraction for a user
 """
-async def log_user(user: discord.User, reason: str, state: LogTypes, author: discord.User | discord.Member, channel_id: int) -> str:
+async def log_user(client: discord.Client, user: discord.User, reason: str, state: LogTypes, author: discord.User | discord.Member, channel_id: int) -> str:
     current_time = datetime.now(timezone.utc)
     output = ""
 
@@ -72,13 +72,13 @@ async def log_user(user: discord.User, reason: str, state: LogTypes, author: dis
         output += f"\nThis user has received {_WARN_THRESHOLD} warnings or more. It is recommended that they be banned."
 
     # Record this action in the user's reply thread
-    await add_context_to_reply_thread(channel_id, user, f"`{str(user)}` was {past_tense(state)}", reason)
+    await add_context_to_reply_thread(client, channel_id, user, f"`{str(user)}` was {past_tense(state)}", reason)
 
     log_mes_id = 0
     # If we aren't noting, need to also write to log channel
-    if state != LogTypes.NOTE and client.log is not None:
+    if state != LogTypes.NOTE and singletons.log is not None:
         # Post to channel, keep track of message ID
-        log_mes = await client.log.send(log_message)
+        log_mes = await singletons.log.send(log_message)
         log_mes_id = log_mes.id
 
         try:
@@ -178,8 +178,8 @@ async def remove_error(user: discord.User, index: int) -> str:
 
     # Search logging channel for matching post, and remove it
     try:
-        if item.message_id != 0 and item.message_id is not None and client.log is not None:
-            old_mes = await client.log.fetch_message(item.message_id)
+        if item.message_id != 0 and item.message_id is not None and singletons.log is not None:
+            old_mes = await singletons.log.fetch_message(item.message_id)
             await old_mes.delete()
     # If we were unable to find message to delete, that's okay
     except discord.errors.HTTPException:

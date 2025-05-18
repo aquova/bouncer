@@ -3,7 +3,7 @@ from typing import cast, override
 
 import discord
 
-from client import client
+from singletons import singletons
 from forwarder import message_forwarder
 import utils
 
@@ -35,7 +35,7 @@ class ReportResolveButton(discord.ui.Button):
 
 
 class ReportThreadButton(discord.ui.Button):
-    def __init__(self, *, reported_user: discord.User | discord.Member, thread_url: str | None = None):
+    def __init__(self, reported_user: discord.User | discord.Member, thread_url: str | None = None):
         super().__init__(
             label="Thread",
             style=discord.ButtonStyle.link if thread_url else discord.ButtonStyle.secondary,
@@ -44,11 +44,10 @@ class ReportThreadButton(discord.ui.Button):
         )
         self.reported_user: discord.User | discord.Member = reported_user
 
+    @override
     async def callback(self, interaction: discord.Interaction):
         if self.url is None:
-            thread: discord.Thread = await message_forwarder.get_or_create_user_reply_thread(
-                user=self.reported_user
-            )
+            thread: discord.Thread = await message_forwarder.get_or_create_user_reply_thread(interaction.client, self.reported_user)
 
             view: discord.ui.View = self.view
             view.remove_item(self)
@@ -62,20 +61,18 @@ class ReportThreadButton(discord.ui.Button):
 
 
 class ReportMailboxView(discord.ui.View):
-    def __init__(self, *, reported_user: discord.User | discord.Member):
+    def __init__(self, client: discord.Client, reported_user: discord.User | discord.Member):
         super().__init__(timeout=0)
 
         thread_id: int | None = message_forwarder.get_reply_thread_id_for_user(user=reported_user)
         thread: discord.Thread | None = cast(discord.Thread, client.get_channel(thread_id)) if thread_id else None
-        self.thread_button = ReportThreadButton(
-            reported_user=reported_user,
-            thread_url=thread.jump_url if thread else None)
+        self.thread_button = ReportThreadButton(reported_user=reported_user, thread_url=thread.jump_url if thread else None)
         self.add_item(ReportResolveButton())
         self.add_item(self.thread_button)
 
 
 class ReportModal(discord.ui.Modal):
-    def __init__(self, *, message: discord.Message):
+    def __init__(self, message: discord.Message):
         super().__init__(title="Report a message")
 
         self.message: discord.Message = message
@@ -113,8 +110,8 @@ class ReportModal(discord.ui.Modal):
             ] if field[1]
         ]
 
-        if client.mailbox is not None:
-            await client.mailbox.send(embed=embed, view=ReportMailboxView(reported_user=reported_user))
+        if singletons.mailbox is not None:
+            await singletons.mailbox.send(embed=embed, view=ReportMailboxView(interaction.client, reported_user))
         await interaction.response.send_message(
             content="Your report has been forwarded to the server staff. Thanks!",
             ephemeral=True)

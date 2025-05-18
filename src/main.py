@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 import discord
 import humanize
 
+from singletons import singletons
 import config
 from client import client
 from forwarder import message_forwarder
@@ -26,7 +27,7 @@ async def delete_message_helper(message: discord.Message):
         for item in message.attachments:
             mes += '\n' + item.url
 
-    await client.syslog.add_log(mes)
+    await singletons.syslog.add_log(mes)
 
 """
 Should Log
@@ -90,7 +91,7 @@ async def on_member_update(before: discord.Member, after: discord.Member):
             mes = f"**:spy: {str(after)}** has reset their username"
         else:
             mes = f"**:spy: {str(after)}** is now known as `{after.nick}`"
-        await client.syslog.add_log(mes)
+        await singletons.syslog.add_log(mes)
     # If role quantity has changed
     elif before.roles != after.roles:
         # Determine role difference, post about it
@@ -106,7 +107,7 @@ async def on_member_update(before: discord.Member, after: discord.Member):
             mes += f":new: **{str(after)}** had the role(s) `{added_str}` added."
 
         if mes != "":
-            await client.syslog.add_log(mes)
+            await singletons.syslog.add_log(mes)
     # If they were timed out
     # Note, this won't trip when the timeout wears off, due to a Discord limitation
     if before.timed_out_until != after.timed_out_until:
@@ -114,9 +115,9 @@ async def on_member_update(before: discord.Member, after: discord.Member):
             timedelta = after.timed_out_until - datetime.now(timezone.utc)
             timeout_str = humanize.precisedelta(timedelta, minimum_unit="seconds", format="%d")
             mes = f":zipper_mouth: {str(after)} has been timed out for {timeout_str}."
-            await client.syslog.add_log(mes)
+            await singletons.syslog.add_log(mes)
         else:
-            await client.syslog.add_log(f":grin: {str(after)} is no longer timed out.")
+            await singletons.syslog.add_log(f":grin: {str(after)} is no longer timed out.")
 
 """
 On Member Ban
@@ -129,11 +130,11 @@ async def on_member_ban(server: discord.Guild, member: discord.Member):
         return
 
     # We can remove banned user from our answering machine and watch list (if they exist)
-    client.am.remove_entry(member.id)
-    client.watch.remove_user(member.id)
+    singletons.am.remove_entry(member.id)
+    singletons.watch.remove_user(member.id)
 
     mes = f":newspaper2: **{str(member)} ({member.id})** has been banned."
-    await client.syslog.add_log(mes)
+    await singletons.syslog.add_log(mes)
 
 """
 On Member Remove
@@ -146,13 +147,13 @@ async def on_member_remove(member: discord.Member):
         return
 
     # We can remove left users from our answering machine
-    client.am.remove_entry(member.id)
+    singletons.am.remove_entry(member.id)
 
-    if client.watch.should_note(member.id) and client.watchlist is not None:
-        await utils.send_message(f"{str(member)} has left the server.", client.watchlist)
+    if singletons.watch.should_note(member.id) and singletons.watchlist is not None:
+        await utils.send_message(f"{str(member)} has left the server.", singletons.watchlist)
 
     mes = f":wave: **{str(member)} ({member.id})** has left"
-    await client.syslog.add_log(mes)
+    await singletons.syslog.add_log(mes)
 
 """
 On Message Delete
@@ -195,17 +196,17 @@ async def on_message_edit(before: discord.Message, after: discord.Message):
 
     # Forward an edit to a DM
     if isinstance(after.channel, discord.channel.DMChannel):
-        await message_forwarder.on_dm(after, True)
+        await message_forwarder.on_dm(client, after, True)
         return
 
     try:
         mes = f":pencil: **{str(before.author)}** modified in <#{before.channel.id}>: `{before.content}` to `{after.content}`"
-        await client.syslog.add_log(mes)
+        await singletons.syslog.add_log(mes)
 
         # If user is on watchlist, then post it there as well
-        watching = client.watch.should_note(after.author.id)
-        if watching and client.watchlist is not None:
-            await utils.send_message(mes, client.watchlist)
+        watching = singletons.watch.should_note(after.author.id)
+        if watching and singletons.watchlist is not None:
+            await utils.send_message(mes, singletons.watchlist)
 
     except discord.errors.HTTPException as err:
         print(f"Unknown error with editing message. This message was unable to post for this reason: {err}\n")
@@ -220,11 +221,11 @@ async def on_member_join(member: discord.Member):
     if not should_log(member.guild):
         return
 
-    if client.watch.should_note(member.id) and client.watchlist is not None:
-        await utils.send_message(f"{str(member)} has joined the server.", client.watchlist)
+    if singletons.watch.should_note(member.id) and singletons.watchlist is not None:
+        await utils.send_message(f"{str(member)} has joined the server.", singletons.watchlist)
 
     mes = f":confetti_ball: **{str(member)} ({member.id})** has joined"
-    await client.syslog.add_log(mes)
+    await singletons.syslog.add_log(mes)
 
 """
 On Voice State Update
@@ -238,10 +239,10 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
 
     if after.channel is None and before.channel is not None:
         mes = f":mute: **{str(member)}** has left voice channel {before.channel.name}"
-        await client.syslog.add_log(mes)
+        await singletons.syslog.add_log(mes)
     elif before.channel is None and after.channel is not None:
         mes = f":loud_sound: **{str(member)}** has joined voice channel {after.channel.name}"
-        await client.syslog.add_log(mes)
+        await singletons.syslog.add_log(mes)
 
 """
 On Reaction Remove
@@ -254,7 +255,7 @@ async def on_reaction_remove(reaction: discord.Reaction, user: discord.Member):
         return
 
     emoji_name = reaction.emoji if isinstance(reaction.emoji, str) else reaction.emoji.name
-    await client.syslog.add_log(f":face_in_clouds: {str(user)} ({user.id}) removed the `{emoji_name}` emoji")
+    await singletons.syslog.add_log(f":face_in_clouds: {str(user)} ({user.id}) removed the `{emoji_name}` emoji")
 
 """
 On Message
@@ -270,28 +271,28 @@ async def on_message(message: discord.Message):
 
     # If bouncer detects a private DM sent to it, forward it to staff
     if isinstance(message.channel, discord.channel.DMChannel):
-        await message_forwarder.on_dm(message)
+        await message_forwarder.on_dm(client, message)
         return
 
-    spammed, spam_message = await client.spammers.check_spammer(message)
-    if spammed and client.spam is not None:
-        await client.spam.send(spam_message)
+    spammed, spam_message = await singletons.spammers.check_spammer(message)
+    if spammed and singletons.spam is not None:
+        await singletons.spam.send(spam_message)
         return
 
     # Check if user is on watchlist, and should be tracked
-    watching = client.watch.should_note(message.author.id)
-    if watching and client.watchlist is not None:
+    watching = singletons.watch.should_note(message.author.id)
+    if watching and singletons.watchlist is not None:
         content = utils.combine_message(message)
         mes = f"<@{str(message.author.id)}> said in <#{message.channel.id}>: {content}"
-        await utils.send_message(mes, client.watchlist)
+        await utils.send_message(mes, singletons.watchlist)
 
     # If a user pings bouncer, log into mod channel
-    if client.user in message.mentions and client.mailbox is not None:
+    if client.user in message.mentions and singletons.mailbox is not None:
         embed: discord.Embed = discord.Embed(
             title=f"\N{DIGIT ONE}\u20E3 Pinged by {message.author.global_name or message.author}",
             description=f"{message.content if len(message.content) <= 99 else message.content[:99] + '…'}",
             colour=discord.Colour.blue(),
             url=message.jump_url)
-        await client.mailbox.send(embed=embed)
+        await singletons.mailbox.send(embed=embed)
 
 client.run(config.DISCORD_KEY)

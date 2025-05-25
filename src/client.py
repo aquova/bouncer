@@ -23,6 +23,7 @@ HELP_MESSAGE = (
     "`/search` - Search for a user's logs\n"
     "`/edit` - Edit an incorrect log\n"
     "`/remove` - Remove a log\n"
+    "`/alt` - Link two accounts together as alts\n"
     "## Messaging Users\n"
     "`/dm` - Send a DM to a user\n"
     "`/reply` - Reply to the owner of a DM thread\n"

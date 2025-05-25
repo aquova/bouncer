@@ -57,6 +57,12 @@ class DiscordClient(commands.Bot):
 client = DiscordClient()
 
 ### Slash Commands
+@client.tree.command(name="alt", description="Notes a user as an alt for another")
+@ac.describe(a="Account A", b="Account B")
+async def alt_slash(interaction: discord.Interaction, a: discord.User, b: discord.User):
+    db.add_alt(a.id, b.id)
+    await interaction_response_helper(interaction, f"`{str(a)}` has now been identified as an alt of `{str(b)}` (and vice versa)")
+
 @client.tree.command(name="block", description="Change if user can DM us")
 @ac.describe(user="User", block="Block?")
 async def block_slash(interaction: discord.Interaction, user: discord.User, block: bool):

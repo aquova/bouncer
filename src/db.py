@@ -1,4 +1,4 @@
-# pyright: reportCallInDefaultInitializer=false, reportExplicitAny=false
+# pyright: reportCallInDefaultInitializer=false, reportExplicitAny=false, reportAny=false
 
 import sqlite3
 from dataclasses import dataclass
@@ -45,6 +45,8 @@ Generates database with needed tables if it doesn't exist
 def initialize():
     sqlconn = sqlite3.connect(DATABASE_PATH)
     sqlconn.execute("CREATE TABLE IF NOT EXISTS badeggs (dbid INTEGER PRIMARY KEY AUTOINCREMENT, id INTEGER, log INTEGER, date DATE, message TEXT, staff TEXT, post INTEGER);")
+    sqlconn.execute("CREATE TABLE IF NOT EXISTS alts (idx INTEGER PRIMARY KEY AUTOINCREMENT);")
+    sqlconn.execute("CREATE TABLE IF NOT EXISTS altMap (uid INT, idx INT, PRIMARY KEY (uid, idx), FOREIGN KEY(idx) REFERENCES alts(idx));")
     sqlconn.execute("CREATE TABLE IF NOT EXISTS blocks (id TEXT);")
     sqlconn.execute("CREATE TABLE IF NOT EXISTS staffLogs (staff TEXT PRIMARY KEY, bans INT, warns INT);")
     sqlconn.execute("CREATE TABLE IF NOT EXISTS monthLogs (month TEXT PRIMARY KEY, bans INT, warns INT);")
@@ -75,10 +77,10 @@ def search(uid: int) -> list[UserLogEntry]:
     entries: list[UserLogEntry] = []
     for result in search_results:
         # SQL stores Python datetimes as strings so we need to format them back
-        # Making matters worse, there are *three* formats saved in the logs.
+        # Making matters worse, there are *three* formats saved in the logs:
         # - An older format without a timezone
         # - The more common newer one with a timezone
-        # - A very rarely, some logs don't have any milliseconds stored, possibly due to falling exactly on the second mark
+        # - Very rarely, some logs don't have any milliseconds stored, possibly due to falling exactly on the second mark
         try:
             dt = datetime.strptime(result[3], "%Y-%m-%d %H:%M:%S.%f%z")
         except ValueError:
@@ -92,6 +94,30 @@ def search(uid: int) -> list[UserLogEntry]:
 
     return entries
 
+def add_alt(a: int, b: int):
+    alts_a = get_alts(a)
+    alts_b = get_alts(b)
+    # If we have no alts, we need to create a new index for the mapping
+    if len(alts_a) == 0 and len(alts_b) == 0:
+        _db_write("INSERT INTO alts DEFAULT VALUES")
+        result = _db_read("SELECT MAX(idx) FROM alts LIMIT 1")
+    elif len(alts_a) > 0:
+        result = _db_read("SELECT idx FROM altMap WHERE uid=?", [a])
+    else:
+        result = _db_read("SELECT idx FROM altMap WHERE uid=?", [b])
+
+    idx = result[0][0]
+    query = "INSERT OR IGNORE INTO altMap (uid, idx) VALUES (?, ?), (?, ?)"
+    _db_write(query, [a, idx, b, idx])
+
+def get_alts(uid: int) -> list[int]:
+    # TODO: This can probably be done in a single query, somehow
+    result = _db_read("SELECT idx FROM altMap WHERE uid=?", [uid])
+    if len(result) == 0:
+        return []
+    query = "SELECT uid FROM altMap JOIN alts ON altMap.idx = alts.idx WHERE alts.idx=?"
+    ids = _db_read(query, [result[0][0]])
+    return [x[0] for x in ids]
 
 def get_user_reply_thread_id(uid: int) -> int | None:
     """

@@ -161,18 +161,16 @@ def set_user_reply_thread(uid: int, thread_id: int):
     query = "REPLACE into userReplyThreads (userid, threadid) VALUES (?, ?)"
     _db_write(query, [uid, thread_id])
 
+def _get_log_count(uid: int, type: LogTypes) -> int:
+    query = "SELECT COUNT(*) FROM badeggs WHERE id=? AND log=?"
+    search_results: list[tuple[int]] = _db_read(query, [uid, type])
+    return search_results[0][0] + 1
 
 def get_warn_count(uid: int) -> int:
-    query = "SELECT COUNT(*) FROM badeggs WHERE id=? AND log = 1"
-    search_results: list[tuple[int]] = _db_read(query, [uid])
-
-    return search_results[0][0] + 1
+    return _get_log_count(uid, LogTypes.WARN)
 
 def get_note_count(uid: int) -> int:
-    query = "SELECT COUNT(*) FROM badeggs WHERE id=? AND log = 2"
-    search_results: list[tuple[int]] = _db_read(query, [uid])
-
-    return search_results[0][0] + 1
+    return _get_log_count(uid, LogTypes.NOTE)
 
 def add_log(log_entry: UserLogEntry):
     if log_entry.dbid is None:

@@ -26,7 +26,7 @@ def search_logs(user: discord.User) -> str:
     search_results = db.search(user.id)
     alts = db.get_alts(user.id)
     if len(search_results) == 0:
-        return f"User {str(user)} was not found in the database\n"
+        out = f"User {str(user)} has no infractions\n"
     else:
         # Format output message
         out = f"User `{str(user)}` ({user.id}) was found with the following infractions\n"
@@ -37,10 +37,11 @@ def search_logs(user: discord.User) -> str:
                 out += f"{index + 1}. {db.UserLogEntry.format(item, warn_cnt)}"
             else:
                 out += f"{index + 1}. {db.UserLogEntry.format(item, None)}"
-        if len(alts) > 0:
-            alt_str = ", ".join([str(x) for x in alts if x != user.id])
-            out += f"They are also known to be an alt of {alt_str}"
-        return out
+
+    if len(alts) > 0:
+        alt_str = ", ".join([str(x) for x in alts if x != user.id])
+        out += f"They are also known to be an alt of {alt_str}"
+    return out
 
 """
 Log User
